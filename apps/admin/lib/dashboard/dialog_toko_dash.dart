@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../dialog_gulir_isi.dart';
 import '../jaringan.dart';
 import '../pesan.dart';
 import '../setoran/daftar_rinci_dialog.dart';
@@ -53,12 +54,14 @@ class DialogTokoDash extends StatefulWidget {
 class _DialogTokoDashState extends State<DialogTokoDash> {
   static const _garis = Color(0xFF8FB4D9);
   final _cari = TextEditingController();
+  final _gulir = ScrollController();
   var _sortKolom = 0;
   var _sortNaik = true;
 
   @override
   void dispose() {
     _cari.dispose();
+    _gulir.dispose();
     super.dispose();
   }
 
@@ -92,6 +95,15 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
         angka(b.actual);
   }
 
+  static double _rasioNilai(int omset, int modal) {
+    if (omset <= 0 || modal <= 0) return 0;
+    return (omset - modal) / modal * 100;
+  }
+
+  static String _rasioTeks(int omset, int modal) {
+    return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
+  }
+
   int _banding(TokoDash a, TokoDash b) {
     final r = switch (_sortKolom) {
       0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
@@ -99,29 +111,169 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
       2 => a.nota.compareTo(b.nota),
       3 => a.sku.compareTo(b.sku),
       4 => a.order.compareTo(b.order),
-      5 => a.kiriman.compareTo(b.kiriman),
-      6 => a.batal.compareTo(b.batal),
-      7 => a.pending.compareTo(b.pending),
-      8 => a.actual.compareTo(b.actual),
+      5 => _rasioNilai(a.order, a.modalOrder)
+          .compareTo(_rasioNilai(b.order, b.modalOrder)),
+      6 => a.kiriman.compareTo(b.kiriman),
+      7 => _rasioNilai(a.kiriman, a.modalKiriman)
+          .compareTo(_rasioNilai(b.kiriman, b.modalKiriman)),
+      8 => a.batal.compareTo(b.batal),
+      9 => a.pending.compareTo(b.pending),
+      10 => _rasioNilai(a.pending, a.modalPending)
+          .compareTo(_rasioNilai(b.pending, b.modalPending)),
+      11 => a.actual.compareTo(b.actual),
+      12 => _rasioNilai(a.actual, a.modalActual)
+          .compareTo(_rasioNilai(b.actual, b.modalActual)),
       _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
     };
     return _sortNaik ? r : -r;
   }
 
-  DataColumn _kolom(String judul, int i, {bool angka = false, double? lebar}) {
-    return DataColumn(
-      numeric: angka,
-      headingRowAlignment: MainAxisAlignment.center,
-      onSort: (idx, naik) => setState(() {
+  static const _lebar = <double>[
+    160,
+    112,
+    52,
+    44,
+    92,
+    56,
+    92,
+    56,
+    68,
+    88,
+    56,
+    92,
+    56,
+    80,
+  ];
+
+  void _urut(int i) {
+    setState(() {
+      if (_sortKolom == i) {
+        _sortNaik = !_sortNaik;
+      } else {
         _sortKolom = i;
-        _sortNaik = naik;
-      }),
-      label: SizedBox(
-        width: lebar,
-        child: Text(
-          judul,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        _sortNaik = i == 0;
+      }
+    });
+  }
+
+  Widget _sel(
+    String teks, {
+    int i = 0,
+    bool angka = false,
+    bool tengah = false,
+    bool tebal = false,
+    Widget? anak,
+  }) {
+    return SizedBox(
+      width: _lebar[i],
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: i == 0 ? 0 : 6,
+          right: i == _lebar.length - 1 ? 0 : 4,
         ),
+        child: anak ??
+            Align(
+              alignment: tengah
+                  ? Alignment.center
+                  : angka
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+              child: Text(
+                teks,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: tengah
+                    ? TextAlign.center
+                    : angka
+                        ? TextAlign.right
+                        : TextAlign.left,
+                style: TextStyle(
+                  fontWeight: tebal ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+      ),
+    );
+  }
+
+  Widget _kepala() {
+    const judul = [
+      'Toko',
+      'Visit',
+      'Nota',
+      'SKU',
+      'Order',
+      '%',
+      'Kiriman',
+      '%',
+      'Batal',
+      'Pending',
+      '%',
+      'Actual',
+      '%',
+      'Status',
+    ];
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _garis)),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < judul.length; i++)
+            InkWell(
+              onTap: () => _urut(i),
+              child: SizedBox(
+                width: _lebar[i],
+                height: 36,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 0 : 6,
+                    right: i == judul.length - 1 ? 0 : 4,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          judul[i],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      if (_sortKolom == i)
+                        Icon(
+                          _sortNaik
+                              ? Icons.arrow_drop_up
+                              : Icons.arrow_drop_down,
+                          size: 18,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _baris({
+    required List<Widget> sel,
+    bool jumlah = false,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: jumlah ? Colors.grey.shade50 : null,
+        border: const Border(bottom: BorderSide(color: _garis, width: 0.5)),
+      ),
+      child: SizedBox(
+        height: 40,
+        child: Row(children: sel),
       ),
     );
   }
@@ -136,18 +288,50 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
     final jumBatal = tampil.fold<int>(0, (a, b) => a + b.batal);
     final jumPending = tampil.fold<int>(0, (a, b) => a + b.pending);
     final jumActual = tampil.fold<int>(0, (a, b) => a + b.actual);
-    const gayaJumlah = TextStyle(fontWeight: FontWeight.bold);
+    final jumModalOrder = tampil.fold<int>(0, (a, b) => a + b.modalOrder);
+    final jumModalKiriman = tampil.fold<int>(0, (a, b) => a + b.modalKiriman);
+    final jumModalPending = tampil.fold<int>(0, (a, b) => a + b.modalPending);
+    final jumModalActual = tampil.fold<int>(0, (a, b) => a + b.modalActual);
 
-    DataCell uang(int n, {bool tebal = false}) => DataCell(
-          Text(
-            Uang.angka(n),
-            textAlign: TextAlign.right,
-            style: tebal ? gayaJumlah : null,
-          ),
+    Widget uang(int n, int i, {bool tebal = false}) => _sel(
+          Uang.angka(n),
+          i: i,
+          angka: true,
+          tebal: tebal,
         );
 
-    return AlertDialog(
-      title: Row(
+    Widget persen(int omset, int modal, int i, {bool tebal = false}) => _sel(
+          _rasioTeks(omset, modal),
+          i: i,
+          angka: true,
+          tebal: tebal,
+        );
+
+    List<Widget> nilaiToko(TokoDash? b, {bool tebal = false}) {
+      final order = b?.order ?? jumOrder;
+      final kiriman = b?.kiriman ?? jumKiriman;
+      final pending = b?.pending ?? jumPending;
+      final actual = b?.actual ?? jumActual;
+      return [
+        uang(b?.nota ?? jumNota, 2, tebal: tebal),
+        uang(b?.sku ?? jumSku, 3, tebal: tebal),
+        uang(order, 4, tebal: tebal),
+        persen(order, b?.modalOrder ?? jumModalOrder, 5, tebal: tebal),
+        uang(kiriman, 6, tebal: tebal),
+        persen(kiriman, b?.modalKiriman ?? jumModalKiriman, 7, tebal: tebal),
+        uang(b?.batal ?? jumBatal, 8, tebal: tebal),
+        uang(pending, 9, tebal: tebal),
+        persen(pending, b?.modalPending ?? jumModalPending, 10, tebal: tebal),
+        uang(actual, 11, tebal: tebal),
+        persen(actual, b?.modalActual ?? jumModalActual, 12, tebal: tebal),
+      ];
+    }
+
+    return DialogGulirIsi(
+      lebar: _lebar.fold<double>(0, (a, b) => a + b),
+      controller: _gulir,
+      itemCount: tampil.length,
+      judul: Row(
         children: [
           Expanded(
             child: Text(
@@ -191,89 +375,33 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
           ),
         ],
       ),
-      titlePadding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      content: IsiDialog(
-        width: 980,
-        child: widget.data.toko.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Text('Tidak ada toko untuk sales ini di hari itu.'),
-              )
-            : DaftarGulirDialog(
-                faktor: 0.62,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    border: const TableBorder(
-                      verticalInside: BorderSide(color: _garis, width: 1),
-                    ),
-                    columnSpacing: 12,
-                    horizontalMargin: 8,
-                    headingRowHeight: 36,
-                    dataRowMinHeight: 36,
-                    dataRowMaxHeight: 40,
-                    sortColumnIndex: _sortKolom,
-                    sortAscending: _sortNaik,
-                    columns: [
-                      _kolom('Toko', 0, lebar: 168),
-                      _kolom('Visit', 1, lebar: 88),
-                      _kolom('Nota', 2, angka: true, lebar: 56),
-                      _kolom('SKU', 3, angka: true, lebar: 56),
-                      _kolom('Order', 4, angka: true),
-                      _kolom('Kiriman', 5, angka: true),
-                      _kolom('Batal', 6, angka: true),
-                      _kolom('Pending', 7, angka: true),
-                      _kolom('Actual', 8, angka: true),
-                      _kolom('Status', 9, lebar: 80),
-                    ],
-                    rows: [
-                      for (final b in tampil)
-                        DataRow(
-                          cells: [
-                            DataCell(_namaToko(context, b)),
-                            DataCell(Text(b.teksVisit)),
-                            uang(b.nota),
-                            uang(b.sku),
-                            uang(b.order),
-                            uang(b.kiriman),
-                            uang(b.batal),
-                            uang(b.pending),
-                            uang(b.actual),
-                            DataCell(Text(b.status)),
-                          ],
-                        ),
-                      DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              'Jumlah (${tampil.length})',
-                              style: gayaJumlah,
-                            ),
-                          ),
-                          const DataCell(Text('')),
-                          uang(jumNota, tebal: true),
-                          uang(jumSku, tebal: true),
-                          uang(jumOrder, tebal: true),
-                          uang(jumKiriman, tebal: true),
-                          uang(jumBatal, tebal: true),
-                          uang(jumPending, tebal: true),
-                          uang(jumActual, tebal: true),
-                          const DataCell(Text('')),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      kepala: _kepala(),
+      jumlah: _baris(
+        jumlah: true,
+        sel: [
+          _sel(
+            'Jumlah (${tampil.length})',
+            tebal: true,
+          ),
+          _sel('', i: 1),
+          ...nilaiToko(null, tebal: true),
+          _sel('', i: 13),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Tutup'),
-        ),
-      ],
+      itemBuilder: (context, i) {
+        final b = tampil[i];
+        return _baris(
+          sel: [
+            _sel(
+              '',
+              anak: _namaToko(context, b),
+            ),
+            _sel(b.teksVisit, i: 1, tengah: true),
+            ...nilaiToko(b),
+            _sel(b.status, i: 13, tengah: true),
+          ],
+        );
+      },
     );
   }
 

@@ -79,7 +79,10 @@ BEGIN
       n.pending,
       coalesce(sum(i.subtotal_jual_order), 0)::bigint AS jual_order,
       coalesce(sum(i.subtotal_jual_packed), 0)::bigint AS jual_packed,
-      coalesce(sum(i.subtotal_jual_actual), 0)::bigint AS jual_actual
+      coalesce(sum(i.subtotal_jual_actual), 0)::bigint AS jual_actual,
+      coalesce(sum(i.subtotal_beli_order), 0)::bigint AS beli_order,
+      coalesce(sum(i.subtotal_beli_packed), 0)::bigint AS beli_packed,
+      coalesce(sum(i.subtotal_beli_actual), 0)::bigint AS beli_actual
     FROM nota n
     JOIN public.v_transaksi_item i ON i.id_transaksi = n.id_transaksi
     GROUP BY
@@ -97,8 +100,12 @@ BEGIN
           'nama', max(i.nama_barang),
           'qty', sum(coalesce(i.qty_order, 0))::integer,
           'nilai', sum(coalesce(i.subtotal_jual_order, 0))::bigint,
+          'qty_order', sum(coalesce(i.qty_order, 0))::integer,
+          'order', sum(coalesce(i.subtotal_jual_order, 0))::bigint,
+          'modal_order', sum(coalesce(i.subtotal_beli_order, 0))::bigint,
           'qty_packed', sum(coalesce(i.qty_packed, 0))::integer,
           'packed', sum(coalesce(i.subtotal_jual_packed, 0))::bigint,
+          'modal_packed', sum(coalesce(i.subtotal_beli_packed, 0))::bigint,
           'qty_batal', sum(
             CASE
               WHEN o.status = 'batal' THEN coalesce(i.qty_packed, i.qty_order, 0)
@@ -123,7 +130,8 @@ BEGIN
             END
           )::bigint,
           'qty_actual', sum(coalesce(i.qty_actual, 0))::integer,
-          'actual', sum(coalesce(i.subtotal_jual_actual, 0))::bigint
+          'actual', sum(coalesce(i.subtotal_jual_actual, 0))::bigint,
+          'modal_actual', sum(coalesce(i.subtotal_beli_actual, 0))::bigint
         ) AS sku
       FROM nota n
       JOIN omset o ON o.id_transaksi = n.id_transaksi
@@ -164,6 +172,7 @@ BEGIN
         jsonb_build_object(
           'id', o.id_transaksi,
           'rute', v_rute,
+          'order', o.jual_order,
           'packed', o.jual_packed,
           'batal', CASE
             WHEN o.status = 'batal' THEN o.jual_packed
@@ -174,6 +183,10 @@ BEGIN
           'pending', CASE WHEN o.pending THEN o.jual_packed ELSE 0 END,
           'actual', o.jual_actual,
           'retur', 0,
+          'modal_order', o.beli_order,
+          'modal_packed', o.beli_packed,
+          'modal_pending', CASE WHEN o.pending THEN o.beli_packed ELSE 0 END,
+          'modal_actual', o.beli_actual,
           'status', CASE WHEN o.pending THEN 'pending' ELSE o.status END,
           'sku', coalesce(sn.sku, '[]'::jsonb)
         )
@@ -224,6 +237,12 @@ BEGIN
         CASE WHEN o.pending THEN o.jual_packed ELSE 0 END
       ), 0)::bigint AS jual_pending,
       coalesce(sum(o.jual_actual), 0)::bigint AS jual_actual,
+      coalesce(sum(o.beli_order), 0)::bigint AS beli_order,
+      coalesce(sum(o.beli_packed), 0)::bigint AS beli_packed,
+      coalesce(sum(
+        CASE WHEN o.pending THEN o.beli_packed ELSE 0 END
+      ), 0)::bigint AS beli_pending,
+      coalesce(sum(o.beli_actual), 0)::bigint AS beli_actual,
       CASE
         WHEN bool_or(o.status = 'dikirim') THEN 'dikirim'
         WHEN bool_or(o.pending) THEN 'pending'
@@ -267,6 +286,10 @@ BEGIN
         'batal', b.jual_batal,
         'pending', b.jual_pending,
         'actual', b.jual_actual,
+        'modal_order', b.beli_order,
+        'modal_packed', b.beli_packed,
+        'modal_pending', b.beli_pending,
+        'modal_actual', b.beli_actual,
         'retur', 0,
         'status', b.status,
         'visit_masuk', b.waktu_masuk,

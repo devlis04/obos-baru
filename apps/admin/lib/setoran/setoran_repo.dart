@@ -245,6 +245,11 @@ class SkuSetoranRinci {
     required this.nilai,
     this.qtyPacked = 0,
     this.packed = 0,
+    this.qtyOrder = 0,
+    this.nilaiOrder = 0,
+    this.modalOrder = 0,
+    this.modalPacked = 0,
+    this.modalActual = 0,
     this.qtyBatal = 0,
     this.batal = 0,
     this.qtyActual = 0,
@@ -259,6 +264,11 @@ class SkuSetoranRinci {
   final int nilai;
   final int qtyPacked;
   final int packed;
+  final int qtyOrder;
+  final int nilaiOrder;
+  final int modalOrder;
+  final int modalPacked;
+  final int modalActual;
   final int qtyBatal;
   final int batal;
   final int qtyActual;
@@ -276,6 +286,11 @@ class SkuSetoranRinci {
       nilai: packed,
       qtyPacked: qtyPacked,
       packed: packed,
+      qtyOrder: _n(m['qty_order'] ?? m['qty']),
+      nilaiOrder: _n(m['order'] ?? m['nilai']),
+      modalOrder: _n(m['modal_order']),
+      modalPacked: _n(m['modal_packed']),
+      modalActual: _n(m['modal_actual']),
       qtyBatal: _n(m['qty_batal']),
       batal: _n(m['batal']),
       qtyActual: _n(m['qty_actual']),
@@ -361,6 +376,11 @@ class NotaSetoranRinci {
     required this.actual,
     required this.retur,
     required this.status,
+    this.nilaiOrder = 0,
+    this.modalOrder = 0,
+    this.modalPacked = 0,
+    this.modalPending = 0,
+    this.modalActual = 0,
     this.sku = const [],
   });
 
@@ -372,27 +392,57 @@ class NotaSetoranRinci {
   final int actual;
   final int retur;
   final String status;
+  final int nilaiOrder;
+  final int modalOrder;
+  final int modalPacked;
+  final int modalPending;
+  final int modalActual;
   final List<SkuSetoranRinci> sku;
 
   factory NotaSetoranRinci.dari(Map<String, dynamic> m) {
     final list = m['sku'];
+    final sku = [
+      if (list is List)
+        for (final e in list)
+          if (e is Map)
+            SkuSetoranRinci.dari(Map<String, dynamic>.from(e)),
+    ];
+    var nilaiOrder = _n(m['order']);
+    var modalOrder = _n(m['modal_order']);
+    var modalPacked = _n(m['modal_packed']);
+    var modalPending = _n(m['modal_pending']);
+    var modalActual = _n(m['modal_actual']);
+    if (nilaiOrder == 0 && sku.isNotEmpty) {
+      nilaiOrder = sku.fold<int>(0, (a, s) => a + s.nilaiOrder);
+    }
+    if (modalOrder == 0 && sku.isNotEmpty) {
+      modalOrder = sku.fold<int>(0, (a, s) => a + s.modalOrder);
+    }
+    if (modalPacked == 0 && sku.isNotEmpty) {
+      modalPacked = sku.fold<int>(0, (a, s) => a + s.modalPacked);
+    }
+    if (modalActual == 0 && sku.isNotEmpty) {
+      modalActual = sku.fold<int>(0, (a, s) => a + s.modalActual);
+    }
+    final pending = _n(m['pending']);
+    if (modalPending == 0 && pending > 0) modalPending = modalPacked;
     return NotaSetoranRinci(
       id: m['id']?.toString() ?? '',
       rute: m['rute']?.toString() ?? '',
       packed: _n(m['packed']),
       batal: _n(m['batal']),
-      pending: _n(m['pending']),
+      pending: pending,
       actual: _n(m['actual']),
       retur: _n(m['retur']),
       status: (m['status']?.toString() ?? '').trim().isEmpty
           ? '-'
           : m['status'].toString(),
-      sku: [
-        if (list is List)
-          for (final e in list)
-            if (e is Map)
-              SkuSetoranRinci.dari(Map<String, dynamic>.from(e)),
-      ],
+      nilaiOrder: nilaiOrder,
+      modalOrder: modalOrder,
+      modalPacked: modalPacked,
+      modalPending: modalPending,
+      modalActual: modalActual,
+      sku: sku,
     );
   }
 }

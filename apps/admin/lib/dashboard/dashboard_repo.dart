@@ -273,6 +273,10 @@ class TokoDash {
     required this.batal,
     required this.pending,
     required this.actual,
+    required this.modalOrder,
+    required this.modalKiriman,
+    required this.modalPending,
+    required this.modalActual,
     required this.status,
     required this.jadwal,
     required this.isi,
@@ -290,6 +294,10 @@ class TokoDash {
   final int batal;
   final int pending;
   final int actual;
+  final int modalOrder;
+  final int modalKiriman;
+  final int modalPending;
+  final int modalActual;
   final String status;
   final bool jadwal;
   final DateTime? visitMasuk;
@@ -298,6 +306,18 @@ class TokoDash {
 
   factory TokoDash.dari(Map<String, dynamic> m) {
     final sku = m['sku'];
+    int modal(String kunci) {
+      final langsung = Uang.dari(m[kunci]);
+      if (langsung != 0) return langsung;
+      final list = m['nota_list'];
+      if (list is! List) return 0;
+      var s = 0;
+      for (final e in list) {
+        if (e is Map) s += Uang.dari(e[kunci]);
+      }
+      return s;
+    }
+
     return TokoDash(
       idPelanggan: m['id_pelanggan']?.toString() ?? '',
       nama: (m['nama']?.toString() ?? '').trim(),
@@ -309,6 +329,10 @@ class TokoDash {
       batal: Uang.dari(m['batal']),
       pending: Uang.dari(m['pending']),
       actual: Uang.dari(m['actual']),
+      modalOrder: modal('modal_order'),
+      modalKiriman: modal('modal_packed'),
+      modalPending: modal('modal_pending'),
+      modalActual: modal('modal_actual'),
       status: (m['status']?.toString() ?? '').trim().isEmpty
           ? '-'
           : m['status'].toString(),
