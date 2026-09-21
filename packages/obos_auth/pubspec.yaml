@@ -1,0 +1,23 @@
+name: obos_auth
+description: Login bersama empat app Obos.
+publish_to: "none"
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  supabase_flutter: ^2.17.2
+  obos_core:
+    path: ../obos_core
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

@@ -1,0 +1,336 @@
+import 'package:flutter/material.dart';
+import 'package:obos_core/obos_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../jaringan.dart';
+import '../pesan.dart';
+import '../uang.dart';
+import 'opname_repo.dart';
+
+Future<void> bukaDaftarSelisih({
+  required BuildContext context,
+  required RingkasOpname data,
+  required Future<void> Function() onMuat,
+}) async {
+  final id = data.idSetoranBuku;
+  if (id == null) return;
+  final repo = OpnameRepo(Supabase.instance.client);
+  List<BarisSelisihOpname> baris;
+  List<UserKasbon> users;
+  try {
+    baris = await repo.selisih(id);
+    users = await repo.usersKasbon();
+  } catch (e) {
+    if (!context.mounted) return;
+    tampilPesan(
+      context,
+      Jaringan.mati(e)
+          ? 'Tidak ada internet. Daftar selisih belum bisa dibuka.'
+          : 'Daftar selisih belum bisa dibaca.',
+    );
+    return;
+  }
+  if (!context.mounted) return;
+  if (baris.isEmpty) {
+    tampilPesan(
+      context,
+      data.skuFisik == 0
+          ? 'Belum ada stok fisik dari gudang.'
+          : 'Tidak ada selisih stok.',
+    );
+    return;
+  }
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => DaftarSelisihDialog(
+      idBuku: id,
+      ditutup: data.ditutup,
+      awal: baris,
+      users: users,
+      onMuat: onMuat,
+    ),
+  );
+}
+
+class DaftarSelisihDialog extends StatefulWidget {
+  const DaftarSelisihDialog({
+    super.key,
+    required this.idBuku,
+    required this.ditutup,
+    required this.awal,
+    required this.users,
+    required this.onMuat,
+  });
+
+  final int idBuku;
+  final bool ditutup;
+  final List<BarisSelisihOpname> awal;
+  final List<UserKasbon> users;
+  final Future<void> Function() onMuat;
+
+  @override
+  State<DaftarSelisihDialog> createState() => _DaftarSelisihDialogState();
+}
+
+class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
+  final _repo = OpnameRepo(Supabase.instance.client);
+  late List<BarisSelisihOpname> _baris = widget.awal;
+  final Map<String, String> _pilih = {};
+  String? _prosesSku;
+
+  @override
+  void initState() {
+    super.initState();
+    for (final r in _baris) {
+      if (r.kasbonEmail.isNotEmpty) _pilih[r.idBarang] = r.kasbonEmail;
+    }
+  }
+
+  Future<void> _putusan(BarisSelisihOpname r, String jenis) async {
+    if (widget.ditutup || _prosesSku != null) return;
+    final email = _pilih[r.idBarang];
+    if (jenis == 'kasbon' && (email == null || email.isEmpty)) {
+      tampilPesan(context, 'Pilih karyawan untuk kasbon.');
+      return;
+    }
+    setState(() => _prosesSku = r.idBarang);
+    try {
+      await _repo.putusan(
+        idBuku: widget.idBuku,
+        idBarang: r.idBarang,
+        jenis: jenis,
+        email: jenis == 'kasbon' ? email : null,
+      );
+      final baru = await _repo.selisih(widget.idBuku);
+      if (!mounted) return;
+      setState(() {
+        _baris = baru;
+        _prosesSku = null;
+      });
+      await widget.onMuat();
+      if (!mounted) return;
+      tampilPesan(
+        context,
+        jenis == 'kasbon' ? 'Kasbon tersimpan.' : 'Selisih masuk potong margin.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _prosesSku = null);
+      tampilPesan(
+        context,
+        Jaringan.mati(e)
+            ? 'Tidak ada internet. Putusan belum tersimpan.'
+            : (e is PostgrestException && e.message.trim().isNotEmpty
+                ? e.message.trim()
+                : 'Putusan belum tersimpan.'),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Selisih opname (${_baris.length})',
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      content: IsiDialog(
+        width: 800,
+        child: DaftarGulirDialog(
+          faktor: 0.5,
+          child: ListView.separated(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            primary: false,
+            itemCount: _baris.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, i) => _kartuBaris(_baris[i]),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _prosesSku != null ? null : () => Navigator.pop(context),
+          child: const Text('Tutup'),
+        ),
+      ],
+    );
+  }
+
+  Widget _kartuBaris(BarisSelisihOpname r) {
+    final kurang = r.selisih < 0;
+    final sibuk = _prosesSku == r.idBarang;
+    final emailPilih = _pilih[r.idBarang];
+    const tombol = ButtonStyle(
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      minimumSize: WidgetStatePropertyAll(Size(0, 32)),
+      padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10)),
+      textStyle: WidgetStatePropertyAll(
+        TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      ),
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                r.nama,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+                softWrap: false,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Hitung ${Uang.qty(r.stokHitung)}  ·  '
+                'Fisik ${Uang.qty(r.stokFisik)}  ·  '
+                'Selisih ${Uang.qty(r.selisih)}',
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              Text(
+                Uang.rp(r.nilaiSelisih.abs()),
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              if (r.dicekOleh.isNotEmpty)
+                Text(
+                  'Dicek ${r.dicekOleh}',
+                  style: const TextStyle(fontSize: 12, color: Tema.redup),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: _tokoPacked(r),
+        ),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 220,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _statusTeks(r, kurang),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: kurang
+                      ? Colors.orange.shade800
+                      : const Color(0xFF2E7D32),
+                ),
+              ),
+              if (kurang && !widget.ditutup) ...[
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  key: ValueKey('kasbon-${r.idBarang}-${emailPilih ?? ''}'),
+                  initialValue: widget.users.any((u) => u.email == emailPilih)
+                      ? emailPilih
+                      : null,
+                  isExpanded: true,
+                  isDense: true,
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                  decoration: const InputDecoration(
+                    labelText: 'Karyawan kasbon',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                  items: [
+                    for (final u in widget.users)
+                      DropdownMenuItem(
+                        value: u.email,
+                        child: Text(
+                          '${u.nama} (${u.peran})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: sibuk
+                      ? null
+                      : (v) => setState(() {
+                            if (v == null) {
+                              _pilih.remove(r.idBarang);
+                            } else {
+                              _pilih[r.idBarang] = v;
+                            }
+                          }),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    FilledButton(
+                      style: tombol,
+                      onPressed: sibuk ? null : () => _putusan(r, 'kasbon'),
+                      child: Text(sibuk ? '…' : 'Kasbon'),
+                    ),
+                    const SizedBox(width: 6),
+                    OutlinedButton(
+                      style: tombol,
+                      onPressed: sibuk ? null : () => _putusan(r, 'beban'),
+                      child: const Text('Potong margin'),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tokoPacked(BarisSelisihOpname r) {
+    if (r.tokoPacked.isEmpty) {
+      return const Text(
+        'Belum ada packing',
+        style: TextStyle(
+          fontSize: 14,
+          color: Tema.redup,
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final t in r.tokoPacked)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(
+              '${t.nama}  ·  ${Uang.qty(t.qty)}',
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.25,
+                color: Colors.black,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _statusTeks(BarisSelisihOpname r, bool kurang) {
+    if (!kurang) return 'Tambah margin ${Uang.rp(r.nilaiSelisih.abs())}';
+    if (r.putusan == 'kasbon') {
+      return 'Kasbon ${r.kasbonNama} · ${Uang.rp(r.nilaiPutusan)}';
+    }
+    if (r.putusan == 'beban') {
+      return 'Potong margin ${Uang.rp(r.nilaiPutusan)}';
+    }
+    return 'Belum diputuskan';
+  }
+}

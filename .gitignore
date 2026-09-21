@@ -1,0 +1,10 @@
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+.cursor/
+**/assets/.env
+.env
