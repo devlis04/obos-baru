@@ -213,4 +213,123 @@ class DashboardRepo {
     if (s.isEmpty) return null;
     return DateTime.tryParse(s.length >= 10 ? s.substring(0, 10) : s);
   }
+
+  Future<IsiTokoDash> tokoHari({
+    required DateTime hari,
+    required String rute,
+  }) async {
+    final hasil = await Jaringan.denganUlang(
+      () => _sb
+          .rpc(
+            'admin_dashboard_toko',
+            params: {
+              'p_hari': Uang.isoHari(hari),
+              'p_rute': rute,
+            },
+          )
+          .timeout(const Duration(seconds: 30)),
+    );
+    if (hasil is! Map) {
+      throw Exception('Daftar toko belum bisa dimuat.');
+    }
+    return IsiTokoDash.dari(Map<String, dynamic>.from(hasil));
+  }
+}
+
+class IsiTokoDash {
+  const IsiTokoDash({
+    required this.hari,
+    required this.rute,
+    required this.toko,
+  });
+
+  final DateTime hari;
+  final String rute;
+  final List<TokoDash> toko;
+
+  factory IsiTokoDash.dari(Map<String, dynamic> j) {
+    final list = j['toko'];
+    return IsiTokoDash(
+      hari: Uang.hariDari(j['hari']) ?? DateTime.now(),
+      rute: (j['rute']?.toString() ?? '').trim(),
+      toko: [
+        if (list is List)
+          for (final e in list)
+            if (e is Map) TokoDash.dari(Map<String, dynamic>.from(e)),
+      ],
+    );
+  }
+}
+
+class TokoDash {
+  const TokoDash({
+    required this.idPelanggan,
+    required this.nama,
+    required this.rute,
+    required this.nota,
+    required this.sku,
+    required this.order,
+    required this.kiriman,
+    required this.batal,
+    required this.pending,
+    required this.actual,
+    required this.status,
+    required this.jadwal,
+    required this.isi,
+    this.visitMasuk,
+    this.visitKeluar,
+  });
+
+  final String idPelanggan;
+  final String nama;
+  final String rute;
+  final int nota;
+  final int sku;
+  final int order;
+  final int kiriman;
+  final int batal;
+  final int pending;
+  final int actual;
+  final String status;
+  final bool jadwal;
+  final DateTime? visitMasuk;
+  final DateTime? visitKeluar;
+  final Map<String, dynamic> isi;
+
+  factory TokoDash.dari(Map<String, dynamic> m) {
+    final sku = m['sku'];
+    return TokoDash(
+      idPelanggan: m['id_pelanggan']?.toString() ?? '',
+      nama: (m['nama']?.toString() ?? '').trim(),
+      rute: (m['rute_pengirim']?.toString() ?? '').trim(),
+      nota: Uang.dari(m['nota']),
+      sku: sku is List ? sku.length : 0,
+      order: Uang.dari(m['order'] ?? m['nilai']),
+      kiriman: Uang.dari(m['packed']),
+      batal: Uang.dari(m['batal']),
+      pending: Uang.dari(m['pending']),
+      actual: Uang.dari(m['actual']),
+      status: (m['status']?.toString() ?? '').trim().isEmpty
+          ? '-'
+          : m['status'].toString(),
+      jadwal: m['jadwal'] == true,
+      visitMasuk: DateTime.tryParse(m['visit_masuk']?.toString() ?? ''),
+      visitKeluar: DateTime.tryParse(m['visit_keluar']?.toString() ?? ''),
+      isi: m,
+    );
+  }
+
+  String get teksVisit {
+    if (visitMasuk == null) return jadwal ? 'jadwal' : '—';
+    final masuk = _jam(visitMasuk!);
+    if (visitKeluar == null) return masuk;
+    return '$masuk–${_jam(visitKeluar!)}';
+  }
+
+  static String _jam(DateTime d) {
+    final l = d.toLocal();
+    final h = l.hour.toString().padLeft(2, '0');
+    final m = l.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }

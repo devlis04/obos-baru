@@ -7,6 +7,7 @@ import '../jaringan.dart';
 import '../pesan.dart';
 import '../uang.dart';
 import 'dashboard_repo.dart';
+import 'dialog_toko_dash.dart';
 
 class DashboardLayar extends StatefulWidget {
   const DashboardLayar({super.key});
@@ -18,6 +19,7 @@ class DashboardLayar extends StatefulWidget {
 class _DashboardLayarState extends State<DashboardLayar> {
   final _repo = DashboardRepo(Supabase.instance.client);
   bool _muat = true;
+  bool _tokoBuka = false;
   late DateTime _senin;
   late DateTime _hari;
   IsiDashboard _isi = IsiDashboard.kosong(DateTime(2000), DateTime(2000));
@@ -86,6 +88,21 @@ class _DashboardLayarState extends State<DashboardLayar> {
     }
   }
 
+  Future<void> _bukaTokoHari(KartuDash k) async {
+    if (_muat || _tokoBuka || k.rute.isEmpty) return;
+    setState(() => _tokoBuka = true);
+    try {
+      await bukaTokoDash(
+        context: context,
+        hari: _hari,
+        rute: k.rute,
+        nama: k.nama,
+      );
+    } finally {
+      if (mounted) setState(() => _tokoBuka = false);
+    }
+  }
+
   DateTime _jepitHariKeMinggu(DateTime hari, DateTime senin) {
     final sabtu = senin.add(const Duration(days: 5));
     if (hari.isBefore(senin)) return senin;
@@ -146,9 +163,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
     return nilai / target;
   }
 
-  static const _lebarIsiTotal = 360.0;
-  static const _lebarKartuKiri = 380.0;
+  static const _lebarIsiTotal = 280.0;
+  static const _lebarKartuKiri = 292.0;
   static const _teks = 14.0;
+  static const _teksIsi = 12.0;
   static const _ikonKalender = ButtonStyle(
     visualDensity: VisualDensity.compact,
     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -390,22 +408,6 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 ),
               ),
             ),
-            const Divider(height: 4),
-            Expanded(
-              child: _isiTarget(
-                _barisTarget(
-                  label: 'Jumlah nota',
-                  warna: Colors.blueGrey,
-                  targetText: '—',
-                  orderText: '${m.notaOrder}',
-                  kirimanText: '${m.notaKiriman}',
-                  actualText: '${m.notaActual}',
-                  persentaseOrder: 0,
-                  persentaseActual: 0,
-                  tampilCincin: false,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -512,7 +514,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.hardEdge,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+        padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -553,18 +555,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           '${m.ecKiriman}',
                           '${m.ecActual}',
                         ),
-                        _barisKecil(
-                          'Nota',
-                          '${m.notaOrder}',
-                          '${m.notaKiriman}',
-                          '${m.notaActual}',
-                        ),
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             'Visit ${m.visit} / ${m.targetVisit}',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: _teksIsi,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -573,13 +569,25 @@ class _DashboardLayarState extends State<DashboardLayar> {
                     ),
                   ),
                   VerticalDivider(
-                    width: 16,
+                    width: 10,
                     thickness: 1,
                     color: Colors.grey.shade300,
                   ),
                   Expanded(
                     child: _sisiRute(
                       judul: _hariIni ? 'Hari ini' : Uang.tanggal(_hari),
+                      aksi: IconButton(
+                        style: _ikonKalender,
+                        tooltip: 'Toko hari ini',
+                        onPressed: _muat || _tokoBuka
+                            ? null
+                            : () => _bukaTokoHari(k),
+                        icon: const Icon(
+                          Icons.storefront_outlined,
+                          color: Tema.biru,
+                          size: 18,
+                        ),
+                      ),
                       anak: [
                         _kepalaTiga(),
                         _barisKecil(
@@ -600,18 +608,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           '${h.ecKiriman}',
                           '${h.ecActual}',
                         ),
-                        _barisKecil(
-                          'Nota',
-                          '${h.notaOrder}',
-                          '${h.notaKiriman}',
-                          '${h.notaActual}',
-                        ),
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             'Visit ${h.visit} / ${h.targetVisit}',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: _teksIsi,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -628,28 +630,46 @@ class _DashboardLayarState extends State<DashboardLayar> {
     );
   }
 
-  Widget _sisiRute({required String judul, required List<Widget> anak}) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.topLeft,
-      child: SizedBox(
-        width: 240,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              judul,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
+  Widget _sisiRute({
+    required String judul,
+    required List<Widget> anak,
+    Widget? aksi,
+  }) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final lebar = !c.maxWidth.isFinite || c.maxWidth <= 0
+            ? 240.0
+            : c.maxWidth;
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: lebar,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        judul,
+                        style: TextStyle(
+                          fontSize: _teksIsi,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                    ?aksi,
+                  ],
+                ),
+                ...anak,
+              ],
             ),
-            ...anak,
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -658,7 +678,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          const SizedBox(width: 48),
+          const SizedBox(width: 40),
           Expanded(
             child: Text(
               'Order',
@@ -685,10 +705,44 @@ class _DashboardLayarState extends State<DashboardLayar> {
   }
 
   Widget _isiTarget(Widget anak) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: SizedBox(width: _lebarIsiTotal, child: anak),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final lebar = !c.maxWidth.isFinite || c.maxWidth <= 0
+            ? _lebarIsiTotal
+            : c.maxWidth;
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topLeft,
+          child: SizedBox(width: lebar, child: anak),
+        );
+      },
+    );
+  }
+
+  Widget _nilaiRute(
+    String teks, {
+    TextAlign align = TextAlign.left,
+    FontWeight berat = FontWeight.w600,
+  }) {
+    final arah = align == TextAlign.right
+        ? Alignment.centerRight
+        : align == TextAlign.center
+        ? Alignment.center
+        : Alignment.centerLeft;
+    return Expanded(
+      child: Align(
+        alignment: arah,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: arah,
+          child: Text(
+            teks,
+            maxLines: 1,
+            textAlign: align,
+            style: TextStyle(fontSize: _teksIsi, fontWeight: berat),
+          ),
+        ),
+      ),
     );
   }
 
@@ -698,38 +752,15 @@ class _DashboardLayarState extends State<DashboardLayar> {
       child: Row(
         children: [
           SizedBox(
-            width: 48,
+            width: 40,
             child: Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: _teksIsi, color: Colors.grey.shade700),
             ),
           ),
-          Expanded(
-            child: Text(
-              order,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              kiriman,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              actual,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-            ),
-          ),
+          _nilaiRute(order),
+          _nilaiRute(kiriman, align: TextAlign.center),
+          _nilaiRute(actual, align: TextAlign.right, berat: FontWeight.w700),
         ],
       ),
     );
@@ -748,17 +779,17 @@ class _DashboardLayarState extends State<DashboardLayar> {
     bool tampilCincin = true,
   }) {
     final gayaTarget = TextStyle(
-      fontSize: 12,
+      fontSize: _teksIsi,
       color: Colors.grey.shade600,
       fontWeight: FontWeight.w500,
     );
     const gayaIsi = TextStyle(
-      fontSize: 12,
+      fontSize: _teksIsi,
       color: Colors.black87,
       fontWeight: FontWeight.bold,
     );
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
@@ -903,7 +934,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: _teksIsi,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey,
                   ),
@@ -914,14 +945,14 @@ class _DashboardLayarState extends State<DashboardLayar> {
               const SizedBox(height: 4),
               Text(
                 'Target : $targetText',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: _teksIsi, color: Colors.grey.shade600),
               ),
             ],
             if (orderText != null)
               Text(
                 'Order : $orderText',
                 style: const TextStyle(
-                  fontSize: _teks,
+                  fontSize: _teksIsi,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -929,7 +960,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
               Text(
                 'Kiriman : $kirimanText',
                 style: const TextStyle(
-                  fontSize: _teks,
+                  fontSize: _teksIsi,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -938,7 +969,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   ? actualText
                   : 'Actual : $actualText',
               style: const TextStyle(
-                fontSize: _teks,
+                fontSize: _teksIsi,
                 fontWeight: FontWeight.bold,
               ),
             ),
