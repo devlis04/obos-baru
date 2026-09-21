@@ -83,7 +83,8 @@ cd apps/admin && flutter run -d chrome
 
 Sama pola app lama (`obos-baru-admin`), untuk app admin **baru**.
 
-1. Buat repo GitHub (contoh `obos-admin`), lalu push isi folder `obos` ini.
+1. Buat repo GitHub **kosong** bernama `obos-baru` (jangan centang README).
+   `https://github.com/new?name=obos-baru`
 2. Repo → **Settings → Secrets and variables → Actions**, tambah:
    - `SUPABASE_URL` (contoh `https://obos1.alhan.web.id`)
    - `SUPABASE_ANON_KEY`
@@ -91,7 +92,9 @@ Sama pola app lama (`obos-baru-admin`), untuk app admin **baru**.
 4. Setiap push ke `main` / `master`, workflow `.github/workflows/deploy-admin-web.yml` membangun `apps/admin` dan menerbitkan ke Pages.
 
 Alamat: `https://<user>.github.io/<nama-repo>/`  
-Contoh jika repo `obos-admin` milik `devlis04`: `https://devlis04.github.io/obos-admin/`
+Contoh: `https://devlis04.github.io/obos-baru/`
+
+Jangan pakai repo `obos-admin` (itu app gaji, lain) atau `obos` (project RSL lain).
 
 `.env` tidak ikut git. CI menulis `apps/admin/assets/.env` dari secret saat build.
 
