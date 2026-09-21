@@ -333,14 +333,40 @@ class TokoDash {
       modalKiriman: modal('modal_packed'),
       modalPending: modal('modal_pending'),
       modalActual: modal('modal_actual'),
-      status: (m['status']?.toString() ?? '').trim().isEmpty
-          ? '-'
-          : m['status'].toString(),
+      status: _statusToko(m),
       jadwal: m['jadwal'] == true,
       visitMasuk: DateTime.tryParse(m['visit_masuk']?.toString() ?? ''),
       visitKeluar: DateTime.tryParse(m['visit_keluar']?.toString() ?? ''),
       isi: m,
     );
+  }
+
+  /// Ringkas nota: yang paling belum selesai. Jadwal/visit bukan status nota.
+  static String _statusToko(Map<String, dynamic> m) {
+    final list = m['nota_list'];
+    final nota = <String>[];
+    if (list is List) {
+      for (final e in list) {
+        if (e is! Map) continue;
+        final pending = e['pending'] == true;
+        final s = (e['status']?.toString() ?? '').trim().toLowerCase();
+        if (pending || s == 'pending') {
+          nota.add('pending');
+        } else if (s.isNotEmpty) {
+          nota.add(s);
+        }
+      }
+    }
+    if (nota.isNotEmpty) {
+      bool ada(String s) => nota.contains(s);
+      if (ada('diproses')) return 'diproses';
+      if (ada('dikirim')) return 'dikirim';
+      if (ada('pending')) return 'pending';
+      if (ada('terkirim')) return 'terkirim';
+      if (ada('batal')) return 'batal';
+      return nota.first;
+    }
+    return '—';
   }
 
   String get teksVisit {

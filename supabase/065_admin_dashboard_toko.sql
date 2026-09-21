@@ -244,13 +244,12 @@ BEGIN
       ), 0)::bigint AS beli_pending,
       coalesce(sum(o.beli_actual), 0)::bigint AS beli_actual,
       CASE
-        WHEN bool_or(o.status = 'dikirim') THEN 'dikirim'
+        WHEN bool_or(o.status = 'diproses') THEN 'diproses'
+        WHEN bool_or(o.status = 'dikirim' AND NOT o.pending) THEN 'dikirim'
         WHEN bool_or(o.pending) THEN 'pending'
         WHEN bool_or(o.status = 'terkirim') THEN 'terkirim'
         WHEN bool_or(o.status = 'batal') THEN 'batal'
-        WHEN v.waktu_masuk IS NOT NULL THEN 'visit'
-        WHEN j.id_pelanggan IS NOT NULL THEN 'jadwal'
-        ELSE '-'
+        ELSE '—'
       END AS status,
       v.waktu_masuk,
       v.waktu_keluar,
