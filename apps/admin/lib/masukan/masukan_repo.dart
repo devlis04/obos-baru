@@ -90,14 +90,19 @@ class RingkasMasuk {
     DateTime? tgl;
     final raw = m['tanggal']?.toString();
     if (raw != null && raw.isNotEmpty) tgl = DateTime.tryParse(raw);
+    final supplier = _chipDari(m['supplier']);
+    final nilaiRpc = _n(m['nilai']);
+    final ongkirRpc = _n(m['ongkir']);
+    final jumNilai = supplier.fold<int>(0, (a, s) => a + s.nilai);
+    final jumOngkir = supplier.fold<int>(0, (a, s) => a + s.ongkir);
     return RingkasMasuk(
       adaBuku: m['ada_buku'] == true,
       idSetoranBuku: (m['id_setoran_buku'] as num?)?.toInt(),
       tanggal: tgl,
       sku: _n(m['sku']),
-      nilai: _n(m['nilai']),
-      ongkir: _n(m['ongkir']),
-      supplier: _chipDari(m['supplier']),
+      nilai: jumNilai > nilaiRpc ? jumNilai : nilaiRpc,
+      ongkir: jumOngkir > ongkirRpc ? jumOngkir : ongkirRpc,
+      supplier: supplier,
     );
   }
 }
@@ -123,13 +128,22 @@ List<ChipSupplier> _chipDari(dynamic raw) {
   return data.whereType<Map>().map((e) {
     final m = Map<String, dynamic>.from(e);
     return ChipSupplier(
-      id: (m['id'] as num?)?.toInt() ?? 0,
-      nama: m['nama']?.toString() ?? '',
+      id: _n(m['id'] ?? m['id_supplier']),
+      nama: ((m['nama'] ?? m['nama_supplier'])?.toString() ?? '').trim(),
       sku: _n(m['sku']),
       nilai: _n(m['nilai']),
       ongkir: _n(m['ongkir']),
     );
-  }).where((s) => s.id > 0 && s.nama.isNotEmpty).toList();
+  }).where((s) => s.id > 0).map((s) {
+    if (s.nama.isNotEmpty) return s;
+    return ChipSupplier(
+      id: s.id,
+      nama: 'Supplier ${s.id}',
+      sku: s.sku,
+      nilai: s.nilai,
+      ongkir: s.ongkir,
+    );
+  }).toList();
 }
 
 class Supplier {

@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:js_interop';
-import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+import '../csv_unduh.dart';
 import '../rumus_sederhana.dart';
+
+export '../csv_unduh.dart' show unduhBerkasCsv;
 
 class NamaPecah {
   const NamaPecah({
@@ -58,21 +59,21 @@ NamaPecah pecahNamaBarang(String namaBarang) {
 }
 
 String csvDariBaris(List<BarisCsvMasuk> baris) {
-  final out = StringBuffer()..writeln(csvJudulMasuk);
-  for (final b in baris) {
-    out.writeln(
-      [
-        b.idBarang ?? '',
-        b.nama,
-        b.satuan,
-        b.rincian,
-        b.kategori,
-        _angka(b.hargaBeli),
-        b.qty == null || b.qty! <= 0 ? '' : _angka(b.qty!),
-      ].map(_sel).join(','),
-    );
-  }
-  return out.toString();
+  return csvTulis(
+    csvJudulMasuk.split(','),
+    [
+      for (final b in baris)
+        [
+          b.idBarang ?? '',
+          b.nama,
+          b.satuan,
+          b.rincian,
+          b.kategori,
+          _angka(b.hargaBeli),
+          b.qty == null || b.qty! <= 0 ? '' : _angka(b.qty!),
+        ],
+    ],
+  );
 }
 
 List<BarisCsvMasuk> barisDariCsv(String teks) {
@@ -80,18 +81,29 @@ List<BarisCsvMasuk> barisDariCsv(String teks) {
   final lines = s
       .split(RegExp(r'\r\n|\n|\r'))
       .map((l) => l.trim())
-      .where((l) => l.isNotEmpty)
+      .where((l) => l.isNotEmpty && !l.toLowerCase().startsWith('sep='))
       .toList();
   if (lines.isEmpty) return const [];
-  final sep = _pemisah(lines.first);
-  final kepala = pecahCsv(lines.first, sep).map(_kunci).toList();
-  final iId = _idx(kepala, const ['id_barang', 'kode', 'kode_barang']);
+  var sep = ',';
+  var kepala = pecahCsv(lines.first, sep).map(_kunci).toList();
+  var iId = _idx(kepala, const ['id_barang', 'kode', 'kode_barang']);
+  var iQty = _idx(kepala, const ['qty', 'jumlah']);
+  if (iId < 0 || iQty < 0) {
+    final cadangan = pecahCsv(lines.first, ';').map(_kunci).toList();
+    final idTitik = _idx(cadangan, const ['id_barang', 'kode', 'kode_barang']);
+    final qtyTitik = _idx(cadangan, const ['qty', 'jumlah']);
+    if (idTitik >= 0 && qtyTitik >= 0) {
+      sep = ';';
+      kepala = cadangan;
+      iId = idTitik;
+      iQty = qtyTitik;
+    }
+  }
   final iNama = _idx(kepala, const ['nama', 'nama_barang']);
   final iSatuan = _idx(kepala, const ['satuan']);
   final iRincian = _idx(kepala, const ['rincian']);
   final iKategori = _idx(kepala, const ['kategori']);
   final iHarga = _idx(kepala, const ['harga_beli', 'harga', 'modal']);
-  final iQty = _idx(kepala, const ['qty', 'jumlah']);
   if (iId < 0) {
     throw const FormatException('CSV wajib kolom id_barang.');
   }
@@ -123,28 +135,6 @@ List<BarisCsvMasuk> barisDariCsv(String teks) {
     );
   }
   return out;
-}
-
-void unduhBerkasCsv(String namaFile, String isi) {
-  final data = Uint8List.fromList(utf8.encode('\uFEFF$isi'));
-  final blob = web.Blob(
-    [data.toJS].toJS,
-    web.BlobPropertyBag(type: 'application/octet-stream'),
-  );
-  final url = web.URL.createObjectURL(blob);
-  final a = web.HTMLAnchorElement()
-    ..href = url
-    ..download = namaFile
-    ..rel = 'noopener'
-    ..style.display = 'none';
-  web.document.body?.append(a);
-  a.click();
-  // Jangan revoke segera: Chrome Windows menandai unduhan belum selesai
-  // (progress di taskbar berkedip) jika blob sudah dihapus.
-  Future<void>.delayed(const Duration(seconds: 2), () {
-    a.remove();
-    web.URL.revokeObjectURL(url);
-  });
 }
 
 Future<String?> pilihBerkasCsv() {
@@ -193,7 +183,7 @@ Future<String?> pilihBerkasCsv() {
           done(null);
         }.toJS,
       );
-      baca.readAsText(file);
+      baca.readAsText(file, 'UTF-8');
     }.toJS,
   );
   input.click();
@@ -230,20 +220,6 @@ List<String> pecahCsv(String baris, String sep) {
   return out;
 }
 
-String _pemisah(String judul) {
-  var koma = 0;
-  var titik = 0;
-  var kutip = false;
-  for (var i = 0; i < judul.length; i++) {
-    final c = judul[i];
-    if (c == '"') kutip = !kutip;
-    if (kutip) continue;
-    if (c == ',') koma++;
-    if (c == ';') titik++;
-  }
-  return titik > koma ? ';' : ',';
-}
-
 bool _judul(List<String> kepala) {
   return kepala.any(
     (k) =>
@@ -263,13 +239,6 @@ int _idx(List<String> kepala, List<String> nama) {
 }
 
 String _kunci(String s) => s.trim().toLowerCase().replaceAll(' ', '_');
-
-String _sel(String s) {
-  if (s.contains(RegExp(r'[,"\n\r]'))) {
-    return '"${s.replaceAll('"', '""')}"';
-  }
-  return s;
-}
 
 String _angka(num n) {
   if (n == n.roundToDouble()) return '${n.round()}';

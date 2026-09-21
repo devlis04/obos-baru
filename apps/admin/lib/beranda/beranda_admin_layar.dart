@@ -602,7 +602,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
                         sibuk: _muat || _proses,
                         tinggiBaris: tinggiBaris,
                       ),
-                      kanan: _kananAtas(),
+                      kanan: _kananAtas(tinggiRute),
                       tinggiKanan: tinggiRute,
                     ),
                     const SizedBox(height: celah),
@@ -688,7 +688,12 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
     );
   }
 
-  Widget _kananAtas() {
+  Widget _kananAtas(double tinggiKolom) {
+    const celah = 6.0;
+    const minMutasi = 80.0;
+    var hMasuk = KartuMasukan.tinggiUntuk(_masuk.supplier.length);
+    final maks = (tinggiKolom - celah - minMutasi).clamp(72.0, tinggiKolom);
+    if (hMasuk > maks) hMasuk = maks;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -701,12 +706,16 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
             onHapus: _hapusMutasi,
           ),
         ),
-        const SizedBox(height: 6),
-        KartuMasukan(
-          data: _masuk,
-          sibuk: _muat || _proses,
-          ditutup: _setoran.ditutup,
-          onMuat: _muatData,
+        const SizedBox(height: celah),
+        SizedBox(
+          height: hMasuk,
+          width: double.infinity,
+          child: KartuMasukan(
+            data: _masuk,
+            sibuk: _muat || _proses,
+            ditutup: _setoran.ditutup,
+            onMuat: _muatData,
+          ),
         ),
       ],
     );

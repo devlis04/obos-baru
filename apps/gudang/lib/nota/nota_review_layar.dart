@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../barang/barang.dart';
 import '../barang/barang_repo.dart';
 import '../lantai.dart';
+import '../printer_thermal.dart';
 import '../umpan.dart';
 import 'bilah_aksi.dart';
 import 'dialog_qty.dart';
@@ -242,6 +243,11 @@ class _NotaReviewLayarState extends State<NotaReviewLayar> {
       if (ya != true || !mounted) return;
     }
 
+    if (!_kosong && PrinterThermal.bisaCetakPerangkat) {
+      final printerOk = await PrinterThermal.pastikanTerhubung(context);
+      if (!printerOk || !mounted) return;
+    }
+
     setState(() => _simpan = true);
     final ids = {..._idAsal, ..._keranjang.keys};
     final baris = [
@@ -251,10 +257,26 @@ class _NotaReviewLayarState extends State<NotaReviewLayar> {
     try {
       await _notaRepo.pack(_nota.idTransaksi, baris);
       if (!mounted) return;
-      umpan(
-        context,
-        _kosong ? 'Nota dibatalkan.' : 'Packing tersimpan.',
-      );
+      if (_kosong) {
+        umpan(context, 'Nota dibatalkan.');
+      } else if (PrinterThermal.bisaCetakPerangkat) {
+        final cetak = await PrinterThermal.cetakNota(
+          namaToko: _nota.namaPelanggan,
+          namaSales: widget.namaSales,
+          tanggalNota: _nota.waktuOrder,
+          keranjangQty: Map<String, int>.from(_keranjang),
+          daftarBarang: _katalog,
+        );
+        if (!mounted) return;
+        umpan(
+          context,
+          cetak
+              ? 'Nota disimpan dan dicetak.'
+              : 'Nota disimpan, tetapi cetak gagal. Periksa printer, lalu cetak ulang.',
+        );
+      } else {
+        umpan(context, 'Packing tersimpan. Cetak thermal hanya di HP Android.');
+      }
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -335,8 +357,33 @@ class _NotaReviewLayarState extends State<NotaReviewLayar> {
                           )
                         : const FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text('Simpan packing'),
+                            child: Text('Simpan & Cetak'),
                           ),
+                  ),
+                ),
+              ),
+            ),
+          ] else if (!_kosong) ...[
+            const SizedBox(width: 8),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 160),
+                child: SizedBox(
+                  height: 46,
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => PrinterThermal.cetakUlangUi(
+                      context: context,
+                      namaToko: _nota.namaPelanggan,
+                      namaSales: widget.namaSales,
+                      tanggalNota: _nota.waktuOrder,
+                      keranjangQty: Map<String, int>.from(_keranjang),
+                      daftarBarang: _katalog,
+                    ),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Cetak ulang'),
+                    ),
                   ),
                 ),
               ),

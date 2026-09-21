@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../barang/barang.dart';
+import '../barang/barang_repo.dart';
 import '../lantai.dart';
+import '../printer_thermal.dart';
 import '../umpan.dart';
 import 'nota_repo.dart';
 import 'nota_review_layar.dart';
@@ -98,6 +101,7 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
         );
         if (mounted) await _muatData(diam: true);
       },
+      onCetak: (items) => _cetakUlang(nota, items),
     );
   }
 
@@ -114,6 +118,44 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
       ),
     );
     if (mounted) await _muatData(diam: true);
+  }
+
+  Future<void> _cetakUlang(RingkasNota nota, List<ItemNota> items) async {
+    final qty = <String, int>{};
+    for (final it in items) {
+      final q = it.qtyPacked ?? 0;
+      if (q > 0) qty[it.idBarang] = q;
+    }
+    if (qty.isEmpty) {
+      umpan(context, 'Belum ada jumlah packing untuk dicetak.');
+      return;
+    }
+    var daftar = <Barang>[];
+    try {
+      daftar = await BarangRepo(Supabase.instance.client)
+          .banyak(qty.keys.toList());
+    } catch (_) {}
+    final byId = {for (final b in daftar) b.id: b};
+    for (final it in items) {
+      if ((qty[it.idBarang] ?? 0) <= 0) continue;
+      final live = byId[it.idBarang];
+      final dasar = live ??
+          Barang.cetak(
+            id: it.idBarang,
+            nama: it.nama,
+            hargaJual: it.hargaDasarKunci,
+          );
+      byId[it.idBarang] = TransaksiHelper.pakaiKunciNota(dasar, it);
+    }
+    if (!mounted) return;
+    await PrinterThermal.cetakUlangUi(
+      context: context,
+      namaToko: nota.namaPelanggan,
+      namaSales: widget.namaSales,
+      tanggalNota: nota.waktuOrder,
+      keranjangQty: qty,
+      daftarBarang: byId.values.toList(),
+    );
   }
 
   Widget _chip(String teks, Color warna) {

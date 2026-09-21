@@ -1,3 +1,4 @@
+import '../csv_unduh.dart';
 import 'pelanggan.dart';
 
 class BarisCsvPelanggan {
@@ -27,8 +28,6 @@ class BarisCsvPelanggan {
 }
 
 class PelangganCsv {
-  static const pemisah = ';';
-
   static const kepala = [
     'id',
     'nama',
@@ -113,29 +112,23 @@ class PelangganCsv {
   }
 
   static String _tulis(List<String> kepala, List<List<String>> isi) {
-    final buf = StringBuffer();
-    buf.writeln(kepala.map(_sel).join(pemisah));
-    for (final row in isi) {
-      buf.writeln(row.map(_sel).join(pemisah));
-    }
-    return buf.toString();
-  }
-
-  static String _sel(String s) {
-    if (s.contains(pemisah) || s.contains('"') || s.contains('\n')) {
-      return '"${s.replaceAll('"', '""')}"';
-    }
-    return s;
+    return csvTulis(kepala, isi);
   }
 
   static List<List<String>> _baca(String teks) {
     var t = teks.replaceFirst(RegExp(r'^\uFEFF'), '');
     t = t.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-    if (t.trim().isEmpty) return [];
-    final baris1 =
-        t.split('\n').firstWhere((e) => e.trim().isNotEmpty, orElse: () => '');
-    final sep = _hitung(baris1, ';') >= _hitung(baris1, ',') ? ';' : ',';
-    return _pecah(t, sep);
+    final baris = t
+        .split('\n')
+        .where((e) {
+          final s = e.trim();
+          return s.isNotEmpty && !s.toLowerCase().startsWith('sep=');
+        })
+        .join('\n');
+    if (baris.trim().isEmpty) return [];
+    final baris1 = baris.split('\n').first;
+    final sep = _hitung(baris1, ';') > _hitung(baris1, ',') ? ';' : ',';
+    return _pecah(baris, sep);
   }
 
   static int _hitung(String s, String c) => c.allMatches(s).length;

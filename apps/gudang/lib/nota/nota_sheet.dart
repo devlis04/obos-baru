@@ -208,6 +208,7 @@ Future<void> tampilkanSheetRincianNota({
   required Future<List<ItemNota>> Function() muatItem,
   required Future<void> Function() onPack,
   required Future<void> Function() onLihat,
+  Future<void> Function(List<ItemNota> items)? onCetak,
   bool bolehPack = true,
 }) {
   return showModalBottomSheet<void>(
@@ -371,6 +372,21 @@ Future<void> tampilkanSheetRincianNota({
                           await onLihat();
                         },
                         child: const Text('Lihat nota'),
+                      ),
+                    ),
+                  ],
+                  if (nota.status != 'batal' &&
+                      items.any((it) => (it.qtyPacked ?? 0) > 0) &&
+                      onCetak != null) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          onCetak(items);
+                        },
+                        child: const Text('Cetak ulang'),
                       ),
                     ),
                   ],

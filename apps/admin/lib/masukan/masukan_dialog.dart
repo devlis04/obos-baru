@@ -92,6 +92,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
   final _satuan = TextEditingController();
   final _rincian = TextEditingController();
   final _kategori = TextEditingController();
+  final _gulirSku = ScrollController();
   CariBarang? _pilihCari;
   TextEditingController? _cariAuto;
   int _kunciCari = 0;
@@ -126,6 +127,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
     _satuan.dispose();
     _rincian.dispose();
     _kategori.dispose();
+    _gulirSku.dispose();
     super.dispose();
   }
 
@@ -430,13 +432,17 @@ class _MasukanDialogState extends State<MasukanDialog> {
       final kat = await _repo.katalogCsv();
       if (!mounted) return;
       final qtyIsi = <String, num>{};
+      final hargaIsi = <String, num>{};
       for (final d in _draft) {
         final kode = d.idBarang;
-        if (kode != null && kode.isNotEmpty) qtyIsi[kode.toLowerCase()] = d.qty;
+        if (kode == null || kode.isEmpty) continue;
+        qtyIsi[kode.toLowerCase()] = d.qty;
+        hargaIsi[kode.toLowerCase()] = d.hargaBeli;
       }
       final baris = <BarisCsvMasuk>[];
       for (final k in kat) {
         final pecah = pecahNamaBarang(k.namaBarang);
+        final kunci = k.idBarang.toLowerCase();
         baris.add(
           BarisCsvMasuk(
             idBarang: k.idBarang,
@@ -444,8 +450,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
             satuan: pecah.satuan,
             rincian: pecah.rincian,
             kategori: k.kategori,
-            hargaBeli: k.hargaBeli,
-            qty: qtyIsi[k.idBarang.toLowerCase()],
+            hargaBeli: hargaIsi[kunci] ?? k.hargaBeli,
+            qty: qtyIsi[kunci],
           ),
         );
       }
@@ -454,8 +460,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
       tampilPesan(
         context,
         kat.isEmpty
-            ? 'Templat CSV diunduh.'
-            : 'CSV ${kat.length} SKU katalog diunduh. Isi kolom qty.',
+            ? 'Templat CSV UTF-8 (koma) diunduh.'
+            : 'CSV UTF-8 (koma) ${kat.length} SKU diunduh. Isi qty; harga beli boleh diubah.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -512,7 +518,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
             idBarang: k.idBarang,
             nama: k.namaBarang,
             qty: b.qty!,
-            hargaBeli: k.hargaBeli,
+            hargaBeli: b.hargaBeli > 0 ? b.hargaBeli : k.hargaBeli,
           ),
         );
       }
@@ -546,6 +552,19 @@ class _MasukanDialogState extends State<MasukanDialog> {
             : 'CSV belum bisa dicek ke katalog.',
       );
     }
+  }
+
+  static const _tinggiBarisSku = 40.0;
+  static const _celahSku = 8.0;
+  static const _maksTampilSku = 6;
+
+  double _tinggiDaftarSku() {
+    final n = _draft.length;
+    if (n <= 0) return 0;
+    final isi = n * _tinggiBarisSku + (n - 1) * _celahSku;
+    const maks =
+        _maksTampilSku * _tinggiBarisSku + (_maksTampilSku - 1) * _celahSku;
+    return isi < maks ? isi.toDouble() : maks;
   }
 
   InputDecoration _dekor(String label) {
@@ -652,34 +671,38 @@ class _MasukanDialogState extends State<MasukanDialog> {
                   style: _gayaJudul,
                 ),
                 const SizedBox(height: 8),
-                DaftarGulirDialog(
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(
-                      overscroll: false,
-                      scrollbars: true,
-                    ),
+                SizedBox(
+                  height: _tinggiDaftarSku(),
+                  child: Scrollbar(
+                    controller: _gulirSku,
+                    thumbVisibility: _draft.length > _maksTampilSku,
                     child: ListView.separated(
+                      controller: _gulirSku,
+                      primary: false,
                       padding: EdgeInsets.zero,
-                      shrinkWrap: true,
                       itemCount: _draft.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: _celahSku),
                       itemBuilder: (context, i) {
-                        return _BarisDraft(
-                          draft: _draft[i],
-                          aktif: _editDraftI == i,
-                          onTap: _proses ? null : () => _isiDraft(i),
-                          onHapus: _proses
-                              ? null
-                              : () => setState(() {
-                                    if (_editDraftI == i) {
-                                      _editDraftI = null;
-                                      _bersihFormSku();
-                                    } else if (_editDraftI != null &&
-                                        _editDraftI! > i) {
-                                      _editDraftI = _editDraftI! - 1;
-                                    }
-                                    _draft.removeAt(i);
-                                  }),
+                        return SizedBox(
+                          height: _tinggiBarisSku,
+                          child: _BarisDraft(
+                            draft: _draft[i],
+                            aktif: _editDraftI == i,
+                            onTap: _proses ? null : () => _isiDraft(i),
+                            onHapus: _proses
+                                ? null
+                                : () => setState(() {
+                                      if (_editDraftI == i) {
+                                        _editDraftI = null;
+                                        _bersihFormSku();
+                                      } else if (_editDraftI != null &&
+                                          _editDraftI! > i) {
+                                        _editDraftI = _editDraftI! - 1;
+                                      }
+                                      _draft.removeAt(i);
+                                    }),
+                          ),
                         );
                       },
                     ),
