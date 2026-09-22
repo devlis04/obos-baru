@@ -362,7 +362,7 @@ BEGIN
   FROM public.barang b
   JOIN public.supplier_harga h
     ON h.id_supplier = b.id_supplier_utama
-   AND lower(h.kode_barang) = lower(b.id_barang)
+   AND lower(h.id_barang) = lower(b.id_barang)
   WHERE lower(b.id_barang) = lower(v_id);
   IF COALESCE(v_harga, 0) > 0 THEN
     PERFORM public.barang_ikut_modal(v_id, v_harga);
@@ -615,7 +615,7 @@ BEGIN
   FROM public.barang b
   LEFT JOIN public.supplier_harga h
     ON h.id_supplier = b.id_supplier_utama
-   AND lower(h.kode_barang) = lower(b.id_barang)
+   AND lower(h.id_barang) = lower(b.id_barang)
   WHERE lower(b.id_barang) = lower(v_id);
 
   IF v_utama IS NOT NULL AND COALESCE(v_modal, 0) > 0 THEN
@@ -845,7 +845,7 @@ BEGIN
           pesan := 'Sudah dipakai nota/buku. Tidak dihapus, dinonaktifkan.';
         ELSE
           DELETE FROM public.supplier_harga h
-          WHERE lower(h.kode_barang) = lower(v_id);
+          WHERE lower(h.id_barang) = lower(v_id);
           DELETE FROM public.barang b WHERE lower(b.id_barang) = lower(v_id);
           aksi := 'hapus';
           ok := true;
@@ -1005,7 +1005,7 @@ BEGIN
     (v_utama IS NOT NULL AND h.id_supplier = v_utama)
   FROM public.supplier_harga h
   JOIN public.supplier s ON s.id = h.id_supplier
-  WHERE lower(h.kode_barang) = lower(v_id)
+  WHERE lower(h.id_barang) = lower(v_id)
     AND s.aktif
   ORDER BY (v_utama IS NOT NULL AND h.id_supplier = v_utama) DESC,
     lower(s.nama),

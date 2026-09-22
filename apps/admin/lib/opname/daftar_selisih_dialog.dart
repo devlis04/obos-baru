@@ -86,6 +86,55 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
     }
   }
 
+  Future<void> _konfirmasiFisik() async {
+    if (widget.ditutup || _prosesSku != null) return;
+    final ya = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Konfirmasi stok fisik?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: IsiDialog(
+          child: const Text(
+            'Stok master SKU yang sudah dihitung fisik akan mengikuti fisik gudang. Buku tidak ditutup.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, konfirmasi'),
+          ),
+        ],
+      ),
+    );
+    if (ya != true || !mounted) return;
+    setState(() => _prosesSku = '_fisik');
+    try {
+      await _repo.konfirmasi(widget.idBuku);
+      if (!mounted) return;
+      setState(() => _prosesSku = null);
+      await widget.onMuat();
+      if (!mounted) return;
+      tampilPesan(context, 'Stok master sudah mengikuti fisik gudang.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _prosesSku = null);
+      tampilPesan(
+        context,
+        Jaringan.mati(e)
+            ? 'Tidak ada internet. Konfirmasi belum tersimpan.'
+            : (e is PostgrestException && e.message.trim().isNotEmpty
+                ? e.message.trim()
+                : 'Konfirmasi stok belum tersimpan.'),
+      );
+    }
+  }
+
   Future<void> _putusan(BarisSelisihOpname r, String jenis) async {
     if (widget.ditutup || _prosesSku != null) return;
     final email = _pilih[r.idBarang];
@@ -156,6 +205,11 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
           onPressed: _prosesSku != null ? null : () => Navigator.pop(context),
           child: const Text('Tutup'),
         ),
+        if (!widget.ditutup)
+          FilledButton(
+            onPressed: _prosesSku != null ? null : _konfirmasiFisik,
+            child: const Text('Konfirmasi stok fisik'),
+          ),
       ],
     );
   }
@@ -304,22 +358,62 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
         ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final t in r.tokoPacked)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              '${t.nama}  ·  ${Uang.qty(t.qty)}',
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.25,
-                color: Colors.black,
+    final n = r.tokoPacked.length;
+    final qty = r.tokoPacked.fold<num>(0, (a, t) => a + t.qty);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: MenuAnchor(
+        builder: (context, controller, _) {
+          return OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.fromLTRB(10, 0, 6, 0),
+            ),
+            onPressed: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$n toko · ${Uang.qty(qty)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
+                ),
+                Icon(
+                  controller.isOpen
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                  size: 18,
+                  color: Colors.black,
+                ),
+              ],
+            ),
+          );
+        },
+        menuChildren: [
+          for (final t in r.tokoPacked)
+            MenuItemButton(
+              onPressed: () {},
+              child: SizedBox(
+                width: 280,
+                child: Text(
+                  '${t.nama}  ·  ${Uang.qty(t.qty)}',
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

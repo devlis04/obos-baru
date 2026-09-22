@@ -68,13 +68,19 @@ class KartuOpname extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: SizedBox(
+                      child: SizedBox(
                       height: 32,
                       child: FilledButton(
                         onPressed: sibuk || !data.adaBuku
                             ? null
                             : () {
-                                if (data.skuMinusBelum > 0 && bisaKonfirmasi) {
+                                if (data.skuSelisih > 0) {
+                                  bukaDaftarSelisih(
+                                    context: context,
+                                    data: data,
+                                    onMuat: onMuat,
+                                  );
+                                } else if (bisaKonfirmasi) {
                                   onKonfirmasi();
                                 } else {
                                   bukaDaftarSelisih(

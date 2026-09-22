@@ -571,64 +571,86 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           const padBawah = 6.0;
           const celah = 6.0;
           const tinggiAbsen = 40.0;
-          final tinggiTersedia =
-              layar.maxHeight - padAtas - padBawah;
-          final tinggiBlok = (tinggiTersedia - tinggiAbsen - celah * 2)
+          const tinggiBanner = 40.0;
+          final adaBanner = _siklus.pesan.isNotEmpty;
+          final adaProgress = _muat || _proses;
+          final tinggiKartuArea = (layar.maxHeight -
+                  padAtas -
+                  padBawah -
+                  tinggiAbsen -
+                  celah -
+                  (adaBanner ? tinggiBanner : 0) -
+                  (adaProgress ? 4.0 : 0))
               .clamp(240.0, 4000.0);
           const cadangan = 2 * (4 + 8 + 32);
-          var tinggiBaris = ((tinggiBlok - celah - cadangan) / 5).floorToDouble();
+          var tinggiBaris =
+              ((tinggiKartuArea - celah - cadangan) / 5).floorToDouble();
           if (tinggiBaris > 200) tinggiBaris = 200;
-          if (tinggiBaris < 104) tinggiBaris = 104;
+          if (tinggiBaris < 72) tinggiBaris = 72;
           final nRute = _setoran.rute.isEmpty ? 4 : _setoran.rute.length;
           final tinggiRute = tinggiKartuSetoran(nRute, tinggiBaris);
           final tinggiJumlah = tinggiKartuSetoran(1, tinggiBaris);
-          return RefreshIndicator(
-            onRefresh: _muatData,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, padAtas, 16, padBawah),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: tinggiTersedia),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_muat || _proses)
-                      const LinearProgressIndicator(),
-                    if (_siklus.pesan.isNotEmpty) _bannerSiklus(),
-                    _barisKiriKanan(
-                      lebar: layar.maxWidth - 32,
-                      kiri: KartuSetoran(
-                        data: _setoran,
-                        sibuk: _muat || _proses,
-                        tinggiBaris: tinggiBaris,
-                      ),
-                      kanan: _kananAtas(tinggiRute),
-                      tinggiKanan: tinggiRute,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (adaProgress) const LinearProgressIndicator(),
+              if (adaBanner)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, padAtas, 16, 0),
+                  child: _bannerSiklus(),
+                ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _muatData,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      adaBanner ? 0 : padAtas,
+                      16,
+                      celah,
                     ),
-                    const SizedBox(height: celah),
-                    _barisKiriKanan(
-                      lebar: layar.maxWidth - 32,
-                      kiri: KartuSetoran(
-                        data: _setoran,
-                        sibuk: _muat || _proses,
-                        tinggiBaris: tinggiBaris,
-                        totalSaja: true,
-                      ),
-                      kanan: _opname(),
-                      tinggiKanan: tinggiJumlah,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _barisKiriKanan(
+                          lebar: layar.maxWidth - 32,
+                          kiri: KartuSetoran(
+                            data: _setoran,
+                            sibuk: _muat || _proses,
+                            tinggiBaris: tinggiBaris,
+                          ),
+                          kanan: _kananAtas(tinggiRute),
+                          tinggiKanan: tinggiRute,
+                        ),
+                        const SizedBox(height: celah),
+                        _barisKiriKanan(
+                          lebar: layar.maxWidth - 32,
+                          kiri: KartuSetoran(
+                            data: _setoran,
+                            sibuk: _muat || _proses,
+                            tinggiBaris: tinggiBaris,
+                            totalSaja: true,
+                          ),
+                          kanan: _opname(),
+                          tinggiKanan: tinggiJumlah,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: celah),
-                    SizedBox(
-                      height: tinggiAbsen,
-                      child: KartuAbsensi(
-                        pengirim: _pengirim,
-                        gudang: _gudang,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, padBawah),
+                child: SizedBox(
+                  height: tinggiAbsen,
+                  child: KartuAbsensi(
+                    pengirim: _pengirim,
+                    gudang: _gudang,
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
