@@ -247,22 +247,24 @@ class OpnameRepo {
         .toList();
   }
 
-  Future<void> putusan({
+  Future<Map<String, dynamic>> putusan({
     required int idBuku,
     required String idBarang,
     required String jenis,
     String? email,
-  }) {
-    return _sb
+  }) async {
+    final hasil = await _sb
         .rpc(
           'admin_opname_putusan',
           params: {
             'p_id_setoran_buku': idBuku,
             'p_id_barang': idBarang,
             'p_jenis': jenis,
-            'p_email': email,
+            if (email != null && email.isNotEmpty) 'p_email': email,
           },
         )
         .timeout(Jaringan.lambat);
+    if (hasil is Map) return Map<String, dynamic>.from(hasil);
+    return {};
   }
 }

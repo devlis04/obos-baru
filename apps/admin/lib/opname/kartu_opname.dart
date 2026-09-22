@@ -11,13 +11,11 @@ class KartuOpname extends StatelessWidget {
     required this.data,
     required this.sibuk,
     required this.onMuat,
-    required this.onKonfirmasi,
   });
 
   final RingkasOpname data;
   final bool sibuk;
   final Future<void> Function() onMuat;
-  final Future<void> Function() onKonfirmasi;
 
   String get _status {
     if (!data.adaBuku) return 'Menunggu buku';
@@ -42,20 +40,19 @@ class KartuOpname extends StatelessWidget {
     if (data.skuSelisih == 0) return 'Tidak ada selisih stok.';
     final bagian = <String>[
       if (data.skuMinusBelum > 0)
-        '${data.skuMinusBelum} dari ${data.skuSelisih} SKU'
+        '${data.skuMinusBelum} dari ${data.skuSelisih} SKU belum diputuskan'
       else
         '${data.skuSelisih} SKU',
+      if (data.nilaiKasbon > 0) 'Kasbon Rp ${Uang.angka(data.nilaiKasbon)}',
+      if (data.nilaiBeban > 0) 'Potong margin Rp ${Uang.angka(data.nilaiBeban)}',
+      if (data.nilaiMarginPlus > 0)
+        'Tambah margin Rp ${Uang.angka(data.nilaiMarginPlus)}',
     ];
-    if (data.nilaiSelisih != 0) {
-      bagian.add('Rp ${Uang.angka(data.nilaiSelisih.abs())}');
-    }
     return bagian.join('  ·  ');
   }
 
   @override
   Widget build(BuildContext context) {
-    final bisaKonfirmasi =
-        !sibuk && data.adaBuku && !data.ditutup && data.skuFisik > 0;
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.hardEdge,
@@ -68,38 +65,22 @@ class KartuOpname extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                      child: SizedBox(
+                    child: SizedBox(
                       height: 32,
                       child: FilledButton(
                         onPressed: sibuk || !data.adaBuku
                             ? null
-                            : () {
-                                if (data.skuSelisih > 0) {
-                                  bukaDaftarSelisih(
-                                    context: context,
-                                    data: data,
-                                    onMuat: onMuat,
-                                  );
-                                } else if (bisaKonfirmasi) {
-                                  onKonfirmasi();
-                                } else {
-                                  bukaDaftarSelisih(
-                                    context: context,
-                                    data: data,
-                                    onMuat: onMuat,
-                                  );
-                                }
-                              },
+                            : () => bukaDaftarSelisih(
+                                  context: context,
+                                  data: data,
+                                  onMuat: onMuat,
+                                ),
                         style: FilledButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                           minimumSize: const Size(0, 32),
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                         ),
-                        child: Text(
-                          data.skuMinusBelum > 0
-                              ? 'Konfirmasi opname'
-                              : 'Lihat opname',
-                        ),
+                        child: const Text('Lihat opname'),
                       ),
                     ),
                   ),
@@ -119,35 +100,21 @@ class KartuOpname extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              InkWell(
-                onTap: sibuk || !data.adaBuku
-                    ? null
-                    : () => bukaDaftarSelisih(
-                          context: context,
-                          data: data,
-                          onMuat: onMuat,
-                        ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _status,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: _warnaStatus,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _angkaSku,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                  ],
+              Text(
+                _status,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _warnaStatus,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _angkaSku,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
                 ),
               ),
             ],

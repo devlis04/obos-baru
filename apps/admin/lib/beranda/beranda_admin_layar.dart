@@ -332,53 +332,6 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
     return cadangan;
   }
 
-  Future<void> _konfirmasi() async {
-    final id = _data.idSetoranBuku;
-    if (id == null || _proses) return;
-    final ya = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Konfirmasi stok fisik?',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: IsiDialog(
-          child: const Text(
-            'Stok master SKU yang sudah dihitung fisik akan mengikuti fisik gudang. Buku tidak ditutup.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, konfirmasi'),
-          ),
-        ],
-      ),
-    );
-    if (ya != true || !mounted) return;
-    setState(() => _proses = true);
-    try {
-      await _repo.konfirmasi(id);
-      if (!mounted) return;
-      tampilPesan(context, 'Stok master sudah mengikuti fisik gudang.');
-      await _muatData();
-    } catch (e) {
-      if (!mounted) return;
-      tampilPesan(
-        context,
-        Jaringan.mati(e)
-            ? 'Tidak ada internet. Konfirmasi belum tersimpan.'
-            : _pesanGagal(e, 'Konfirmasi stok belum tersimpan.'),
-      );
-    } finally {
-      if (mounted) setState(() => _proses = false);
-    }
-  }
-
   Future<void> _tutupBuku() async {
     if (_proses || !_bisaTutup) return;
     final ya = await showDialog<bool>(
@@ -871,7 +824,6 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         data: _data,
         sibuk: _muat || _proses,
         onMuat: _muatData,
-        onKonfirmasi: _konfirmasi,
       ),
     );
   }

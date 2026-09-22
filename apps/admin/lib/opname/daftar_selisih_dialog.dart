@@ -77,6 +77,7 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
   late List<BarisSelisihOpname> _baris = widget.awal;
   final Map<String, String> _pilih = {};
   String? _prosesSku;
+  String? _pesan;
 
   @override
   void initState() {
@@ -138,13 +139,22 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
   Future<void> _putusan(BarisSelisihOpname r, String jenis) async {
     if (widget.ditutup || _prosesSku != null) return;
     final email = _pilih[r.idBarang];
-    if (jenis == 'kasbon' && (email == null || email.isEmpty)) {
-      tampilPesan(context, 'Pilih karyawan untuk kasbon.');
+    if (jenis == 'kasbon' && widget.users.isEmpty) {
+      setState(() => _pesan = 'Tidak ada karyawan di daftar kasbon.');
       return;
     }
-    setState(() => _prosesSku = r.idBarang);
+    if (jenis == 'kasbon' && (email == null || email.isEmpty)) {
+      setState(
+        () => _pesan = 'Pilih karyawan untuk kasbon, baru tekan Kasbon.',
+      );
+      return;
+    }
+    setState(() {
+      _prosesSku = r.idBarang;
+      _pesan = null;
+    });
     try {
-      await _repo.putusan(
+      final hasil = await _repo.putusan(
         idBuku: widget.idBuku,
         idBarang: r.idBarang,
         jenis: jenis,
@@ -152,27 +162,31 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
       );
       final baru = await _repo.selisih(widget.idBuku);
       if (!mounted) return;
+      final cek = baru.where((b) => b.idBarang == r.idBarang).toList();
+      final dariRpc = (hasil['putusan']?.toString() ?? '') == jenis;
+      final dariDb = cek.isNotEmpty && cek.first.putusan == jenis;
+      final nilai = int.tryParse('${hasil['nilai']}') ??
+          (cek.isNotEmpty ? cek.first.nilaiPutusan : 0);
       setState(() {
         _baris = baru;
         _prosesSku = null;
+        _pesan = dariDb || dariRpc
+            ? (jenis == 'kasbon'
+                ? 'Kasbon ${hasil['kasbon_nama'] ?? cek.firstOrNull?.kasbonNama ?? ''} ${Uang.rp(nilai)} tersimpan.'
+                : 'Selisih masuk potong margin.')
+            : 'Putusan belum tertulis di buku. Jalankan SQL 090, lalu ulangi.';
       });
       await widget.onMuat();
-      if (!mounted) return;
-      tampilPesan(
-        context,
-        jenis == 'kasbon' ? 'Kasbon tersimpan.' : 'Selisih masuk potong margin.',
-      );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _prosesSku = null);
-      tampilPesan(
-        context,
-        Jaringan.mati(e)
+      setState(() {
+        _prosesSku = null;
+        _pesan = Jaringan.mati(e)
             ? 'Tidak ada internet. Putusan belum tersimpan.'
             : (e is PostgrestException && e.message.trim().isNotEmpty
                 ? e.message.trim()
-                : 'Putusan belum tersimpan.'),
-      );
+                : 'Putusan belum tersimpan.');
+      });
     }
   }
 
@@ -188,16 +202,32 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
       actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       content: IsiDialog(
         width: 800,
-        child: DaftarGulirDialog(
-          faktor: 0.5,
-          child: ListView.separated(
-            padding: EdgeInsets.zero,
-            shrinkWrap: true,
-            primary: false,
-            itemCount: _baris.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, i) => _kartuBaris(_baris[i]),
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_pesan != null) ...[
+              Text(
+                _pesan!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            DaftarGulirDialog(
+              faktor: 0.5,
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                primary: false,
+                itemCount: _baris.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => _kartuBaris(_baris[i]),
+              ),
+            ),
+          ],
         ),
       ),
       actions: [
@@ -288,42 +318,39 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
               ),
               if (kurang && !widget.ditutup) ...[
                 const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  key: ValueKey('kasbon-${r.idBarang}-${emailPilih ?? ''}'),
-                  initialValue: widget.users.any((u) => u.email == emailPilih)
-                      ? emailPilih
-                      : null,
-                  isExpanded: true,
-                  isDense: true,
-                  style: const TextStyle(fontSize: 14, color: Colors.black),
-                  decoration: const InputDecoration(
-                    labelText: 'Karyawan kasbon',
+                if (widget.users.isEmpty)
+                  const Text(
+                    'Tidak ada karyawan untuk kasbon.',
+                    style: TextStyle(fontSize: 12, color: Colors.black),
+                  )
+                else
+                  DropdownButton<String>(
+                    isExpanded: true,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                  items: [
-                    for (final u in widget.users)
-                      DropdownMenuItem(
-                        value: u.email,
-                        child: Text(
-                          '${u.nama} (${u.peran})',
-                          overflow: TextOverflow.ellipsis,
+                    hint: const Text('Karyawan kasbon'),
+                    value: widget.users.any((u) => u.email == emailPilih)
+                        ? emailPilih
+                        : null,
+                    items: [
+                      for (final u in widget.users)
+                        DropdownMenuItem(
+                          value: u.email,
+                          child: Text(
+                            '${u.nama} (${u.peran})',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                  ],
-                  onChanged: sibuk
-                      ? null
-                      : (v) => setState(() {
-                            if (v == null) {
-                              _pilih.remove(r.idBarang);
-                            } else {
-                              _pilih[r.idBarang] = v;
-                            }
-                          }),
-                ),
+                    ],
+                    onChanged: sibuk
+                        ? null
+                        : (v) => setState(() {
+                              if (v == null) {
+                                _pilih.remove(r.idBarang);
+                              } else {
+                                _pilih[r.idBarang] = v;
+                              }
+                            }),
+                  ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
