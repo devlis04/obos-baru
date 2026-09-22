@@ -57,7 +57,18 @@ class CekRinciSetoran extends ChangeNotifier {
     required String jenis,
     String? rute,
   }) {
-    return Set.of(_centang[_kunci(tanggal, jenis, rute)] ?? const {});
+    final k = _kunci(tanggal, jenis, rute);
+    final sini = _centang[k];
+    if (sini != null && sini.isNotEmpty) return Set.of(sini);
+    final akhir = '|$jenis|${rute ?? ''}';
+    for (final e in _centang.entries) {
+      if (e.key == k || !e.key.endsWith(akhir) || e.value.isEmpty) continue;
+      _centang[k] = Set.of(e.value);
+      if (_hijau[e.key] == true) _hijau[k] = true;
+      _tulis();
+      return Set.of(e.value);
+    }
+    return Set.of(sini ?? const {});
   }
 
   bool hijau({
@@ -65,7 +76,15 @@ class CekRinciSetoran extends ChangeNotifier {
     required String jenis,
     String? rute,
   }) {
-    return _hijau[_kunci(tanggal, jenis, rute)] ?? false;
+    final k = _kunci(tanggal, jenis, rute);
+    if (_hijau[k] == true) return true;
+    final akhir = '|$jenis|${rute ?? ''}';
+    for (final e in _hijau.entries) {
+      if (e.key == k || !e.key.endsWith(akhir) || e.value != true) continue;
+      _hijau[k] = true;
+      return true;
+    }
+    return false;
   }
 
   void simpanTutup({
@@ -146,21 +165,29 @@ class CekRinciSetoran extends ChangeNotifier {
 
   void gabungJson(Object? raw) {
     if (raw is! Map) return;
+    var ubah = false;
     final c = raw['centang'];
     if (c is Map) {
       for (final e in c.entries) {
         final v = e.value;
-        if (v is List) {
-          _centang[e.key.toString()] = {for (final x in v) x.toString()};
-        }
+        if (v is! List) continue;
+        final masuk = {for (final x in v) x.toString()};
+        if (masuk.isEmpty) continue;
+        final k = e.key.toString();
+        final lama = _centang[k] ?? {};
+        _centang[k] = {...lama, ...masuk};
+        ubah = true;
       }
     }
     final h = raw['hijau'];
     if (h is Map) {
       for (final e in h.entries) {
-        _hijau[e.key.toString()] = e.value == true;
+        if (e.value != true) continue;
+        _hijau[e.key.toString()] = true;
+        ubah = true;
       }
     }
+    if (!ubah) return;
     _tulis();
     notifyListeners();
   }

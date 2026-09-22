@@ -32,7 +32,7 @@ class TokoRepo {
         .rpc(
           'setoran_buku_untuk_hari',
           params: {
-            if (tanggal != null) 'p_tanggal': Uang.isoHari(tanggal),
+            'p_tanggal': tanggal == null ? null : Uang.isoHari(tanggal),
           },
         )
         .timeout(Jaringan.lambat);

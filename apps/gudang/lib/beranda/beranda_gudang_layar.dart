@@ -44,8 +44,15 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
   late DateTime _tanggal;
   bool _hidup = true;
 
+  bool get _hariIni {
+    final now = DateTime.now();
+    return _tanggal.year == now.year &&
+        _tanggal.month == now.month &&
+        _tanggal.day == now.day;
+  }
+
   String get _judul {
-    if (_hidup) return 'Packing hari ini';
+    if (_hidup && _hariIni) return 'Packing hari ini';
     return 'Packing ${Uang.tanggal(_tanggal)}';
   }
 
@@ -84,20 +91,23 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
     if (!diam) setState(() => _muat = true);
     try {
       final status = await _absensi.status();
-      final buku = await _kartu.bukuHari(_pilihTanggalBuku);
-      final tgl = buku?.tanggal ??
-          _pilihTanggalBuku ??
-          DateTime(
-            DateTime.now().year,
-            DateTime.now().month,
-            DateTime.now().day,
-          );
-      final list = buku == null ? <RingkasRute>[] : await _kartu.untukTanggal(tgl);
+      final pilih = _pilihTanggalBuku;
+      final buku = await _kartu.bukuHari(pilih);
+      final now = DateTime.now();
+      final tgl = pilih ??
+          buku?.tanggal ??
+          DateTime(now.year, now.month, now.day);
+      final hidup = buku != null &&
+          buku.hidup &&
+          buku.tanggal.year == tgl.year &&
+          buku.tanggal.month == tgl.month &&
+          buku.tanggal.day == tgl.day;
+      final list = await _kartu.untukTanggal(tgl);
       if (!mounted) return;
       setState(() {
         _status = status;
         _tanggal = tgl;
-        _hidup = buku?.hidup ?? false;
+        _hidup = hidup;
         _rute = list;
         _muat = false;
       });
@@ -422,11 +432,11 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
-                              children: const [
-                                SizedBox(height: 80),
+                              children: [
+                                const SizedBox(height: 80),
                                 Center(
                                   child: Text(
-                                    'Belum ada nota pada buku ini.',
+                                    'Belum ada order ${Uang.tanggal(_tanggal)}.',
                                     textAlign: TextAlign.center,
                                   ),
                                 ),

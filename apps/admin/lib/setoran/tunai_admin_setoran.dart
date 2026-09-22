@@ -46,7 +46,28 @@ class TunaiAdminSetoran extends ChangeNotifier {
   }
 
   IsiTunaiAdmin ambil(DateTime? tanggal, String rute) {
-    return _isi[_kunci(tanggal, rute)] ?? const IsiTunaiAdmin();
+    final k = _kunci(tanggal, rute);
+    final sini = _isi[k];
+    if (_berisi(sini)) return sini!;
+    final akhir = '|$rute';
+    for (final e in _isi.entries) {
+      if (e.key == k || !e.key.endsWith(akhir)) continue;
+      if (_berisi(e.value)) {
+        _isi[k] = e.value;
+        _tulis();
+        return e.value;
+      }
+    }
+    return sini ?? const IsiTunaiAdmin();
+  }
+
+  static bool _berisi(IsiTunaiAdmin? v) {
+    if (v == null) return false;
+    if (v.tunai > 0) return true;
+    for (final n in v.pecahan) {
+      if (n > 0) return true;
+    }
+    return false;
   }
 
   int nilai({
@@ -131,6 +152,7 @@ class TunaiAdminSetoran extends ChangeNotifier {
 
   void gabungJson(Object? raw) {
     if (raw is! Map) return;
+    var ubah = false;
     for (final e in raw.entries) {
       final v = e.value;
       if (v is! Map) continue;
@@ -141,11 +163,16 @@ class TunaiAdminSetoran extends ChangeNotifier {
           pecahan.add(int.tryParse(x.toString()) ?? 0);
         }
       }
-      _isi[e.key.toString()] = IsiTunaiAdmin(
+      final isi = IsiTunaiAdmin(
         tunai: int.tryParse('${v['tunai']}') ?? 0,
         pecahan: pecahan,
       );
+      final k = e.key.toString();
+      if (_berisi(_isi[k]) && !_berisi(isi)) continue;
+      _isi[k] = isi;
+      ubah = true;
     }
+    if (!ubah) return;
     _tulis();
     notifyListeners();
   }

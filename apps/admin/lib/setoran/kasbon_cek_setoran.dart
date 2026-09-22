@@ -27,7 +27,16 @@ class KasbonCekSetoran extends ChangeNotifier {
     required String rute,
     required String peran,
   }) {
-    return _centang[_kunci(tanggal, rute, peran)] ?? false;
+    final k = _kunci(tanggal, rute, peran);
+    if (_centang[k] == true) return true;
+    final akhir = '|$rute|$peran';
+    for (final e in _centang.entries) {
+      if (e.key == k || !e.key.endsWith(akhir) || e.value != true) continue;
+      _centang[k] = true;
+      _tulis();
+      return true;
+    }
+    return false;
   }
 
   void setCentang({

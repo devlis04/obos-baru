@@ -184,9 +184,11 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       }
       try {
         setoran = await _setoranRepo.ringkas(idBuku: _idBukuLihat);
-        CekRinciSetoran.instance.gabungJson(setoran.cek);
-        TunaiAdminSetoran.instance.gabungJson(setoran.tunaiAdmin);
-        KasbonCekSetoran.instance.gabungJson(setoran.kasbon);
+        if (!diam) {
+          CekRinciSetoran.instance.gabungJson(setoran.cek);
+          TunaiAdminSetoran.instance.gabungJson(setoran.tunaiAdmin);
+          KasbonCekSetoran.instance.gabungJson(setoran.kasbon);
+        }
         try {
           siklus = await _setoranRepo.siklus();
         } catch (_) {

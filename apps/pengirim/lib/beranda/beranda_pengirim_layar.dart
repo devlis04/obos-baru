@@ -53,8 +53,15 @@ class _BerandaPengirimLayarState extends State<BerandaPengirimLayar> {
   late DateTime _tanggal;
   bool _hidup = true;
 
+  bool get _hariIni {
+    final now = DateTime.now();
+    return _tanggal.year == now.year &&
+        _tanggal.month == now.month &&
+        _tanggal.day == now.day;
+  }
+
   String get _judul {
-    if (_hidup) return 'Pengiriman hari ini';
+    if (_hidup && _hariIni) return 'Pengiriman hari ini';
     return 'Pengiriman ${Uang.tanggal(_tanggal)}';
   }
 
@@ -155,15 +162,18 @@ class _BerandaPengirimLayarState extends State<BerandaPengirimLayar> {
     if (!diam) setState(() => _muat = true);
     try {
       final status = await _absensi.status();
-      final buku = await _repo.bukuHari(_pilihTanggalBuku);
-      final tgl = buku?.tanggal ??
-          _pilihTanggalBuku ??
-          DateTime(
-            DateTime.now().year,
-            DateTime.now().month,
-            DateTime.now().day,
-          );
-      final list = buku == null ? <KartuToko>[] : await _repo.kartu(tgl);
+      final pilih = _pilihTanggalBuku;
+      final buku = await _repo.bukuHari(pilih);
+      final now = DateTime.now();
+      final tgl = pilih ??
+          buku?.tanggal ??
+          DateTime(now.year, now.month, now.day);
+      final hidup = buku != null &&
+          buku.hidup &&
+          buku.tanggal.year == tgl.year &&
+          buku.tanggal.month == tgl.month &&
+          buku.tanggal.day == tgl.day;
+      final list = await _repo.kartu(tgl);
       List<String> sales = const [];
       try {
         sales = await _repo.ruteSales();
@@ -172,7 +182,7 @@ class _BerandaPengirimLayarState extends State<BerandaPengirimLayar> {
       setState(() {
         _status = status;
         _tanggal = tgl;
-        _hidup = buku?.hidup ?? false;
+        _hidup = hidup;
         _toko = list;
         _ruteSales = sales;
         _rutePengirim = widget.rute.isNotEmpty ? widget.rute : _rutePengirim;
@@ -672,13 +682,13 @@ class _BerandaPengirimLayarState extends State<BerandaPengirimLayar> {
                     onRefresh: () => _muatData(diam: true),
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 120),
+                      children: [
+                        const SizedBox(height: 120),
                         Center(
                           child: Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(24),
                             child: Text(
-                              'Belum ada pengiriman di tanggal ini.',
+                              'Belum ada pengiriman ${Uang.tanggal(_tanggal)}.',
                               textAlign: TextAlign.center,
                             ),
                           ),
