@@ -116,8 +116,8 @@ Future<void> bukaRinciSetoran({
 String _lingkupRute(RinciSetoran data) {
   final jenis = judulJenisSetoran(data.jenis);
   final rute = data.rute;
-  if (rute == null || rute.isEmpty) return '$jenis Â· semua rute';
-  return '$jenis Â· $rute';
+  if (rute == null || rute.isEmpty) return '$jenis · semua rute';
+  return '$jenis · $rute';
 }
 
 class DialogKirimanToko extends StatefulWidget {
@@ -132,6 +132,7 @@ class DialogKirimanToko extends StatefulWidget {
 class _DialogKirimanTokoState extends State<DialogKirimanToko> {
   static const _garis = Color(0xFF8FB4D9);
   final _cari = TextEditingController();
+  final _gulir = ScrollController();
   var _sortKolom = 0;
   var _sortNaik = true;
   final _centang = <String>{};
@@ -156,6 +157,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
   @override
   void dispose() {
     _cari.dispose();
+    _gulir.dispose();
     super.dispose();
   }
 
@@ -247,21 +249,97 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
     final jumActual = tampil.fold<int>(0, (a, b) => a + b.actual);
 
     const gayaJumlah = TextStyle(fontWeight: FontWeight.bold);
+    final wToko = _centangToko ? 188.0 : 160.0;
+    final w = <double>[
+      wToko,
+      88,
+      64,
+      64,
+      92,
+      92,
+      92,
+      92,
+      80,
+    ];
+    final judulKolom = const [
+      'Toko',
+      'Rute',
+      'Nota',
+      'SKU',
+      'Kiriman',
+      'Batal',
+      'Pending',
+      'Actual',
+      'Status',
+    ];
 
-    DataCell uang(int n, {bool tebal = false}) => DataCell(
-          Text(
-            Uang.angka(n),
-            textAlign: TextAlign.right,
-            style: tebal ? gayaJumlah : null,
+    Widget sel(
+      String teks, {
+      required int i,
+      bool angka = false,
+      bool tengah = false,
+      bool tebal = false,
+      Widget? anak,
+    }) {
+      return SizedBox(
+        width: w[i],
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: i == 0 ? 0 : 6,
+            right: i == w.length - 1 ? 0 : 4,
           ),
-        );
+          child: anak ??
+              Align(
+                alignment: tengah
+                    ? Alignment.center
+                    : angka
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                child: Text(
+                  teks,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: tengah
+                      ? TextAlign.center
+                      : angka
+                          ? TextAlign.right
+                          : TextAlign.left,
+                  style: tebal ? gayaJumlah : null,
+                ),
+              ),
+        ),
+      );
+    }
 
-    return PopScope(
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) _catatTutup();
-      },
-      child: AlertDialog(
-      title: Row(
+    Widget uang(int n, int i, {bool tebal = false}) =>
+        sel(Uang.angka(n), i: i, angka: true, tebal: tebal);
+
+    Widget baris(List<Widget> isi, {bool jumlah = false}) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: jumlah ? Colors.grey.shade50 : null,
+          border: const Border(bottom: BorderSide(color: _garis, width: 0.5)),
+        ),
+        child: SizedBox(height: 40, child: Row(children: isi)),
+      );
+    }
+
+    void urut(int i) {
+      setState(() {
+        if (_sortKolom == i) {
+          _sortNaik = !_sortNaik;
+        } else {
+          _sortKolom = i;
+          _sortNaik = true;
+        }
+      });
+    }
+
+    final dialog = DialogGulirIsi(
+      lebar: w.fold<double>(0, (a, b) => a + b),
+      controller: _gulir,
+      itemCount: tampil.length,
+      judul: Row(
         children: [
           Expanded(
             child: Text(
@@ -272,113 +350,95 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
             ),
           ),
           const SizedBox(width: 12),
-          SizedBox(
-            width: 460,
-            child: TextField(
-              controller: _cari,
-              onChanged: (_) => setState(() {}),
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'Cari toko, rute, status, atau angka',
-                prefixIcon: const Icon(Icons.search, size: 18),
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 32,
-                ),
-                suffixIcon: _cari.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Hapus',
-                        icon: const Icon(Icons.close, size: 16),
-                        onPressed: () {
-                          _cari.clear();
-                          setState(() {});
-                        },
-                      ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-              ),
-            ),
+          _bidangCari(
+            controller: _cari,
+            onUbah: () => setState(() {}),
+            hint: 'Cari toko, rute, status, atau angka',
+            lebar: 280,
           ),
         ],
       ),
-      titlePadding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      content: IsiDialog(
-        width: 980,
-        child: DaftarGulirDialog(
-              faktor: 0.62,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  border: const TableBorder(
-                    verticalInside: BorderSide(color: _garis, width: 1),
-                  ),
-                  columnSpacing: 12,
-                  horizontalMargin: 8,
-                  headingRowHeight: 36,
-                  dataRowMinHeight: 36,
-                  dataRowMaxHeight: 40,
-                  columns: [
-                    _kolom('Toko', 0, lebar: _centangToko ? 188 : 160),
-                    _kolom('Rute', 1, lebar: 88),
-                    _kolom('Nota', 2, angka: true, lebar: 64),
-                    _kolom('SKU', 3, angka: true, lebar: 64),
-                    _kolom('Kiriman', 4, angka: true),
-                    _kolom('Batal', 5, angka: true),
-                    _kolom('Pending', 6, angka: true),
-                    _kolom('Actual', 7, angka: true),
-                    _kolom('Status', 8, lebar: 80),
-                  ],
-                  rows: [
-                    for (final b in tampil)
-                      DataRow(
-                        cells: [
-                          DataCell(_namaToko(context, b)),
-                          DataCell(Text(b.rutePengirim)),
-                          uang(b.nota),
-                          uang(b.sku.length),
-                          uang(b.packed),
-                          uang(b.batal),
-                          uang(b.pending),
-                          uang(b.actual),
-                          DataCell(Text(b.status)),
-                        ],
-                      ),
-                    DataRow(
-                      cells: [
-                        DataCell(
-                          Text(
-                            'Jumlah (${tampil.length})',
-                            style: gayaJumlah,
+      kepala: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: _garis)),
+        ),
+        child: SizedBox(
+          height: 36,
+          child: Row(
+            children: [
+              for (var i = 0; i < judulKolom.length; i++)
+                InkWell(
+                  onTap: () => urut(i),
+                  child: SizedBox(
+                    width: w[i],
+                    height: 36,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            judulKolom[i],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: _sortKolom == i ? Tema.seed : Colors.black,
+                            ),
                           ),
                         ),
-                        const DataCell(Text('')),
-                        uang(jumNota, tebal: true),
-                        uang(jumSku, tebal: true),
-                        uang(jumPacked, tebal: true),
-                        uang(jumBatal, tebal: true),
-                        uang(jumPending, tebal: true),
-                        uang(jumActual, tebal: true),
-                        const DataCell(Text('')),
+                        if (_sortKolom == i)
+                          Icon(
+                            _sortNaik
+                                ? Icons.arrow_drop_up
+                                : Icons.arrow_drop_down,
+                            size: 18,
+                            color: Tema.seed,
+                          ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Tutup'),
+            ],
+          ),
         ),
-      ],
-    ),
+      ),
+      jumlah: baris(
+        jumlah: true,
+        [
+          sel('Jumlah (${tampil.length})', i: 0, tebal: true),
+          sel('', i: 1),
+          uang(jumNota, 2, tebal: true),
+          uang(jumSku, 3, tebal: true),
+          uang(jumPacked, 4, tebal: true),
+          uang(jumBatal, 5, tebal: true),
+          uang(jumPending, 6, tebal: true),
+          uang(jumActual, 7, tebal: true),
+          sel('', i: 8),
+        ],
+      ),
+      itemBuilder: (context, i) {
+        final b = tampil[i];
+        return baris([
+          sel('', i: 0, anak: _namaToko(context, b)),
+          sel(b.rutePengirim, i: 1),
+          uang(b.nota, 2),
+          uang(b.sku.length, 3),
+          uang(b.packed, 4),
+          uang(b.batal, 5),
+          uang(b.pending, 6),
+          uang(b.actual, 7),
+          sel(b.status, i: 8, tengah: true),
+        ]);
+      },
+    );
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _catatTutup();
+      },
+      child: dialog,
     );
   }
 
@@ -436,58 +496,6 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
       ],
     );
   }
-
-  DataColumn _kolom(
-    String judul,
-    int indeks, {
-    bool angka = false,
-    double lebar = 92,
-  }) {
-    final aktif = _sortKolom == indeks;
-    return DataColumn(
-      headingRowAlignment: MainAxisAlignment.center,
-      numeric: angka,
-      label: InkWell(
-        onTap: () {
-          setState(() {
-            if (_sortKolom == indeks) {
-              _sortNaik = !_sortNaik;
-            } else {
-              _sortKolom = indeks;
-              _sortNaik = true;
-            }
-          });
-        },
-        child: SizedBox(
-          width: lebar,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  judul,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: aktif ? Tema.seed : Colors.black,
-                  ),
-                ),
-              ),
-              if (aktif)
-                Icon(
-                  _sortNaik ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  size: 18,
-                  color: Tema.seed,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class DialogReturToko extends StatefulWidget {
@@ -501,6 +509,13 @@ class DialogReturToko extends StatefulWidget {
 
 class _DialogReturTokoState extends State<DialogReturToko> {
   static const _garis = Color(0xFF8FB4D9);
+  final _gulir = ScrollController();
+
+  @override
+  void dispose() {
+    _gulir.dispose();
+    super.dispose();
+  }
 
   void _catatTutup() {
     CekRinciSetoran.instance.simpanTutup(
@@ -520,22 +535,6 @@ class _DialogReturTokoState extends State<DialogReturToko> {
   @override
   Widget build(BuildContext context) {
     const gayaJumlah = TextStyle(fontWeight: FontWeight.bold);
-    DataCell uang(int n, {bool tebal = false}) => DataCell(
-          Text(
-            Uang.angka(n),
-            textAlign: TextAlign.right,
-            style: tebal ? gayaJumlah : null,
-          ),
-        );
-    DataColumn judul(String t, {bool angka = false}) => DataColumn(
-          headingRowAlignment: MainAxisAlignment.center,
-          numeric: angka,
-          label: Text(
-            t,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-        );
-
     final tampil = [...widget.data.toko]..sort(
         (a, b) => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
       );
@@ -544,107 +543,144 @@ class _DialogReturTokoState extends State<DialogReturToko> {
     final rute = widget.data.rute;
     final judulTeks =
         (rute == null || rute.isEmpty) ? 'Retur' : 'Retur $rute';
+    const w = <double>[220, 88, 64, 92];
+    const judulKolom = ['Toko', 'Rute', 'SKU', 'Retur'];
+
+    Widget sel(
+      String teks, {
+      required int i,
+      bool angka = false,
+      bool tebal = false,
+      Widget? anak,
+    }) {
+      return SizedBox(
+        width: w[i],
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: i == 0 ? 0 : 6,
+            right: i == w.length - 1 ? 0 : 4,
+          ),
+          child: anak ??
+              Align(
+                alignment:
+                    angka ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  teks,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: angka ? TextAlign.right : TextAlign.left,
+                  style: tebal ? gayaJumlah : null,
+                ),
+              ),
+        ),
+      );
+    }
+
+    Widget uang(int n, int i, {bool tebal = false}) =>
+        sel(Uang.angka(n), i: i, angka: true, tebal: tebal);
+
+    Widget baris(List<Widget> isi, {bool jumlah = false}) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: jumlah ? Colors.grey.shade50 : null,
+          border: const Border(bottom: BorderSide(color: _garis, width: 0.5)),
+        ),
+        child: SizedBox(height: 40, child: Row(children: isi)),
+      );
+    }
+
+    Widget namaToko(TokoSetoranRinci b) {
+      return Tooltip(
+        message: 'Rincian barang',
+        child: InkWell(
+          onTap: b.sku.isEmpty
+              ? null
+              : () => showDialog<void>(
+                    context: context,
+                    builder: (ctx) => RinciSkuDialog(
+                      jenis: 'retur',
+                      toko: b,
+                      nota: b.notaList.isEmpty ? null : b.notaList.first,
+                      tanggal: widget.data.tanggal,
+                      ruteCek: widget.data.rute,
+                      wajibBarang: CekRinciSetoran.kunciSemuaBarang(
+                        widget.data.toko,
+                      ),
+                    ),
+                  ),
+          child: Text(
+            b.nama,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Tema.seed,
+              decoration: TextDecoration.underline,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
 
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) _catatTutup();
       },
-      child: AlertDialog(
-      constraints: const BoxConstraints(minWidth: 0, maxWidth: 640),
-      title: Text(
-        judulTeks,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      content: IsiDialog(
-        child: DaftarGulirDialog(
-          faktor: 0.55,
-          child: IntrinsicWidth(
-            child: DataTable(
-              border: const TableBorder(
-                verticalInside: BorderSide(color: _garis, width: 1),
-              ),
-              columnSpacing: 16,
-              horizontalMargin: 8,
-              headingRowHeight: 36,
-              dataRowMinHeight: 36,
-              dataRowMaxHeight: 40,
-              columns: [
-                judul('Toko'),
-                judul('Rute'),
-                judul('SKU', angka: true),
-                judul('Retur', angka: true),
-              ],
-              rows: [
-                for (final b in tampil)
-                  DataRow(
-                    cells: [
-                      DataCell(
-                        Tooltip(
-                          message: 'Rincian barang',
-                          child: InkWell(
-                            onTap: b.sku.isEmpty
-                                ? null
-                                : () => showDialog<void>(
-                                      context: context,
-                                      builder: (ctx) => RinciSkuDialog(
-                                        jenis: 'retur',
-                                        toko: b,
-                                        nota: b.notaList.isEmpty
-                                            ? null
-                                            : b.notaList.first,
-                                        tanggal: widget.data.tanggal,
-                                        ruteCek: widget.data.rute,
-                                        wajibBarang:
-                                            CekRinciSetoran.kunciSemuaBarang(
-                                          widget.data.toko,
-                                        ),
-                                      ),
-                                    ),
-                            child: Text(
-                              b.nama,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Tema.seed,
-                                decoration: TextDecoration.underline,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+      child: DialogGulirIsi(
+        lebar: w.fold<double>(0, (a, b) => a + b),
+        controller: _gulir,
+        itemCount: tampil.length,
+        judul: Text(
+          judulTeks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        kepala: DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: _garis)),
+          ),
+          child: SizedBox(
+            height: 36,
+            child: Row(
+              children: [
+                for (var i = 0; i < judulKolom.length; i++)
+                  SizedBox(
+                    width: w[i],
+                    height: 36,
+                    child: Center(
+                      child: Text(
+                        judulKolom[i],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
                         ),
                       ),
-                      DataCell(Text(b.rutePengirim)),
-                      uang(b.sku.length),
-                      uang(b.retur),
-                    ],
-                  ),
-                DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        'Jumlah (${tampil.length})',
-                        style: gayaJumlah,
-                      ),
                     ),
-                    const DataCell(Text('')),
-                    uang(jumSku, tebal: true),
-                    uang(jumRetur, tebal: true),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Tutup'),
+        jumlah: baris(
+          jumlah: true,
+          [
+            sel('Jumlah (${tampil.length})', i: 0, tebal: true),
+            sel('', i: 1),
+            uang(jumSku, 2, tebal: true),
+            uang(jumRetur, 3, tebal: true),
+          ],
         ),
-      ],
-    ),
+        itemBuilder: (context, i) {
+          final b = tampil[i];
+          return baris([
+            sel('', i: 0, anak: namaToko(b)),
+            sel(b.rutePengirim, i: 1),
+            uang(b.sku.length, 2),
+            uang(b.retur, 3),
+          ]);
+        },
+      ),
     );
   }
 }
@@ -1151,7 +1187,7 @@ class RinciTokoDialog extends StatelessWidget {
                 '$nToko toko',
                 Uang.rp(data.total),
                 'Tap toko untuk SKU',
-              ].join(' Â· '),
+              ].join(' · '),
               style: const TextStyle(
                 color: Tema.redup,
                 fontWeight: FontWeight.w600,
@@ -1213,7 +1249,7 @@ class RinciTokoDialog extends StatelessWidget {
                       t.idPelanggan,
                       if (t.rutePengirim.isNotEmpty) t.rutePengirim,
                       '${t.sku.length} SKU',
-                    ].join(' Â· '),
+                    ].join(' · '),
                     style: const TextStyle(
                       fontSize: 12,
                       color: Tema.redup,

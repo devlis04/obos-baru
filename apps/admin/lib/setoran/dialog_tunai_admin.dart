@@ -226,63 +226,72 @@ Widget _isiDialog({
     contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
     actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
     content: IsiDialog(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Table(
-              columnWidths: const {
-                0: FixedColumnWidth(64),
-                1: FixedColumnWidth(18),
-                2: FixedColumnWidth(52),
-                3: FixedColumnWidth(58),
-                4: FixedColumnWidth(18),
-                5: FixedColumnWidth(80),
-              },
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: anakPecahan,
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Divider(height: 1, thickness: 0.6),
-            ),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Tunai admin',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      fontWeight: FontWeight.bold,
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DaftarGulirDialog(
+            faktor: 0.4,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Table(
+                    columnWidths: const {
+                      0: FixedColumnWidth(64),
+                      1: FixedColumnWidth(18),
+                      2: FixedColumnWidth(52),
+                      3: FixedColumnWidth(58),
+                      4: FixedColumnWidth(18),
+                      5: FixedColumnWidth(80),
+                    },
+                    defaultVerticalAlignment:
+                        TableCellVerticalAlignment.middle,
+                    children: anakPecahan,
                   ),
-                ),
-                const SizedBox(
-                  width: 18,
-                  child: Text('=', textAlign: TextAlign.center, style: _gaya),
-                ),
-                SizedBox(width: 80, child: _uangSel(total, tebal: true)),
-              ],
+                  ...extra,
+                ],
+              ),
             ),
-            if (pecahanKosong)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Divider(height: 1, thickness: 0.6),
+          ),
+          Row(
+            children: [
+              const Expanded(
                 child: Text(
-                  'Total tersimpan Rp ${Uang.angka(tunaiTersimpan)}. '
-                  'Rincian pecahan belum ada; isi lalu simpan.',
+                  'Tunai admin',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     height: 1.2,
-                    color: Colors.orange.shade800,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ...extra,
-          ],
-        ),
+              const SizedBox(
+                width: 18,
+                child: Text('=', textAlign: TextAlign.center, style: _gaya),
+              ),
+              SizedBox(width: 80, child: _uangSel(total, tebal: true)),
+            ],
+          ),
+          if (pecahanKosong)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Total tersimpan Rp ${Uang.angka(tunaiTersimpan)}. '
+                'Rincian pecahan belum ada; isi lalu simpan.',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
+                  color: Colors.orange.shade800,
+                ),
+              ),
+            ),
+        ],
       ),
     ),
     actions: aksi,
