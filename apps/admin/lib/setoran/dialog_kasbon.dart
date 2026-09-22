@@ -10,6 +10,8 @@ Future<void> bukaDialogKasbon({
   required DateTime? tanggal,
   required String rute,
   required List<BarisSetoranRute> semuaRute,
+  int? idBuku,
+  bool lihatSaja = false,
 }) async {
   final daftar = rute == 'Jumlah'
       ? semuaRute
@@ -22,6 +24,8 @@ Future<void> bukaDialogKasbon({
       judul: rute == 'Jumlah' ? 'Kasbon semua rute' : 'Kasbon $rute',
       daftar: daftar,
       semuaRute: rute == 'Jumlah',
+      idBuku: idBuku,
+      lihatSaja: lihatSaja,
     ),
   );
 }
@@ -32,12 +36,16 @@ class _DialogKasbon extends StatefulWidget {
     required this.judul,
     required this.daftar,
     required this.semuaRute,
+    this.idBuku,
+    this.lihatSaja = false,
   });
 
   final DateTime? tanggal;
   final String judul;
   final List<BarisSetoranRute> daftar;
   final bool semuaRute;
+  final int? idBuku;
+  final bool lihatSaja;
 
   @override
   State<_DialogKasbon> createState() => _DialogKasbonState();
@@ -183,15 +191,19 @@ class _DialogKasbonState extends State<_DialogKasbon> {
                       tanggal: widget.tanggal,
                       rute: x.rute,
                       peran: x.o.peran,
+                      idBuku: widget.idBuku,
                     ),
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (v) => cek.setCentang(
-                      tanggal: widget.tanggal,
-                      rute: x.rute,
-                      peran: x.o.peran,
-                      nilai: v ?? false,
-                    ),
+                    onChanged: widget.lihatSaja
+                        ? null
+                        : (v) => cek.setCentang(
+                              tanggal: widget.tanggal,
+                              rute: x.rute,
+                              peran: x.o.peran,
+                              nilai: v ?? false,
+                              idBuku: widget.idBuku,
+                            ),
                   ),
                 ),
               sel(

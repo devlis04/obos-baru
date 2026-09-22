@@ -306,6 +306,7 @@ class TokoSetoranRinci {
     required this.idPelanggan,
     required this.nama,
     required this.rutePengirim,
+    this.ruteSales = '',
     required this.nilai,
     required this.sku,
     this.nota = 0,
@@ -321,6 +322,7 @@ class TokoSetoranRinci {
   final String idPelanggan;
   final String nama;
   final String rutePengirim;
+  final String ruteSales;
   final int nilai;
   final List<SkuSetoranRinci> sku;
   final int nota;
@@ -340,6 +342,7 @@ class TokoSetoranRinci {
       idPelanggan: m['id_pelanggan']?.toString() ?? '',
       nama: m['nama']?.toString() ?? '',
       rutePengirim: m['rute_pengirim']?.toString() ?? '',
+      ruteSales: (m['rute_sales'] ?? m['rute'])?.toString() ?? '',
       nilai: _n(m['nilai']),
       nota: _n(m['nota']),
       packed: packed,
@@ -452,6 +455,7 @@ class RinciSetoran {
     required this.jenis,
     this.rute,
     this.tanggal,
+    this.idBuku,
     this.total = 0,
     this.toko = const [],
   });
@@ -459,18 +463,20 @@ class RinciSetoran {
   final String jenis;
   final String? rute;
   final DateTime? tanggal;
+  final int? idBuku;
   final int total;
   final List<TokoSetoranRinci> toko;
 
-  factory RinciSetoran.dari(Map<String, dynamic> m) {
+  factory RinciSetoran.dari(Map<String, dynamic> m, {int? idBuku}) {
     DateTime? tgl;
     final raw = m['tanggal']?.toString();
-    if (raw != null && raw.isNotEmpty) tgl = DateTime.tryParse(raw);
+    if (raw != null && raw.isNotEmpty) tgl = Uang.hariDari(raw);
     final list = m['toko'];
     return RinciSetoran(
       jenis: m['jenis']?.toString() ?? '',
       rute: m['rute']?.toString(),
       tanggal: tgl,
+      idBuku: idBuku ?? (m['id_setoran_buku'] as num?)?.toInt(),
       total: _n(m['total']),
       toko: [
         if (list is List)
@@ -509,6 +515,7 @@ class BukuSetoranPilih {
 class SiklusBuku {
   const SiklusBuku({
     this.adaBuku = false,
+    this.idSetoranBuku,
     this.pesan = '',
     this.siapTutup = false,
     this.malamBaruTertahan = false,
@@ -517,6 +524,7 @@ class SiklusBuku {
   static const kosong = SiklusBuku();
 
   final bool adaBuku;
+  final int? idSetoranBuku;
   final String pesan;
   final bool siapTutup;
   final bool malamBaruTertahan;
@@ -524,6 +532,7 @@ class SiklusBuku {
   factory SiklusBuku.dari(Map<String, dynamic> m) {
     return SiklusBuku(
       adaBuku: m['ada_buku'] == true,
+      idSetoranBuku: (m['id_setoran_buku'] as num?)?.toInt(),
       pesan: (m['pesan']?.toString() ?? '').trim(),
       siapTutup: m['siap_tutup'] == true,
       malamBaruTertahan: m['malam_baru_tertahan'] == true,
@@ -584,9 +593,12 @@ class SetoranRepo {
     required String jenis,
     String? rute,
     int? idBuku,
+    bool lihatSaja = false,
   }) async {
     final hasil = await _sb.rpc(
-      'admin_setoran_rinci',
+      lihatSaja && jenis == 'pending'
+          ? 'admin_setoran_pending_foto_rinci'
+          : 'admin_setoran_rinci',
       params: {
         'p_jenis': jenis,
         'p_rute': rute,
@@ -596,6 +608,90 @@ class SetoranRepo {
     if (hasil is! Map) {
       return RinciSetoran(jenis: jenis, rute: rute);
     }
-    return RinciSetoran.dari(Map<String, dynamic>.from(hasil));
+    final data = RinciSetoran.dari(
+      Map<String, dynamic>.from(hasil),
+      idBuku: idBuku,
+    );
+    return _isiRuteSales(data);
+  }
+
+  Future<RinciSetoran> _isiRuteSales(RinciSetoran data) async {
+    final notaId = <String>[
+      for (final t in data.toko)
+        for (final n in t.notaList)
+          if (n.id.isNotEmpty) n.id,
+    ];
+    final tokoId = <String>[
+      for (final t in data.toko)
+        if (t.idPelanggan.isNotEmpty) t.idPelanggan,
+    ];
+    if (notaId.isEmpty && tokoId.isEmpty) return data;
+    final petaNota = <String, String>{};
+    final petaToko = <String, String>{};
+    try {
+      final hasil = await _sb.rpc(
+        'admin_rute_sales_peta',
+        params: {
+          'p_nota': notaId,
+          'p_toko': tokoId,
+        },
+      ).timeout(Jaringan.cepat);
+      if (hasil is Map) {
+        final nota = hasil['nota'];
+        if (nota is Map) {
+          for (final e in nota.entries) {
+            final r = e.value?.toString().trim() ?? '';
+            if (r.isNotEmpty) petaNota[e.key.toString()] = r;
+          }
+        }
+        final toko = hasil['toko'];
+        if (toko is Map) {
+          for (final e in toko.entries) {
+            final r = e.value?.toString().trim() ?? '';
+            if (r.isNotEmpty) petaToko[e.key.toString()] = r;
+          }
+        }
+      }
+    } catch (_) {}
+    if (petaNota.isEmpty && petaToko.isEmpty) return data;
+    String ruteSalesToko(TokoSetoranRinci t) {
+      if (t.ruteSales.isNotEmpty) return t.ruteSales;
+      final ada = <String>{
+        for (final n in t.notaList)
+          if ((petaNota[n.id] ?? '').isNotEmpty) petaNota[n.id]!,
+      };
+      if (ada.isNotEmpty) {
+        final list = ada.toList()..sort();
+        return list.join(', ');
+      }
+      return petaToko[t.idPelanggan] ?? '';
+    }
+
+    return RinciSetoran(
+      jenis: data.jenis,
+      rute: data.rute,
+      tanggal: data.tanggal,
+      idBuku: data.idBuku,
+      total: data.total,
+      toko: [
+        for (final t in data.toko)
+          TokoSetoranRinci(
+            idPelanggan: t.idPelanggan,
+            nama: t.nama,
+            rutePengirim: t.rutePengirim,
+            ruteSales: ruteSalesToko(t),
+            nilai: t.nilai,
+            sku: t.sku,
+            nota: t.nota,
+            packed: t.packed,
+            batal: t.batal,
+            pending: t.pending,
+            actual: t.actual,
+            retur: t.retur,
+            status: t.status,
+            notaList: t.notaList,
+          ),
+      ],
+    );
   }
 }

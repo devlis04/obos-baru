@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../barang/barang.dart';
 import '../pelanggan/pelanggan.dart';
+import '../pesan.dart';
 import 'package:obos_core/obos_core.dart';
 import 'bilah_aksi.dart';
 import 'dialog_qty.dart';
@@ -107,14 +108,7 @@ class _ReviewOrderLayarState extends State<ReviewOrderLayar> {
     if (!mounted) return;
     setState(() => _simpan = false);
     if (!hasil.ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            hasil.pesan,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-      );
+      tampilPesan(context, hasil.pesan);
       return;
     }
     Navigator.pop(

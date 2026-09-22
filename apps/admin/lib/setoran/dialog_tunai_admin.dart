@@ -10,9 +10,11 @@ Future<void> bukaDialogTunaiAdmin({
   required String rute,
   required int tunaiPengirim,
   List<String> semuaRute = const [],
+  int? idBuku,
+  bool lihatSaja = false,
 }) async {
   if (rute == 'Jumlah') {
-    await _dialogJumlah(context, tanggal, semuaRute);
+    await _dialogJumlah(context, tanggal, semuaRute, idBuku);
     return;
   }
   await showDialog<void>(
@@ -20,6 +22,8 @@ Future<void> bukaDialogTunaiAdmin({
     builder: (ctx) => _DialogTunaiRute(
       tanggal: tanggal,
       rute: rute,
+      idBuku: idBuku,
+      lihatSaja: lihatSaja,
     ),
   );
 }
@@ -28,10 +32,14 @@ class _DialogTunaiRute extends StatefulWidget {
   const _DialogTunaiRute({
     required this.tanggal,
     required this.rute,
+    this.idBuku,
+    this.lihatSaja = false,
   });
 
   final DateTime? tanggal;
   final String rute;
+  final int? idBuku;
+  final bool lihatSaja;
 
   @override
   State<_DialogTunaiRute> createState() => _DialogTunaiRuteState();
@@ -45,7 +53,11 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
   @override
   void initState() {
     super.initState();
-    final lama = TunaiAdminSetoran.instance.ambil(widget.tanggal, widget.rute);
+    final lama = TunaiAdminSetoran.instance.ambil(
+      widget.tanggal,
+      widget.rute,
+      idBuku: widget.idBuku,
+    );
     final qtyLama = lama.pecahanLengkap;
     _tunaiTersimpan = lama.tunai;
     _pecahanKosong = lama.tunai > 0 && qtyLama.every((n) => n == 0);
@@ -74,11 +86,13 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
   }
 
   void _pakai() {
+    if (widget.lihatSaja) return;
     TunaiAdminSetoran.instance.simpan(
       tanggal: widget.tanggal,
       rute: widget.rute,
       tunai: _total,
       pecahan: [for (final c in _pecahanCtrl) Uang.angkaTeks(c.text)],
+      idBuku: widget.idBuku,
     );
     Navigator.pop(context);
   }
@@ -95,6 +109,8 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
           _barisPecahan(
             qty: TextField(
               controller: _pecahanCtrl[i],
+              readOnly: widget.lihatSaja,
+              enabled: !widget.lihatSaja,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               style: _gaya,
@@ -113,10 +129,11 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),
-        FilledButton(
-          onPressed: _pakai,
-          child: const Text('Pakai'),
-        ),
+        if (!widget.lihatSaja)
+          FilledButton(
+            onPressed: _pakai,
+            child: const Text('Pakai'),
+          ),
       ],
     );
   }
@@ -126,8 +143,13 @@ Future<void> _dialogJumlah(
   BuildContext context,
   DateTime? tanggal,
   List<String> semuaRute,
+  int? idBuku,
 ) async {
-  final qty = TunaiAdminSetoran.instance.pecahanJumlah(tanggal, semuaRute);
+  final qty = TunaiAdminSetoran.instance.pecahanJumlah(
+    tanggal,
+    semuaRute,
+    idBuku: idBuku,
+  );
   var total = 0;
   for (var i = 0; i < pecahanTunaiAdmin.length; i++) {
     total += pecahanTunaiAdmin[i].nilai * qty[i];
@@ -172,7 +194,9 @@ Future<void> _dialogJumlah(
                   SizedBox(
                     width: 98,
                     child: _uangSel(
-                      TunaiAdminSetoran.instance.ambil(tanggal, r).tunai,
+                      TunaiAdminSetoran.instance
+                          .ambil(tanggal, r, idBuku: idBuku)
+                          .tunai,
                     ),
                   ),
                 ],

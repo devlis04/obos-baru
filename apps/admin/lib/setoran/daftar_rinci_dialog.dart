@@ -9,14 +9,6 @@ import '../uang.dart';
 import 'cek_rinci_setoran.dart';
 import 'setoran_repo.dart';
 
-double _rasioNilai(int omset, int modal) {
-  if (omset <= 0 || modal <= 0) return 0;
-  return (omset - modal) / modal * 100;
-}
-
-String _rasioTeks(int omset, int modal) =>
-    '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
-
 bool _cocokAngka(String f, int n) {
   final digit = f.replaceAll(RegExp(r'[^0-9]'), '');
   if (digit.isNotEmpty && n.toString().contains(digit)) return true;
@@ -85,11 +77,17 @@ Future<void> bukaRinciSetoran({
   required String jenis,
   String? rute,
   int? idBuku,
+  bool lihatSaja = false,
 }) async {
   final repo = SetoranRepo(Supabase.instance.client);
   RinciSetoran data;
   try {
-    data = await repo.rinci(jenis: jenis, rute: rute, idBuku: idBuku);
+    data = await repo.rinci(
+      jenis: jenis,
+      rute: rute,
+      idBuku: idBuku,
+      lihatSaja: lihatSaja,
+    );
   } catch (e) {
     if (!context.mounted) return;
     tampilPesan(
@@ -108,8 +106,8 @@ Future<void> bukaRinciSetoran({
   await showDialog<void>(
     context: context,
     builder: (ctx) => data.jenis == 'retur'
-        ? DialogReturToko(data: data)
-        : DialogKirimanToko(data: data),
+        ? DialogReturToko(data: data, lihatSaja: lihatSaja)
+        : DialogKirimanToko(data: data, lihatSaja: lihatSaja),
   );
 }
 
@@ -121,9 +119,14 @@ String _lingkupRute(RinciSetoran data) {
 }
 
 class DialogKirimanToko extends StatefulWidget {
-  const DialogKirimanToko({super.key, required this.data});
+  const DialogKirimanToko({
+    super.key,
+    required this.data,
+    this.lihatSaja = false,
+  });
 
   final RinciSetoran data;
+  final bool lihatSaja;
 
   @override
   State<DialogKirimanToko> createState() => _DialogKirimanTokoState();
@@ -150,6 +153,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
         tanggal: widget.data.tanggal,
         jenis: widget.data.jenis,
         rute: widget.data.rute,
+        idBuku: widget.data.idBuku,
       ),
     );
   }
@@ -162,17 +166,20 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
   }
 
   void _catatTutup() {
+    if (widget.lihatSaja) return;
     if (widget.data.jenis == 'actual') return;
     if (widget.data.jenis == 'batal' || widget.data.jenis == 'pending') {
       CekRinciSetoran.instance.simpanTutup(
         tanggal: widget.data.tanggal,
         jenis: widget.data.jenis,
         rute: widget.data.rute,
+        idBuku: widget.data.idBuku,
         toko: widget.data.toko,
         centang: CekRinciSetoran.instance.centang(
           tanggal: widget.data.tanggal,
           jenis: widget.data.jenis,
           rute: widget.data.rute,
+          idBuku: widget.data.idBuku,
         ),
         wajib: widget.data.jenis == 'batal'
             ? CekRinciSetoran.kunciSemuaBarang(widget.data.toko)
@@ -184,6 +191,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
       tanggal: widget.data.tanggal,
       jenis: widget.data.jenis,
       rute: widget.data.rute,
+      idBuku: widget.data.idBuku,
       toko: widget.data.toko,
       centang: _centang,
     );
@@ -212,6 +220,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
 
     return b.nama.toLowerCase().contains(f) ||
         b.idPelanggan.toLowerCase().contains(f) ||
+        b.ruteSales.toLowerCase().contains(f) ||
         b.rutePengirim.toLowerCase().contains(f) ||
         b.status.toLowerCase().contains(f) ||
         angka(b.nota) ||
@@ -225,7 +234,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
   int _banding(TokoSetoranRinci a, TokoSetoranRinci b) {
     final r = switch (_sortKolom) {
       0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
-      1 => a.rutePengirim.toLowerCase().compareTo(b.rutePengirim.toLowerCase()),
+      1 => a.ruteSales.toLowerCase().compareTo(b.ruteSales.toLowerCase()),
       2 => a.nota.compareTo(b.nota),
       3 => a.sku.length.compareTo(b.sku.length),
       4 => a.packed.compareTo(b.packed),
@@ -252,7 +261,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
     final wToko = _centangToko ? 188.0 : 160.0;
     final w = <double>[
       wToko,
-      88,
+      100,
       64,
       64,
       92,
@@ -263,7 +272,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
     ];
     final judulKolom = const [
       'Toko',
-      'Rute',
+      'Rute sales',
       'Nota',
       'SKU',
       'Kiriman',
@@ -422,7 +431,7 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
         final b = tampil[i];
         return baris([
           sel('', i: 0, anak: _namaToko(context, b)),
-          sel(b.rutePengirim, i: 1),
+          sel(b.ruteSales, i: 1, tengah: true),
           uang(b.nota, 2),
           uang(b.sku.length, 3),
           uang(b.packed, 4),
@@ -454,7 +463,9 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
                     jenis: widget.data.jenis,
                     toko: b,
                     tanggal: widget.data.tanggal,
+                    idBuku: widget.data.idBuku,
                     ruteCek: widget.data.rute,
+                    lihatSaja: widget.lihatSaja,
                     wajibBarang: widget.data.jenis == 'batal'
                         ? CekRinciSetoran.kunciSemuaBarang(widget.data.toko)
                         : const {},
@@ -481,16 +492,18 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
           value: _centang.contains(CekRinciSetoran.kunciToko(b)),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (v) {
-            setState(() {
-              final id = CekRinciSetoran.kunciToko(b);
-              if (v == true) {
-                _centang.add(id);
-              } else {
-                _centang.remove(id);
-              }
-            });
-          },
+          onChanged: widget.lihatSaja
+              ? null
+              : (v) {
+                  setState(() {
+                    final id = CekRinciSetoran.kunciToko(b);
+                    if (v == true) {
+                      _centang.add(id);
+                    } else {
+                      _centang.remove(id);
+                    }
+                  });
+                },
         ),
         Expanded(child: nama),
       ],
@@ -499,9 +512,14 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
 }
 
 class DialogReturToko extends StatefulWidget {
-  const DialogReturToko({super.key, required this.data});
+  const DialogReturToko({
+    super.key,
+    required this.data,
+    this.lihatSaja = false,
+  });
 
   final RinciSetoran data;
+  final bool lihatSaja;
 
   @override
   State<DialogReturToko> createState() => _DialogReturTokoState();
@@ -518,15 +536,18 @@ class _DialogReturTokoState extends State<DialogReturToko> {
   }
 
   void _catatTutup() {
+    if (widget.lihatSaja) return;
     CekRinciSetoran.instance.simpanTutup(
       tanggal: widget.data.tanggal,
       jenis: 'retur',
       rute: widget.data.rute,
+      idBuku: widget.data.idBuku,
       toko: widget.data.toko,
       centang: CekRinciSetoran.instance.centang(
         tanggal: widget.data.tanggal,
         jenis: 'retur',
         rute: widget.data.rute,
+        idBuku: widget.data.idBuku,
       ),
       wajib: CekRinciSetoran.kunciSemuaBarang(widget.data.toko),
     );
@@ -602,7 +623,9 @@ class _DialogReturTokoState extends State<DialogReturToko> {
                       toko: b,
                       nota: b.notaList.isEmpty ? null : b.notaList.first,
                       tanggal: widget.data.tanggal,
+                      idBuku: widget.data.idBuku,
                       ruteCek: widget.data.rute,
+                      lihatSaja: widget.lihatSaja,
                       wajibBarang: CekRinciSetoran.kunciSemuaBarang(
                         widget.data.toko,
                       ),
@@ -691,17 +714,21 @@ class DialogNotaToko extends StatefulWidget {
     required this.jenis,
     required this.toko,
     this.tanggal,
+    this.idBuku,
     this.ruteCek,
     this.wajibBarang = const {},
     this.wajibNota = const {},
+    this.lihatSaja = false,
   });
 
   final String jenis;
   final TokoSetoranRinci toko;
   final DateTime? tanggal;
+  final int? idBuku;
   final String? ruteCek;
   final Set<String> wajibBarang;
   final Set<String> wajibNota;
+  final bool lihatSaja;
 
   @override
   State<DialogNotaToko> createState() => _DialogNotaTokoState();
@@ -739,34 +766,22 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       }
     }
     return _cocokAngka(f, n.sku.length) ||
-        _cocokAngka(f, n.nilaiOrder) ||
         _cocokAngka(f, n.packed) ||
         _cocokAngka(f, n.batal) ||
         _cocokAngka(f, n.pending) ||
         _cocokAngka(f, n.actual) ||
-        _cocokAngka(f, n.retur) ||
-        _rasioTeks(n.nilaiOrder, n.modalOrder).toLowerCase().contains(f) ||
-        _rasioTeks(n.packed, n.modalPacked).toLowerCase().contains(f) ||
-        _rasioTeks(n.pending, n.modalPending).toLowerCase().contains(f) ||
-        _rasioTeks(n.actual, n.modalActual).toLowerCase().contains(f);
+        _cocokAngka(f, n.retur);
   }
 
   int _banding(NotaSetoranRinci a, NotaSetoranRinci b, bool pakaiRetur) {
-    int rasio(int oa, int ma, int ob, int mb) =>
-        _rasioNilai(oa, ma).compareTo(_rasioNilai(ob, mb));
     final r = switch (_sortKolom) {
       0 => a.id.toLowerCase().compareTo(b.id.toLowerCase()),
       1 => a.sku.length.compareTo(b.sku.length),
-      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
-      3 => rasio(a.nilaiOrder, a.modalOrder, b.nilaiOrder, b.modalOrder),
-      4 => a.packed.compareTo(b.packed),
-      5 => rasio(a.packed, a.modalPacked, b.packed, b.modalPacked),
-      6 => a.batal.compareTo(b.batal),
-      7 => a.pending.compareTo(b.pending),
-      8 => rasio(a.pending, a.modalPending, b.pending, b.modalPending),
-      9 => a.actual.compareTo(b.actual),
-      10 => rasio(a.actual, a.modalActual, b.actual, b.modalActual),
-      11 => pakaiRetur
+      2 => a.packed.compareTo(b.packed),
+      3 => a.batal.compareTo(b.batal),
+      4 => a.pending.compareTo(b.pending),
+      5 => a.actual.compareTo(b.actual),
+      6 => pakaiRetur
           ? a.retur.compareTo(b.retur)
           : a.status.toLowerCase().compareTo(b.status.toLowerCase()),
       _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
@@ -791,6 +806,7 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
     if (!_cekNota) return;
     final sudah = CekRinciSetoran.instance.centang(
       tanggal: widget.tanggal,
+      idBuku: widget.idBuku,
       jenis: widget.jenis,
       rute: widget.ruteCek,
     );
@@ -801,9 +817,11 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
   }
 
   void _catatTutup() {
+    if (widget.lihatSaja) return;
     if (!_cekNota) return;
     CekRinciSetoran.instance.gabungBarang(
       tanggal: widget.tanggal,
+      idBuku: widget.idBuku,
       jenis: widget.jenis,
       rute: widget.ruteCek,
       kunciNota: {
@@ -822,79 +840,39 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
     final tampil = widget.toko.notaList.where(_cocok).toList()
       ..sort((a, b) => _banding(a, b, pakaiRetur));
     final jumSku = tampil.fold<int>(0, (a, n) => a + n.sku.length);
-    final jumOrder = tampil.fold<int>(0, (a, n) => a + n.nilaiOrder);
-    final jumModalOrder = tampil.fold<int>(0, (a, n) => a + n.modalOrder);
     final jumPacked = tampil.fold<int>(0, (a, n) => a + n.packed);
-    final jumModalPacked = tampil.fold<int>(0, (a, n) => a + n.modalPacked);
     final jumBatal = tampil.fold<int>(0, (a, n) => a + n.batal);
     final jumPending = tampil.fold<int>(0, (a, n) => a + n.pending);
-    final jumModalPending = tampil.fold<int>(0, (a, n) => a + n.modalPending);
     final jumActual = tampil.fold<int>(0, (a, n) => a + n.actual);
-    final jumModalActual = tampil.fold<int>(0, (a, n) => a + n.modalActual);
     final jumRetur = tampil.fold<int>(0, (a, n) => a + n.retur);
-    final rute = widget.toko.rutePengirim.trim();
-    final judulTeks = rute.isEmpty
-        ? 'Nota ${widget.toko.nama}'
-        : 'Nota ${widget.toko.nama} $rute';
-    final iStatus = pakaiRetur ? 12 : 11;
+    final judulTeks = [
+      'Nota',
+      widget.toko.nama.trim(),
+      widget.toko.ruteSales.trim(),
+      widget.toko.rutePengirim.trim(),
+    ].where((s) => s.isNotEmpty).join(' ');
+    final iStatus = pakaiRetur ? 7 : 6;
     final lebar = pakaiRetur
-        ? const [
-            176.0,
-            44.0,
-            84.0,
-            48.0,
-            84.0,
-            48.0,
-            72.0,
-            84.0,
-            48.0,
-            84.0,
-            48.0,
-            76.0,
-            72.0,
-          ]
-        : const [
-            188.0,
-            44.0,
-            88.0,
-            48.0,
-            88.0,
-            48.0,
-            72.0,
-            88.0,
-            48.0,
-            88.0,
-            52.0,
-            80.0,
-          ];
+        ? const [176.0, 44.0, 88.0, 72.0, 88.0, 88.0, 76.0, 80.0]
+        : const [188.0, 44.0, 88.0, 72.0, 88.0, 88.0, 80.0];
     final judulKolom = pakaiRetur
         ? const [
             'Nota',
             'SKU',
-            'Order',
-            '%',
             'Kiriman',
-            '%',
             'Batal',
             'Pending',
-            '%',
             'Actual',
-            '%',
             'Retur',
             'Status',
           ]
         : const [
             'Nota',
             'SKU',
-            'Order',
-            '%',
             'Kiriman',
-            '%',
             'Batal',
             'Pending',
-            '%',
             'Actual',
-            '%',
             'Status',
           ];
 
@@ -949,34 +927,22 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       );
     }
 
-    String rasio(int omset, int modal) => _rasioTeks(omset, modal);
-
     List<Widget> nilaiNota({
       required int sku,
-      required int order,
-      required int modalO,
       required int packed,
-      required int modalK,
       required int batal,
       required int pending,
-      required int modalP,
       required int actual,
-      required int modalA,
       required int retur,
       bool tebal = false,
     }) {
       return [
         uang(sku, 1, tebal: tebal),
-        uang(order, 2, tebal: tebal),
-        sel(rasio(order, modalO), i: 3, angkaKolom: true, tebal: tebal),
-        uang(packed, 4, tebal: tebal),
-        sel(rasio(packed, modalK), i: 5, angkaKolom: true, tebal: tebal),
-        uang(batal, 6, tebal: tebal),
-        uang(pending, 7, tebal: tebal),
-        sel(rasio(pending, modalP), i: 8, angkaKolom: true, tebal: tebal),
-        uang(actual, 9, tebal: tebal),
-        sel(rasio(actual, modalA), i: 10, angkaKolom: true, tebal: tebal),
-        if (pakaiRetur) uang(retur, 11, tebal: tebal),
+        uang(packed, 2, tebal: tebal),
+        uang(batal, 3, tebal: tebal),
+        uang(pending, 4, tebal: tebal),
+        uang(actual, 5, tebal: tebal),
+        if (pakaiRetur) uang(retur, 6, tebal: tebal),
       ];
     }
 
@@ -1062,15 +1028,10 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
           ),
           ...nilaiNota(
             sku: jumSku,
-            order: jumOrder,
-            modalO: jumModalOrder,
             packed: jumPacked,
-            modalK: jumModalPacked,
             batal: jumBatal,
             pending: jumPending,
-            modalP: jumModalPending,
             actual: jumActual,
-            modalA: jumModalActual,
             retur: jumRetur,
             tebal: true,
           ),
@@ -1083,15 +1044,10 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
           sel('', i: 0, anak: _namaNota(notaBaris)),
           ...nilaiNota(
             sku: notaBaris.sku.length,
-            order: notaBaris.nilaiOrder,
-            modalO: notaBaris.modalOrder,
             packed: notaBaris.packed,
-            modalK: notaBaris.modalPacked,
             batal: notaBaris.batal,
             pending: notaBaris.pending,
-            modalP: notaBaris.modalPending,
             actual: notaBaris.actual,
-            modalA: notaBaris.modalActual,
             retur: notaBaris.retur,
           ),
           sel(notaBaris.status, i: iStatus, tengah: true),
@@ -1120,7 +1076,9 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
                     toko: widget.toko,
                     nota: n,
                     tanggal: widget.tanggal,
+                    idBuku: widget.idBuku,
                     ruteCek: widget.ruteCek,
+                    lihatSaja: widget.lihatSaja,
                     wajibBarang: widget.wajibBarang,
                   ),
                 ),
@@ -1143,15 +1101,17 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
           value: _centang.contains(id),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (v) {
-            setState(() {
-              if (v == true) {
-                _centang.add(id);
-              } else {
-                _centang.remove(id);
-              }
-            });
-          },
+          onChanged: widget.lihatSaja
+              ? null
+              : (v) {
+                  setState(() {
+                    if (v == true) {
+                      _centang.add(id);
+                    } else {
+                      _centang.remove(id);
+                    }
+                  });
+                },
         ),
         Expanded(child: nama),
       ],
@@ -1284,16 +1244,20 @@ class RinciSkuDialog extends StatefulWidget {
     required this.toko,
     this.nota,
     this.tanggal,
+    this.idBuku,
     this.ruteCek,
     this.wajibBarang = const {},
+    this.lihatSaja = false,
   });
 
   final String jenis;
   final TokoSetoranRinci toko;
   final NotaSetoranRinci? nota;
   final DateTime? tanggal;
+  final int? idBuku;
   final String? ruteCek;
   final Set<String> wajibBarang;
+  final bool lihatSaja;
 
   @override
   State<RinciSkuDialog> createState() => _RinciSkuDialogState();
@@ -1325,24 +1289,17 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         s.idBarang.toLowerCase().contains(f)) {
       return true;
     }
-    return _cocokAngka(f, s.qtyOrder) ||
-        _cocokAngka(f, s.nilaiOrder) ||
-        _cocokAngka(f, s.qtyPacked) ||
+    return _cocokAngka(f, s.qtyPacked) ||
         _cocokAngka(f, s.packed) ||
         _cocokAngka(f, s.qtyBatal) ||
         _cocokAngka(f, s.batal) ||
         _cocokAngka(f, s.qtyActual) ||
         _cocokAngka(f, s.actual) ||
         _cocokAngka(f, s.qtyRetur) ||
-        _cocokAngka(f, s.nilaiRetur) ||
-        _rasioTeks(s.nilaiOrder, s.modalOrder).toLowerCase().contains(f) ||
-        _rasioTeks(s.packed, s.modalPacked).toLowerCase().contains(f) ||
-        _rasioTeks(s.actual, s.modalActual).toLowerCase().contains(f);
+        _cocokAngka(f, s.nilaiRetur);
   }
 
   int _banding(SkuSetoranRinci a, SkuSetoranRinci b, bool pakaiRetur) {
-    int rasio(int oa, int ma, int ob, int mb) =>
-        _rasioNilai(oa, ma).compareTo(_rasioNilai(ob, mb));
     if (pakaiRetur) {
       final r = switch (_sortKolom) {
         0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
@@ -1353,17 +1310,12 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     }
     final r = switch (_sortKolom) {
       0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
-      1 => a.qtyOrder.compareTo(b.qtyOrder),
-      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
-      3 => rasio(a.nilaiOrder, a.modalOrder, b.nilaiOrder, b.modalOrder),
-      4 => a.qtyPacked.compareTo(b.qtyPacked),
-      5 => a.packed.compareTo(b.packed),
-      6 => rasio(a.packed, a.modalPacked, b.packed, b.modalPacked),
-      7 => a.qtyBatal.compareTo(b.qtyBatal),
-      8 => a.batal.compareTo(b.batal),
-      9 => a.qtyActual.compareTo(b.qtyActual),
-      10 => a.actual.compareTo(b.actual),
-      _ => rasio(a.actual, a.modalActual, b.actual, b.modalActual),
+      1 => a.qtyPacked.compareTo(b.qtyPacked),
+      2 => a.packed.compareTo(b.packed),
+      3 => a.qtyBatal.compareTo(b.qtyBatal),
+      4 => a.batal.compareTo(b.batal),
+      5 => a.qtyActual.compareTo(b.qtyActual),
+      _ => a.actual.compareTo(b.actual),
     };
     return _sortNaik ? r : -r;
   }
@@ -1386,6 +1338,7 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     final nota = widget.nota!;
     final sudah = CekRinciSetoran.instance.centang(
       tanggal: widget.tanggal,
+      idBuku: widget.idBuku,
       jenis: widget.jenis,
       rute: widget.ruteCek,
     );
@@ -1396,10 +1349,12 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
   }
 
   void _catatTutup() {
+    if (widget.lihatSaja) return;
     if (!_cekBarang) return;
     final nota = widget.nota!;
     CekRinciSetoran.instance.gabungBarang(
       tanggal: widget.tanggal,
+      idBuku: widget.idBuku,
       jenis: widget.jenis,
       rute: widget.ruteCek,
       kunciNota: {
@@ -1424,54 +1379,39 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
       ..sort((a, b) => _banding(a, b, pakaiRetur));
     final jumQtyPacked = sku.fold<int>(0, (a, s) => a + s.qtyPacked);
     final jumPacked = sku.fold<int>(0, (a, s) => a + s.packed);
-    final jumQtyOrder = sku.fold<int>(0, (a, s) => a + s.qtyOrder);
-    final jumOrder = sku.fold<int>(0, (a, s) => a + s.nilaiOrder);
-    final jumModalOrder = sku.fold<int>(0, (a, s) => a + s.modalOrder);
-    final jumModalPacked = sku.fold<int>(0, (a, s) => a + s.modalPacked);
-    final jumModalActual = sku.fold<int>(0, (a, s) => a + s.modalActual);
     final jumQtyBatal = sku.fold<int>(0, (a, s) => a + s.qtyBatal);
     final jumBatal = sku.fold<int>(0, (a, s) => a + s.batal);
     final jumQtyActual = sku.fold<int>(0, (a, s) => a + s.qtyActual);
     final jumActual = sku.fold<int>(0, (a, s) => a + s.actual);
     final jumQtyRetur = sku.fold<int>(0, (a, s) => a + s.qtyRetur);
     final jumRetur = sku.fold<int>(0, (a, s) => a + s.nilaiRetur);
-    final rute = widget.toko.rutePengirim.trim();
     final judulTeks = [
-      widget.toko.nama,
-      if (rute.isNotEmpty) rute,
+      widget.toko.nama.trim(),
+      widget.toko.ruteSales.trim(),
+      widget.toko.rutePengirim.trim(),
       nota.id,
-    ].join(' ');
+    ].where((s) => s.isNotEmpty).join(' ');
     final lebar = pakaiRetur
         ? const [280.0, 100.0, 100.0]
         : const [
-            200.0,
-            72.0,
+            220.0,
             88.0,
-            52.0,
-            80.0,
             88.0,
-            52.0,
-            72.0,
             80.0,
             80.0,
             88.0,
-            52.0,
+            88.0,
           ];
     final judulKolom = pakaiRetur
         ? const ['Barang', 'qty(retur)', 'Retur']
         : const [
             'Barang',
-            'qty(order)',
-            'Order',
-            '%',
             'qty(kiriman)',
             'Kiriman',
-            '%',
             'qty(batal)',
             'Batal',
             'qty(actual)',
             'Actual',
-            '%',
           ];
 
     Widget sel(
@@ -1507,20 +1447,13 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
       );
     }
 
-    String rasio(int omset, int modal) => _rasioTeks(omset, modal);
-
     List<Widget> selNilai({
-      required int qtyO,
-      required int order,
-      required int modalO,
       required int qtyK,
       required int kiriman,
-      required int modalK,
       required int qtyB,
       required int batal,
       required int qtyA,
       required int actual,
-      required int modalA,
       required int qtyR,
       required int retur,
       bool tebal = false,
@@ -1532,17 +1465,12 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         ];
       }
       return [
-        angkaTeks(Uang.qty(qtyO), 1, tebal: tebal),
-        angkaTeks(Uang.angka(order), 2, tebal: tebal),
-        angkaTeks(rasio(order, modalO), 3, tebal: tebal),
-        angkaTeks(Uang.qty(qtyK), 4, tebal: tebal),
-        angkaTeks(Uang.angka(kiriman), 5, tebal: tebal),
-        angkaTeks(rasio(kiriman, modalK), 6, tebal: tebal),
-        angkaTeks(Uang.qty(qtyB), 7, tebal: tebal),
-        angkaTeks(Uang.angka(batal), 8, tebal: tebal),
-        angkaTeks(Uang.qty(qtyA), 9, tebal: tebal),
-        angkaTeks(Uang.angka(actual), 10, tebal: tebal),
-        angkaTeks(rasio(actual, modalA), 11, tebal: tebal),
+        angkaTeks(Uang.qty(qtyK), 1, tebal: tebal),
+        angkaTeks(Uang.angka(kiriman), 2, tebal: tebal),
+        angkaTeks(Uang.qty(qtyB), 3, tebal: tebal),
+        angkaTeks(Uang.angka(batal), 4, tebal: tebal),
+        angkaTeks(Uang.qty(qtyA), 5, tebal: tebal),
+        angkaTeks(Uang.angka(actual), 6, tebal: tebal),
       ];
     }
 
@@ -1617,17 +1545,12 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         [
           sel('Jumlah (${sku.length})', i: 0, tebal: true),
           ...selNilai(
-            qtyO: jumQtyOrder,
-            order: jumOrder,
-            modalO: jumModalOrder,
             qtyK: jumQtyPacked,
             kiriman: jumPacked,
-            modalK: jumModalPacked,
             qtyB: jumQtyBatal,
             batal: jumBatal,
             qtyA: jumQtyActual,
             actual: jumActual,
-            modalA: jumModalActual,
             qtyR: jumQtyRetur,
             retur: jumRetur,
             tebal: true,
@@ -1639,17 +1562,12 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         return baris([
           sel('', i: 0, anak: _namaBarang(nota, s)),
           ...selNilai(
-            qtyO: s.qtyOrder,
-            order: s.nilaiOrder,
-            modalO: s.modalOrder,
             qtyK: s.qtyPacked,
             kiriman: s.packed,
-            modalK: s.modalPacked,
             qtyB: s.qtyBatal,
             batal: s.batal,
             qtyA: s.qtyActual,
             actual: s.actual,
-            modalA: s.modalActual,
             qtyR: s.qtyRetur,
             retur: s.nilaiRetur,
           ),
@@ -1675,15 +1593,17 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
           value: _centang.contains(id),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (v) {
-            setState(() {
-              if (v == true) {
-                _centang.add(id);
-              } else {
-                _centang.remove(id);
-              }
-            });
-          },
+          onChanged: widget.lihatSaja
+              ? null
+              : (v) {
+                  setState(() {
+                    if (v == true) {
+                      _centang.add(id);
+                    } else {
+                      _centang.remove(id);
+                    }
+                  });
+                },
         ),
         Expanded(child: nama),
       ],
@@ -1708,6 +1628,7 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
             Text(
               [
                 widget.toko.idPelanggan,
+                if (widget.toko.ruteSales.isNotEmpty) widget.toko.ruteSales,
                 if (widget.toko.rutePengirim.isNotEmpty)
                   widget.toko.rutePengirim,
                 '${widget.toko.sku.length} SKU',

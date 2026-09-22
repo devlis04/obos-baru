@@ -56,6 +56,8 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
   List<OrangAbsensi> _pengirim = const [];
   List<OrangAbsensi> _gudang = const [];
   int? _idBukuLihat;
+  int _muatGen = 0;
+  bool _muatUlangPenuh = false;
   bool _muat = true;
   bool _proses = false;
   bool _sedangMuat = false;
@@ -159,19 +161,25 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
   Future<void> _muatData({bool diam = false}) async {
     if (_sedangMuat) {
       _muatUlang = true;
+      _muatUlangPenuh = _muatUlangPenuh || !diam;
       return;
     }
     _sedangMuat = true;
+    final gen = _muatGen;
+    final idMinta = _idBukuLihat;
     if (!diam && mounted) setState(() => _muat = true);
     try {
-      final data = await _repo.ringkas(idBuku: _idBukuLihat);
+      final data = await _repo.ringkas(idBuku: idMinta);
+      if (gen != _muatGen) return;
+      final idBuku = idMinta ?? data.idSetoranBuku;
       RingkasMasuk masuk = _masuk;
       RingkasSetoran setoran = _setoran;
       var siklus = _siklus;
       var pengirim = _pengirim;
       var gudang = _gudang;
       try {
-        masuk = await _masukanRepo.ringkas(idBuku: _idBukuLihat);
+        masuk = await _masukanRepo.ringkas(idBuku: idBuku);
+        if (gen != _muatGen) return;
       } catch (e) {
         if (!diam && mounted) {
           tampilPesan(
@@ -183,11 +191,27 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         }
       }
       try {
-        setoran = await _setoranRepo.ringkas(idBuku: _idBukuLihat);
+        setoran = await _setoranRepo.ringkas(idBuku: idBuku);
+        if (gen != _muatGen) return;
         if (!diam) {
-          CekRinciSetoran.instance.gabungJson(setoran.cek);
-          TunaiAdminSetoran.instance.gabungJson(setoran.tunaiAdmin);
-          KasbonCekSetoran.instance.gabungJson(setoran.kasbon);
+          CekRinciSetoran.instance.gabungJson(
+            setoran.cek,
+            idBuku: setoran.idSetoranBuku,
+            tanggal: setoran.tanggal,
+            bukuTutup: setoran.ditutup,
+          );
+          TunaiAdminSetoran.instance.gabungJson(
+            setoran.tunaiAdmin,
+            idBuku: setoran.idSetoranBuku,
+            tanggal: setoran.tanggal,
+            bukuTutup: setoran.ditutup,
+          );
+          KasbonCekSetoran.instance.gabungJson(
+            setoran.kasbon,
+            idBuku: setoran.idSetoranBuku,
+            tanggal: setoran.tanggal,
+            bukuTutup: setoran.ditutup,
+          );
         }
         try {
           siklus = await _setoranRepo.siklus();
@@ -206,8 +230,9 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       }
       try {
         MutasiSetoran.instance.pasang(
-          await _mutasiRepo.lihat(idBuku: _idBukuLihat),
+          await _mutasiRepo.lihat(idBuku: idBuku),
         );
+        if (gen != _muatGen) return;
       } catch (e) {
         if (!diam) MutasiSetoran.instance.pasang(const []);
         if (!diam && mounted) {
@@ -220,7 +245,8 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         }
       }
       try {
-        final absen = await _absensiRepo.lihat(idBuku: _idBukuLihat);
+        final absen = await _absensiRepo.lihat(idBuku: idBuku);
+        if (gen != _muatGen) return;
         pengirim = absen.pengirim;
         gudang = absen.gudang;
       } catch (e) {
@@ -238,6 +264,9 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         }
       }
       if (!mounted) return;
+      if (gen != _muatGen) return;
+      if (idMinta != null && _idBukuLihat != idMinta) return;
+      final idSimpan = idMinta ?? idBuku ?? setoran.idSetoranBuku;
       final berubah = data != _data ||
           masuk != _masuk ||
           setoran != _setoran ||
@@ -253,17 +282,22 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           _siklus = siklus;
           _pengirim = pengirim;
           _gudang = gudang;
+          if (idMinta == null && idSimpan != null) {
+            _idBukuLihat = idSimpan;
+          }
           _muat = false;
         });
+      } else if (_muat) {
+        setState(() => _muat = false);
       }
     } catch (e) {
       if (!mounted) return;
+      if (gen != _muatGen) return;
       if (diam) {
         if (_muat) setState(() => _muat = false);
         return;
       }
       setState(() {
-        _data = RingkasOpname.kosong;
         _muat = false;
       });
       tampilPesan(
@@ -275,8 +309,10 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
     } finally {
       _sedangMuat = false;
       if (_muatUlang && mounted) {
+        final penuh = _muatUlangPenuh;
         _muatUlang = false;
-        unawaited(_muatData(diam: true));
+        _muatUlangPenuh = false;
+        unawaited(_muatData(diam: !penuh));
       }
     }
   }
@@ -435,29 +471,31 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           tanggalAda.any((t) => _hariSama(t, d)),
     );
     if (pilih == null || !mounted) return;
+    final hariPilih = DateTime(pilih.year, pilih.month, pilih.day);
     final kandidat = [
       for (final b in daftar)
-        if (_hariSama(b.tanggal, pilih)) b,
+        if (_hariSama(b.tanggal, hariPilih)) b,
     ];
     if (kandidat.isEmpty) {
       tampilPesan(context, 'Tidak ada buku di tanggal itu.');
       return;
     }
     kandidat.sort((a, b) => b.id.compareTo(a.id));
+    _muatGen++;
     setState(() => _idBukuLihat = kandidat.first.id);
     await _muatData();
   }
 
   Future<void> _simpanKartu() async {
     final id = _setoran.idSetoranBuku;
-    if (id == null || _proses) return;
+    if (id == null || _proses || _setoran.ditutup) return;
     setState(() => _proses = true);
     try {
       await _setoranRepo.simpanKartu(
         idBuku: id,
-        cek: CekRinciSetoran.instance.keJson(),
-        tunai: TunaiAdminSetoran.instance.keJson(),
-        kasbon: KasbonCekSetoran.instance.keJson(),
+        cek: CekRinciSetoran.instance.keJson(idBuku: id),
+        tunai: TunaiAdminSetoran.instance.keJson(idBuku: id),
+        kasbon: KasbonCekSetoran.instance.keJson(idBuku: id),
       );
       if (!mounted) return;
       tampilPesan(context, 'Kartu setoran disimpan.');
@@ -492,6 +530,15 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
   bool get _absensiMasihOranye =>
       _pengirim.any((o) => o.oranye) || _gudang.any((o) => o.oranye);
 
+  bool get _tampilBannerSiklus {
+    if (_siklus.pesan.isEmpty) return false;
+    if (_setoran.ditutup) return false;
+    final lihat = _idBukuLihat ?? _setoran.idSetoranBuku;
+    final buka = _siklus.idSetoranBuku;
+    if (lihat != null && buka != null && lihat != buka) return false;
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -510,7 +557,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           children: [
             IconButton(
               tooltip: 'Buku lama',
-              onPressed: _muat || _proses ? null : _pilihBuku,
+              onPressed: _proses ? null : _pilihBuku,
               icon: const Icon(Icons.calendar_month_outlined),
             ),
             Flexible(
@@ -530,7 +577,10 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             child: FilledButton(
-              onPressed: _muat || _proses || !_setoran.adaBuku
+              onPressed: _muat ||
+                      _proses ||
+                      !_setoran.adaBuku ||
+                      _setoran.ditutup
                   ? null
                   : _simpanKartu,
               style: FilledButton.styleFrom(
@@ -574,7 +624,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           const celah = 6.0;
           const tinggiAbsen = 40.0;
           const tinggiBanner = 40.0;
-          final adaBanner = _siklus.pesan.isNotEmpty;
+          final adaBanner = _tampilBannerSiklus;
           final adaProgress = _muat || _proses;
           final tinggiKartuArea = (layar.maxHeight -
                   padAtas -
@@ -738,6 +788,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
             data: _masuk,
             sibuk: _muat || _proses,
             ditutup: _setoran.ditutup,
+            idBuku: _idBukuLihat,
             onMuat: _muatData,
           ),
         ),

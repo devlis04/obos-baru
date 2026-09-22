@@ -40,25 +40,18 @@ class TunaiAdminSetoran extends ChangeNotifier {
 
   final Map<String, IsiTunaiAdmin> _isi = {};
 
-  String _kunci(DateTime? tanggal, String rute) {
+  String _kunci(DateTime? tanggal, String rute, {int? idBuku}) {
+    if (idBuku != null) return 'b$idBuku|$rute';
     final tgl = tanggal == null ? '' : Uang.isoHari(tanggal);
     return '$tgl|$rute';
   }
 
-  IsiTunaiAdmin ambil(DateTime? tanggal, String rute) {
-    final k = _kunci(tanggal, rute);
-    final sini = _isi[k];
-    if (_berisi(sini)) return sini!;
-    final akhir = '|$rute';
-    for (final e in _isi.entries) {
-      if (e.key == k || !e.key.endsWith(akhir)) continue;
-      if (_berisi(e.value)) {
-        _isi[k] = e.value;
-        _tulis();
-        return e.value;
-      }
+  IsiTunaiAdmin ambil(DateTime? tanggal, String rute, {int? idBuku}) {
+    if (idBuku != null) {
+      return _isi[_kunci(tanggal, rute, idBuku: idBuku)] ??
+          const IsiTunaiAdmin();
     }
-    return sini ?? const IsiTunaiAdmin();
+    return _isi[_kunci(tanggal, rute)] ?? const IsiTunaiAdmin();
   }
 
   static bool _berisi(IsiTunaiAdmin? v) {
@@ -74,20 +67,26 @@ class TunaiAdminSetoran extends ChangeNotifier {
     required DateTime? tanggal,
     required String rute,
     List<String> semuaRute = const [],
+    int? idBuku,
   }) {
     if (rute == 'Jumlah') {
       return semuaRute.fold<int>(
         0,
-        (n, r) => n + ambil(tanggal, r).tunai,
+        (n, r) =>
+            n + ambil(tanggal, r, idBuku: idBuku).tunai,
       );
     }
-    return ambil(tanggal, rute).tunai;
+    return ambil(tanggal, rute, idBuku: idBuku).tunai;
   }
 
-  List<int> pecahanJumlah(DateTime? tanggal, List<String> semuaRute) {
+  List<int> pecahanJumlah(
+    DateTime? tanggal,
+    List<String> semuaRute, {
+    int? idBuku,
+  }) {
     final out = List<int>.filled(pecahanTunaiAdmin.length, 0);
     for (final r in semuaRute) {
-      final p = ambil(tanggal, r).pecahanLengkap;
+      final p = ambil(tanggal, r, idBuku: idBuku).pecahanLengkap;
       for (var i = 0; i < out.length && i < p.length; i++) {
         out[i] += p[i];
       }
@@ -100,8 +99,9 @@ class TunaiAdminSetoran extends ChangeNotifier {
     required String rute,
     required int tunai,
     required List<int> pecahan,
+    int? idBuku,
   }) {
-    _isi[_kunci(tanggal, rute)] = IsiTunaiAdmin(
+    _isi[_kunci(tanggal, rute, idBuku: idBuku)] = IsiTunaiAdmin(
       tunai: tunai,
       pecahan: pecahan,
     );
@@ -142,32 +142,58 @@ class TunaiAdminSetoran extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Map<String, dynamic> keJson() => {
-        for (final e in _isi.entries)
+  Map<String, dynamic> keJson({int? idBuku}) {
+    final prefix = idBuku == null ? null : 'b$idBuku|';
+    return {
+      for (final e in _isi.entries)
+        if (prefix == null || e.key.startsWith(prefix))
           e.key: {
             'tunai': e.value.tunai,
             'pecahan': e.value.pecahan,
           },
-      };
+    };
+  }
 
-  void gabungJson(Object? raw) {
+  IsiTunaiAdmin? _dariMap(Object? v) {
+    if (v is! Map) return null;
+    final pecahan = <int>[];
+    final p = v['pecahan'];
+    if (p is List) {
+      for (final x in p) {
+        pecahan.add(int.tryParse(x.toString()) ?? 0);
+      }
+    }
+    return IsiTunaiAdmin(
+      tunai: int.tryParse('${v['tunai']}') ?? 0,
+      pecahan: pecahan,
+    );
+  }
+
+  void gabungJson(
+    Object? raw, {
+    int? idBuku,
+    DateTime? tanggal,
+    bool bukuTutup = false,
+  }) {
     if (raw is! Map) return;
     var ubah = false;
+    final iso = tanggal == null ? null : Uang.isoHari(tanggal);
     for (final e in raw.entries) {
-      final v = e.value;
-      if (v is! Map) continue;
-      final pecahan = <int>[];
-      final p = v['pecahan'];
-      if (p is List) {
-        for (final x in p) {
-          pecahan.add(int.tryParse(x.toString()) ?? 0);
+      final isi = _dariMap(e.value);
+      if (isi == null) continue;
+      var k = e.key.toString();
+      if (idBuku != null) {
+        if (k.startsWith('b$idBuku|')) {
+          // kunci buku ini
+        } else if (bukuTutup &&
+            iso != null &&
+            k.startsWith('$iso|') &&
+            !k.startsWith('b')) {
+          k = 'b$idBuku|${k.substring(iso.length + 1)}';
+        } else {
+          continue;
         }
       }
-      final isi = IsiTunaiAdmin(
-        tunai: int.tryParse('${v['tunai']}') ?? 0,
-        pecahan: pecahan,
-      );
-      final k = e.key.toString();
       if (_berisi(_isi[k]) && !_berisi(isi)) continue;
       _isi[k] = isi;
       ubah = true;

@@ -12,11 +12,13 @@ class KartuMasukan extends StatelessWidget {
     required this.sibuk,
     required this.onMuat,
     this.ditutup = false,
+    this.idBuku,
   });
 
   final RingkasMasuk data;
   final bool sibuk;
   final bool ditutup;
+  final int? idBuku;
   final Future<void> Function() onMuat;
 
   static const maksSupplier = 5;
@@ -74,6 +76,7 @@ class KartuMasukan extends StatelessWidget {
                                 context: context,
                                 onMuat: onMuat,
                                 baru: true,
+                                idBuku: idBuku,
                               ),
                       style: FilledButton.styleFrom(
                         visualDensity: VisualDensity.compact,
@@ -139,12 +142,14 @@ class KartuMasukan extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: InkWell(
-                onTap: sibuk || ditutup
+                onTap: sibuk
                     ? null
                     : () => bukaMasukan(
                           context: context,
                           onMuat: onMuat,
                           idSupplier: s.id,
+                          idBuku: idBuku,
+                          lihatSaja: ditutup,
                         ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(

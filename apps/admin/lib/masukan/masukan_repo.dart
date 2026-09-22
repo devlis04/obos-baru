@@ -259,9 +259,15 @@ class MasukanRepo {
     }).where((b) => b.idBarang.isNotEmpty).toList();
   }
 
-  Future<List<BarisMasuk>> lihat(int idSupplier) async {
+  Future<List<BarisMasuk>> lihat(int idSupplier, {int? idBuku}) async {
     final hasil = await _sb
-        .rpc('admin_barang_masuk_lihat', params: {'p_id_supplier': idSupplier})
+        .rpc(
+          'admin_barang_masuk_lihat',
+          params: {
+            'p_id_supplier': idSupplier,
+            'p_id_setoran_buku': ?idBuku,
+          },
+        )
         .timeout(Jaringan.lambat);
     if (hasil is! List) return [];
     return hasil.whereType<Map>().map((e) {
@@ -276,9 +282,15 @@ class MasukanRepo {
     }).toList();
   }
 
-  Future<int> ongkirSupplier(int idSupplier) async {
+  Future<int> ongkirSupplier(int idSupplier, {int? idBuku}) async {
     final hasil = await _sb
-        .rpc('admin_ongkir_lihat_supplier', params: {'p_id_supplier': idSupplier})
+        .rpc(
+          'admin_ongkir_lihat_supplier',
+          params: {
+            'p_id_supplier': idSupplier,
+            'p_id_setoran_buku': ?idBuku,
+          },
+        )
         .timeout(Jaringan.lambat);
     if (hasil is num) return hasil.toInt();
     return int.tryParse(hasil.toString()) ?? 0;

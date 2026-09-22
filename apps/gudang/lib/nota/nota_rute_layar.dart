@@ -86,7 +86,7 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
     return tampilkanSheetRincianNota(
       context: context,
       nota: nota,
-      bolehPack: widget.bukuHidup,
+      bolehPack: widget.bukuHidup && nota.bolehPackPada(widget.tanggal),
       muatItem: () => _repo.item(nota.idTransaksi),
       onPack: () => _bukaReview(nota),
       onLihat: () async {
@@ -95,6 +95,7 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
             NotaReviewLayar(
               nota: nota,
               namaSales: widget.namaSales,
+              tanggalBuku: widget.tanggal,
               bukuHidup: widget.bukuHidup,
             ),
           ),
@@ -113,6 +114,7 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
         NotaReviewLayar(
           nota: nota,
           namaSales: widget.namaSales,
+          tanggalBuku: widget.tanggal,
           bukuHidup: widget.bukuHidup,
         ),
       ),
@@ -319,6 +321,16 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
                                         _chip(
                                           'Pending',
                                           Colors.orange.shade800,
+                                        ),
+                                      ],
+                                      if (widget.bukuHidup &&
+                                          nota.sisaKirimanPada(
+                                            widget.tanggal,
+                                          )) ...[
+                                        const SizedBox(height: 6),
+                                        _chip(
+                                          'Sisa kemarin',
+                                          Colors.blueGrey.shade700,
                                         ),
                                       ],
                                       const SizedBox(height: 6),

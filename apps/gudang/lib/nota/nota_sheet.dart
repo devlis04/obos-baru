@@ -361,7 +361,7 @@ Future<void> tampilkanSheetRincianNota({
                   ],
                   if (nota.status != 'batal' &&
                       nota.status != 'terkirim' &&
-                      !nota.bisaPack &&
+                      !(nota.bisaPack && bolehPack) &&
                       items.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     SizedBox(

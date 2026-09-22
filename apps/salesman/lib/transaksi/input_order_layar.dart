@@ -8,6 +8,7 @@ import '../barang/barang_pdf.dart';
 import '../barang/barang_state.dart';
 import '../barang/dialog_pesan_katalog.dart';
 import '../pelanggan/pelanggan.dart';
+import '../pesan.dart';
 import 'package:obos_core/obos_core.dart';
 import 'bilah_aksi.dart';
 import 'dialog_qty.dart';
@@ -66,16 +67,8 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
     );
   }
 
-  void _snack(String pesan, {Color? warna, Color? teks}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: warna,
-        content: Text(
-          pesan,
-          style: TextStyle(color: teks, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
+  void _snack(String pesan) {
+    tampilPesan(context, pesan);
   }
 
   Future<void> _cobaUnduh() async {
@@ -133,8 +126,6 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
     if (daftar.isEmpty) {
       _snack(
         'Belum ada daftar barang untuk diunduh. Muat katalog dulu, lalu coba lagi.',
-        warna: const Color(0xFFF9A825),
-        teks: Colors.black,
       );
       return;
     }
@@ -145,7 +136,6 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
       if (!mounted) return;
       _snack(
         'Daftar harga belum bisa dibuat. Periksa koneksi, lalu coba lagi.',
-        warna: const Color(0xFFC62828),
       );
     } finally {
       if (mounted) setState(() => _sedangUnduhPdf = false);
@@ -166,8 +156,6 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
       if (hasil is! BarangSiap || hasil.daftar.isEmpty) {
         _snack(
           'Stok belum bisa diunduh. Muat katalog dulu, lalu coba lagi.',
-          warna: const Color(0xFFF9A825),
-          teks: Colors.black,
         );
         return;
       }
@@ -176,7 +164,6 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
       if (!mounted) return;
       _snack(
         'Daftar stok belum bisa dibuat. Periksa internet, lalu coba lagi.',
-        warna: const Color(0xFFC62828),
       );
     } finally {
       if (mounted) setState(() => _sedangUnduhPdf = false);
@@ -208,10 +195,7 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
             onPressed: () {
               setState(_keranjang.clear);
               Navigator.pop(ctx);
-              _snack(
-                'Keranjang sudah dikosongkan.',
-                warna: const Color(0xFF2E7D32),
-              );
+              _snack('Keranjang sudah dikosongkan.');
             },
             child: const Text('Ya, kosongkan'),
           ),
@@ -236,8 +220,6 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
           if (state is BarangKosongNet) {
             _snack(
               'Tidak ada internet. Sambungkan internet, lalu unduh katalog barang.',
-              warna: const Color(0xFFF9A825),
-              teks: Colors.black,
             );
           }
         },
@@ -566,10 +548,7 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
                               if (!hasil.selesai) return;
                               final pesan = hasil.pesan;
                               if (pesan != null && pesan.isNotEmpty) {
-                                _snack(
-                                  pesan,
-                                  warna: const Color(0xFF2E7D32),
-                                );
+                                _snack(pesan);
                               }
                               await Future<void>.delayed(
                                 const Duration(milliseconds: 700),

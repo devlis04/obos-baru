@@ -19,11 +19,13 @@ class NotaReviewLayar extends StatefulWidget {
     super.key,
     required this.nota,
     required this.namaSales,
+    required this.tanggalBuku,
     this.bukuHidup = true,
   });
 
   final RingkasNota nota;
   final String namaSales;
+  final DateTime tanggalBuku;
   final bool bukuHidup;
 
   @override
@@ -48,7 +50,8 @@ class _NotaReviewLayarState extends State<NotaReviewLayar> {
     _muatData();
   }
 
-  bool get _bisaUbah => widget.bukuHidup && _nota.bisaPack;
+  bool get _bisaUbah =>
+      widget.bukuHidup && _nota.bolehPackPada(widget.tanggalBuku);
 
   bool get _kosong =>
       _keranjang.isEmpty || !_keranjang.values.any((q) => q > 0);

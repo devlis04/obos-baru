@@ -48,6 +48,7 @@ bool chipJumlahTanpaOranye(RingkasSetoran data) {
         tanggal: data.tanggal,
         jenis: jenis,
         rute: r.rute,
+        idBuku: data.idSetoranBuku,
       ),
     );
   }
@@ -69,6 +70,7 @@ bool chipJumlahTanpaOranye(RingkasSetoran data) {
           final n = TunaiAdminSetoran.instance.nilai(
             tanggal: data.tanggal,
             rute: r.rute,
+            idBuku: data.idSetoranBuku,
           );
           return n > 0 && n == r.tunai;
         },
@@ -79,6 +81,7 @@ bool chipJumlahTanpaOranye(RingkasSetoran data) {
           tanggal: data.tanggal,
           rute: r.rute,
           semua: data.rute,
+          idBuku: data.idSetoranBuku,
         ),
       );
 }
@@ -218,6 +221,7 @@ class KartuSetoran extends StatelessWidget {
         tanggal: data.tanggal,
         jenis: jenis,
         rute: r.rute,
+        idBuku: data.idSetoranBuku,
       ),
     );
   }
@@ -230,6 +234,7 @@ class KartuSetoran extends StatelessWidget {
       tanggal: data.tanggal,
       rute: b.rute,
       semuaRute: ruteSemua,
+      idBuku: data.idSetoranBuku,
     );
     final hijauTunaiAdmin = jumlah
         ? _hijauSemuaRute(
@@ -238,6 +243,7 @@ class KartuSetoran extends StatelessWidget {
               final n = TunaiAdminSetoran.instance.nilai(
                 tanggal: data.tanggal,
                 rute: r.rute,
+                idBuku: data.idSetoranBuku,
               );
               return n > 0 && n == r.tunai;
             },
@@ -247,6 +253,7 @@ class KartuSetoran extends StatelessWidget {
       tanggal: data.tanggal,
       rute: b.rute,
       semua: data.rute,
+      idBuku: data.idSetoranBuku,
     );
     final mutasi = MutasiSetoran.instance.nilai(
       rute: b.rute,
@@ -344,6 +351,8 @@ class KartuSetoran extends StatelessWidget {
                             rute: b.rute,
                             tunaiPengirim: b.tunai,
                             semuaRute: ruteSemua,
+                            idBuku: data.idSetoranBuku,
+                            lihatSaja: data.ditutup,
                           ),
                 ),
               ],
@@ -372,6 +381,8 @@ class KartuSetoran extends StatelessWidget {
                             tanggal: data.tanggal,
                             rute: b.rute,
                             semuaRute: data.rute,
+                            idBuku: data.idSetoranBuku,
+                            lihatSaja: data.ditutup,
                           ),
                 ),
                 _nilai(
@@ -463,10 +474,11 @@ class KartuSetoran extends StatelessWidget {
               tanggal: data.tanggal,
               jenis: jenis,
               rute: rute,
+              idBuku: data.idSetoranBuku,
             ));
     final chipBiru = pakaiChip && jenis == 'actual';
     final bisaRinci = !sibuk && n != 0 && jenis != null;
-    final bisaDummy = !sibuk && dummy && nilaiChip > 0;
+    final bisaDummy = !sibuk && !data.ditutup && dummy && nilaiChip > 0;
     final aksi = ketuk ??
         (bisaRinci
             ? () => bukaRinciSetoran(
@@ -474,6 +486,7 @@ class KartuSetoran extends StatelessWidget {
                   jenis: jenis,
                   rute: rute,
                   idBuku: data.idSetoranBuku,
+                  lihatSaja: data.ditutup,
                 )
             : (bisaDummy
                 ? () => tampilPesan(context, 'Belum tersedia.')

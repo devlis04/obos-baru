@@ -32,7 +32,9 @@ Future<void> bukaMasukan({
   required BuildContext context,
   required Future<void> Function() onMuat,
   int? idSupplier,
+  int? idBuku,
   bool baru = false,
+  bool lihatSaja = false,
 }) async {
   final repo = MasukanRepo(Supabase.instance.client);
   List<Supplier> daftar;
@@ -55,7 +57,9 @@ Future<void> bukaMasukan({
       awalSupplier: daftar,
       onMuat: onMuat,
       idSupplier: idSupplier,
+      idBuku: idBuku,
       baru: baru,
+      lihatSaja: lihatSaja,
     ),
   );
 }
@@ -66,13 +70,17 @@ class MasukanDialog extends StatefulWidget {
     required this.awalSupplier,
     required this.onMuat,
     this.idSupplier,
+    this.idBuku,
     this.baru = false,
+    this.lihatSaja = false,
   });
 
   final List<Supplier> awalSupplier;
   final Future<void> Function() onMuat;
   final int? idSupplier;
+  final int? idBuku;
   final bool baru;
+  final bool lihatSaja;
 
   @override
   State<MasukanDialog> createState() => _MasukanDialogState();
@@ -101,6 +109,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
   bool _supplierBaru = false;
   bool _muat = false;
   bool _proses = false;
+  bool get _kunci => _proses || widget.lihatSaja;
 
   @override
   void initState() {
@@ -144,8 +153,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
     if (id == null) return;
     setState(() => _muat = true);
     try {
-      final baris = await _repo.lihat(id);
-      final ongkir = await _repo.ongkirSupplier(id);
+      final baris = await _repo.lihat(id, idBuku: widget.idBuku);
+      final ongkir = await _repo.ongkirSupplier(id, idBuku: widget.idBuku);
       if (!mounted) return;
       setState(() {
         _draft
@@ -285,6 +294,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
   }
 
   Future<void> _simpan() async {
+    if (widget.lihatSaja) return;
     var id = _idSupplier;
     final namaBaru = _namaSupplier.text.trim();
     final extra = _barisDariForm(wajib: false);
@@ -578,9 +588,9 @@ class _MasukanDialogState extends State<MasukanDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(
-        'Barang masuk',
-        style: TextStyle(fontWeight: FontWeight.bold),
+      title: Text(
+        widget.lihatSaja ? 'Barang masuk (lihat)' : 'Barang masuk',
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -593,7 +603,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
           children: [
               if (_muat || _proses) const LinearProgressIndicator(),
               const SizedBox(height: 8),
-              SwitchListTile(
+              if (!widget.lihatSaja)
+                SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 title: const Text(
@@ -601,7 +612,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
                   style: _gayaJudul,
                 ),
                 value: _supplierBaru,
-                onChanged: _proses
+                onChanged: _kunci
                     ? null
                     : (v) => setState(() {
                           _supplierBaru = v;
@@ -632,7 +643,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
                                   ),
                                 )
                                 .toList(),
-                            onChanged: _proses
+                            onChanged: _kunci
                                 ? null
                                 : (v) {
                                     setState(() {
@@ -655,6 +666,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
                   Expanded(
                     child: TextField(
                       controller: _ongkir,
+                      readOnly: widget.lihatSaja,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -666,8 +678,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
               ),
               if (_draft.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Belum disimpan',
+                Text(
+                  widget.lihatSaja ? 'SKU' : 'Belum disimpan',
                   style: _gayaJudul,
                 ),
                 const SizedBox(height: 8),
@@ -689,8 +701,8 @@ class _MasukanDialogState extends State<MasukanDialog> {
                           child: _BarisDraft(
                             draft: _draft[i],
                             aktif: _editDraftI == i,
-                            onTap: _proses ? null : () => _isiDraft(i),
-                            onHapus: _proses
+                            onTap: _kunci ? null : () => _isiDraft(i),
+                            onHapus: _kunci
                                 ? null
                                 : () => setState(() {
                                       if (_editDraftI == i) {
@@ -738,10 +750,11 @@ class _MasukanDialogState extends State<MasukanDialog> {
                         style: _gayaJumlah,
                       ),
                     ),
-                    const SizedBox(width: _lebarHapus),
+                    if (!widget.lihatSaja) const SizedBox(width: _lebarHapus),
                   ],
                 ),
               ],
+              if (!widget.lihatSaja) ...[
               const SizedBox(height: 16),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -884,6 +897,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
                   ],
                 ),
               ],
+              ],
             ],
           ),
         ),
@@ -892,18 +906,20 @@ class _MasukanDialogState extends State<MasukanDialog> {
           onPressed: _proses ? null : _unduhCsv,
           child: const Text('Unduh CSV'),
         ),
-        TextButton(
-          onPressed: _proses ? null : _unggahCsv,
-          child: const Text('Unggah CSV'),
-        ),
+        if (!widget.lihatSaja)
+          TextButton(
+            onPressed: _proses ? null : _unggahCsv,
+            child: const Text('Unggah CSV'),
+          ),
         TextButton(
           onPressed: _proses ? null : () => Navigator.pop(context),
           child: const Text('Tutup'),
         ),
-        FilledButton(
-          onPressed: _proses ? null : _simpan,
-          child: const Text('Simpan'),
-        ),
+        if (!widget.lihatSaja)
+          FilledButton(
+            onPressed: _proses ? null : _simpan,
+            child: const Text('Simpan'),
+          ),
       ],
     );
   }
@@ -1053,17 +1069,18 @@ class _BarisDraft extends StatelessWidget {
               style: gaya,
             ),
           ),
-          SizedBox(
-            width: _lebarHapus,
-            child: GestureDetector(
-              onTap: onHapus,
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox(
-                height: 32,
-                child: Icon(Icons.close, size: 20),
+          if (onHapus != null)
+            SizedBox(
+              width: _lebarHapus,
+              child: GestureDetector(
+                onTap: onHapus,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  height: 32,
+                  child: Icon(Icons.close, size: 20),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

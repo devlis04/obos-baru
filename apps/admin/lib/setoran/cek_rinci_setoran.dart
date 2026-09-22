@@ -47,44 +47,30 @@ class CekRinciSetoran extends ChangeNotifier {
     };
   }
 
-  String _kunci(DateTime? tanggal, String jenis, String? rute) {
+  String _kunci(DateTime? tanggal, String jenis, String? rute, {int? idBuku}) {
     final tgl = tanggal == null ? '' : Uang.isoHari(tanggal);
-    return '$tgl|$jenis|${rute ?? ''}';
+    final kepala = idBuku != null ? 'b$idBuku' : tgl;
+    return '$kepala|$jenis|${rute ?? ''}';
   }
 
   Set<String> centang({
     required DateTime? tanggal,
     required String jenis,
     String? rute,
+    int? idBuku,
   }) {
-    final k = _kunci(tanggal, jenis, rute);
-    final sini = _centang[k];
-    if (sini != null && sini.isNotEmpty) return Set.of(sini);
-    final akhir = '|$jenis|${rute ?? ''}';
-    for (final e in _centang.entries) {
-      if (e.key == k || !e.key.endsWith(akhir) || e.value.isEmpty) continue;
-      _centang[k] = Set.of(e.value);
-      if (_hijau[e.key] == true) _hijau[k] = true;
-      _tulis();
-      return Set.of(e.value);
-    }
-    return Set.of(sini ?? const {});
+    final sini = _centang[_kunci(tanggal, jenis, rute, idBuku: idBuku)];
+    if (sini == null || sini.isEmpty) return {};
+    return Set.of(sini);
   }
 
   bool hijau({
     required DateTime? tanggal,
     required String jenis,
     String? rute,
+    int? idBuku,
   }) {
-    final k = _kunci(tanggal, jenis, rute);
-    if (_hijau[k] == true) return true;
-    final akhir = '|$jenis|${rute ?? ''}';
-    for (final e in _hijau.entries) {
-      if (e.key == k || !e.key.endsWith(akhir) || e.value != true) continue;
-      _hijau[k] = true;
-      return true;
-    }
-    return false;
+    return _hijau[_kunci(tanggal, jenis, rute, idBuku: idBuku)] == true;
   }
 
   void simpanTutup({
@@ -94,8 +80,9 @@ class CekRinciSetoran extends ChangeNotifier {
     required List<TokoSetoranRinci> toko,
     required Set<String> centang,
     Set<String>? wajib,
+    int? idBuku,
   }) {
-    final k = _kunci(tanggal, jenis, rute);
+    final k = _kunci(tanggal, jenis, rute, idBuku: idBuku);
     _centang[k] = Set.of(centang);
     final target = wajib ?? {for (final t in toko) kunciToko(t)};
     _hijau[k] = target.isNotEmpty && target.every(_centang[k]!.contains);
@@ -110,8 +97,9 @@ class CekRinciSetoran extends ChangeNotifier {
     required Set<String> kunciNota,
     required Set<String> centangNota,
     required Set<String> wajib,
+    int? idBuku,
   }) {
-    final k = _kunci(tanggal, jenis, rute);
+    final k = _kunci(tanggal, jenis, rute, idBuku: idBuku);
     final s = Set<String>.of(_centang[k] ?? const {});
     s.removeAll(kunciNota);
     s.addAll(centangNota);
@@ -156,16 +144,43 @@ class CekRinciSetoran extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Map<String, dynamic> keJson() => {
-        'centang': {
-          for (final e in _centang.entries) e.key: e.value.toList(),
-        },
-        'hijau': _hijau,
-      };
+  Map<String, dynamic> keJson({int? idBuku}) {
+    final prefix = idBuku == null ? null : 'b$idBuku|';
+    return {
+      'centang': {
+        for (final e in _centang.entries)
+          if (prefix == null || e.key.startsWith(prefix)) e.key: e.value.toList(),
+      },
+      'hijau': {
+        for (final e in _hijau.entries)
+          if (e.value && (prefix == null || e.key.startsWith(prefix)))
+            e.key: true,
+      },
+    };
+  }
 
-  void gabungJson(Object? raw) {
+  void gabungJson(
+    Object? raw, {
+    int? idBuku,
+    DateTime? tanggal,
+    bool bukuTutup = false,
+  }) {
     if (raw is! Map) return;
     var ubah = false;
+    final iso = tanggal == null ? null : Uang.isoHari(tanggal);
+
+    String? kunciMasuk(String k) {
+      if (idBuku == null) return k;
+      if (k.startsWith('b$idBuku|')) return k;
+      if (bukuTutup &&
+          iso != null &&
+          k.startsWith('$iso|') &&
+          !k.startsWith('b')) {
+        return 'b$idBuku|${k.substring(iso.length + 1)}';
+      }
+      return null;
+    }
+
     final c = raw['centang'];
     if (c is Map) {
       for (final e in c.entries) {
@@ -173,7 +188,8 @@ class CekRinciSetoran extends ChangeNotifier {
         if (v is! List) continue;
         final masuk = {for (final x in v) x.toString()};
         if (masuk.isEmpty) continue;
-        final k = e.key.toString();
+        final k = kunciMasuk(e.key.toString());
+        if (k == null) continue;
         final lama = _centang[k] ?? {};
         _centang[k] = {...lama, ...masuk};
         ubah = true;
@@ -183,7 +199,9 @@ class CekRinciSetoran extends ChangeNotifier {
     if (h is Map) {
       for (final e in h.entries) {
         if (e.value != true) continue;
-        _hijau[e.key.toString()] = true;
+        final k = kunciMasuk(e.key.toString());
+        if (k == null) continue;
+        _hijau[k] = true;
         ubah = true;
       }
     }

@@ -75,6 +75,22 @@ class RingkasNota {
       status == 'diproses' || (status == 'dikirim' && waktuActual == null);
 
   bool get sudahPack => waktuPacked != null;
+
+  bool _hariSama(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Sisa kiriman buku kemarin: sudah di truk, jangan packing ulang.
+  bool sisaKirimanPada(DateTime tanggalBuku) {
+    if (status != 'dikirim' || waktuActual != null) return false;
+    final w = waktuOrder;
+    if (w == null) return false;
+    return !_hariSama(w.toLocal(), tanggalBuku);
+  }
+
+  bool bolehPackPada(DateTime tanggalBuku) {
+    if (!bisaPack) return false;
+    return !sisaKirimanPada(tanggalBuku);
+  }
 }
 
 class ItemNota {
