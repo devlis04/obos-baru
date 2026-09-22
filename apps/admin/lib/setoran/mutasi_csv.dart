@@ -105,7 +105,7 @@ class MutasiCsv {
     if (lines.isEmpty) {
       return const HasilMutasiCsv([], 'Berkas CSV kosong.');
     }
-    final daftar = lines.toList();
+    final daftar = [for (final l in lines) _bukaBarisBca(l)];
     String? periodeIso;
     for (final baris in daftar) {
       final p = _periodeDariBaris(baris);
@@ -241,7 +241,9 @@ class MutasiCsv {
       'JANU ARI': 'JANUARI',
       'FEBRU ARI': 'FEBRUARI',
       'SEPTEM BER': 'SEPTEMBER',
+      'SEPTEMBE R': 'SEPTEMBER',
       'OKTO BER': 'OKTOBER',
+      'OKTOBE R': 'OKTOBER',
       'NOVEM BER': 'NOVEMBER',
       'DESEM BER': 'DESEMBER',
       'AGUS TUS': 'AGUSTUS',
@@ -253,7 +255,23 @@ class MutasiCsv {
       RegExp(r'(\d{1,2}[/\-.]\d{1,2}[/\-.])(\d{2,3})\s+(\d{1,2})\b'),
       (m) => '${m[1]}${m[2]}${m[3]}',
     );
+    t = t.replaceAllMapped(
+      RegExp(
+        r'\b(JANUARI|FEBRUARI|MARET|APRIL|MEI|JUNI|JULI|AGUSTUS|SEPTEMBER|'
+        r'OKTOBER|NOVEMBER|DESEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AGU|AGS|'
+        r'AGT|AUG|SEP|SEPT|OKT|OCT|NOV|DES|DEC)\s+(\d{2})\s+(\d{2})\b',
+      ),
+      (m) => '${m[1]} ${m[2]}${m[3]}',
+    );
     return t;
+  }
+
+  /// BCA Corp: seluruh baris dikutip, kolom dalam `""`.
+  static String _bukaBarisBca(String line) {
+    var t = line.trim();
+    if (t.length < 2 || !t.startsWith('"') || !t.endsWith('"')) return t;
+    if (!t.contains('""')) return t;
+    return t.substring(1, t.length - 1).replaceAll('""', '"');
   }
 
   static const _bulanNama = {

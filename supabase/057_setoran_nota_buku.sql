@@ -3,6 +3,24 @@
 -- Pengirim: nota dikirim ikut id buku, bukan hanya tanggal HP = hari ini.
 -- Jalankan SETELAH 056. Boleh diulang.
 
+-- Batal setoran = nota batal (nilai packing) + sisa tebus terkirim (packed − actual).
+CREATE OR REPLACE FUNCTION public.admin_omset_batal(
+  p_status text,
+  p_packed numeric,
+  p_actual numeric
+)
+RETURNS bigint
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE
+    WHEN p_status = 'batal' THEN round(coalesce(p_packed, 0))::bigint
+    WHEN p_status = 'terkirim' THEN
+      greatest(round(coalesce(p_packed, 0) - coalesce(p_actual, 0)), 0)::bigint
+    ELSE 0
+  END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.admin_transaksi_ikut_buku(
   p_id_buku bigint,
   p_tgl date,
@@ -96,7 +114,9 @@ BEGIN
         rp.rute_pengirim,
         coalesce(sum(i.subtotal_jual_packed), 0)::bigint AS kiriman,
         coalesce(sum(
-          CASE WHEN t.status = 'batal' THEN i.subtotal_jual_packed ELSE 0 END
+          public.admin_omset_batal(
+            t.status, i.subtotal_jual_packed, i.subtotal_jual_actual
+          )
         ), 0)::bigint AS batal,
         coalesce(sum(
           CASE WHEN t.pending THEN i.subtotal_jual_packed ELSE 0 END
@@ -427,6 +447,9 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.admin_omset_batal(text, numeric, numeric) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_omset_batal(text, numeric, numeric)
+  TO authenticated, postgres, service_role;
 REVOKE ALL ON FUNCTION public.admin_transaksi_ikut_buku(bigint, date, boolean, bigint, text, timestamptz) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_transaksi_ikut_buku(bigint, date, boolean, bigint, text, timestamptz)
   TO authenticated, postgres, service_role;

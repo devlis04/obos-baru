@@ -776,7 +776,7 @@ BEGIN
         )
         AND (
           v_jenis = 'kiriman'
-          OR (v_jenis = 'batal' AND t.status = 'batal')
+          OR (v_jenis = 'batal' AND t.status IN ('batal', 'terkirim'))
           OR (v_jenis = 'pending' AND t.pending)
           OR (v_jenis = 'actual' AND t.status = 'terkirim')
         )
@@ -808,6 +808,14 @@ BEGIN
       FROM nota n
       JOIN public.v_transaksi_item i ON i.id_transaksi = n.id_transaksi
       WHERE coalesce(i.qty_packed, 0) > 0
+        AND (
+          v_jenis <> 'batal'
+          OR n.status = 'batal'
+          OR (
+            n.status = 'terkirim'
+            AND coalesce(i.qty_packed, 0) > coalesce(i.qty_actual, 0)
+          )
+        )
       GROUP BY n.id_pelanggan, n.rute_pengirim, i.id_barang
     ),
     sku_toko AS (
@@ -870,6 +878,14 @@ BEGIN
         JOIN omset o ON o.id_transaksi = n.id_transaksi
         JOIN public.v_transaksi_item i ON i.id_transaksi = n.id_transaksi
         WHERE coalesce(i.qty_packed, 0) > 0
+          AND (
+            v_jenis <> 'batal'
+            OR o.status = 'batal'
+            OR (
+              o.status = 'terkirim'
+              AND coalesce(i.qty_packed, 0) > coalesce(i.qty_actual, 0)
+            )
+          )
         GROUP BY n.id_transaksi, i.id_barang
       ) x
       GROUP BY x.id_transaksi
@@ -1004,7 +1020,8 @@ BEGIN
         ELSE coalesce(sum(t.jual_packed), 0)::bigint
       END
     INTO v_toko, v_total
-    FROM toko t;
+    FROM toko t
+    WHERE v_jenis <> 'batal' OR t.jual_batal > 0;
   ELSIF v_jenis = 'retur' THEN
     WITH baris AS (
       SELECT
