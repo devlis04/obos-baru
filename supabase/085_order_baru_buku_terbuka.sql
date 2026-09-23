@@ -148,6 +148,7 @@ BEGIN
       SET tanggal = v_tgl
       WHERE id_setoran_buku = v_id;
     END IF;
+    PERFORM public.setoran_pending_foto_pindah(v_id);
     RETURN v_id;
   END IF;
 
@@ -168,7 +169,8 @@ BEGIN
     GREATEST(COALESCE(b.stok, 0), 0),
     0
   FROM public.barang b
-  WHERE btrim(b.id_barang) <> '';
+  WHERE btrim(b.id_barang) <> ''
+    AND COALESCE(b.aktif, true);
 
   PERFORM public.setoran_pending_foto_pindah(v_id);
   RETURN v_id;

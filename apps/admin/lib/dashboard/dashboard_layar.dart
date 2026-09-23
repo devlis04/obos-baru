@@ -402,9 +402,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   label: 'Kunjungan visit',
                   warna: Colors.red,
                   targetText: '${m.targetVisit} toko',
+                  orderText: m.xcOrder > 0 || m.xcBatal > 0
+                      ? 'XC ${m.xcOrder}${m.xcBatal > 0 ? ' · batal ${m.xcBatal}' : ''}'
+                      : null,
                   actualText: '${m.visit} toko',
                   persentaseActual: _pct(m.visit, m.targetVisit),
-                  tampilkanOrder: false,
+                  tampilkanOrder: m.xcOrder > 0 || m.xcBatal > 0,
                 ),
               ),
             ),
@@ -492,9 +495,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _kotakHari(
-                      label: 'Kunjungan visit',
+                      label: 'Visit · Extra call',
                       warna: Colors.red,
                       targetText: '${h.targetVisit} toko',
+                      orderText: h.xcBatal > 0
+                          ? 'XC ${h.xcOrder} · batal ${h.xcBatal}'
+                          : 'XC ${h.xcOrder} toko',
                       actualText: '${h.visit} toko',
                     ),
                   ),
@@ -555,10 +561,18 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           '${m.ecKiriman}',
                           '${m.ecActual}',
                         ),
+                        _barisKecil(
+                          'XC',
+                          '${m.xcOrder}',
+                          '${m.xcKiriman}',
+                          '${m.xcActual}',
+                        ),
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            'Visit ${m.visit} / ${m.targetVisit}',
+                            m.xcBatal > 0
+                                ? 'Visit ${m.visit} / ${m.targetVisit} · XC batal ${m.xcBatal}'
+                                : 'Visit ${m.visit} / ${m.targetVisit}',
                             style: const TextStyle(
                               fontSize: _teksIsi,
                               fontWeight: FontWeight.w600,
@@ -608,10 +622,18 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           '${h.ecKiriman}',
                           '${h.ecActual}',
                         ),
+                        _barisKecil(
+                          'XC',
+                          '${h.xcOrder}',
+                          '${h.xcKiriman}',
+                          '${h.xcActual}',
+                        ),
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            'Visit ${h.visit} / ${h.targetVisit}',
+                            h.xcBatal > 0
+                                ? 'Visit ${h.visit} / ${h.targetVisit} · XC batal ${h.xcBatal}'
+                                : 'Visit ${h.visit} / ${h.targetVisit}',
                             style: const TextStyle(
                               fontSize: _teksIsi,
                               fontWeight: FontWeight.w600,

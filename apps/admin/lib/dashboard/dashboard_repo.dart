@@ -14,6 +14,10 @@ class CapaianDash {
     required this.ecOrder,
     required this.ecKiriman,
     required this.ecActual,
+    required this.xcOrder,
+    required this.xcKiriman,
+    required this.xcActual,
+    required this.xcBatal,
     required this.notaOrder,
     required this.notaKiriman,
     required this.notaActual,
@@ -31,6 +35,10 @@ class CapaianDash {
   final int ecOrder;
   final int ecKiriman;
   final int ecActual;
+  final int xcOrder;
+  final int xcKiriman;
+  final int xcActual;
+  final int xcBatal;
   final int notaOrder;
   final int notaKiriman;
   final int notaActual;
@@ -48,6 +56,10 @@ class CapaianDash {
     ecOrder: 0,
     ecKiriman: 0,
     ecActual: 0,
+    xcOrder: 0,
+    xcKiriman: 0,
+    xcActual: 0,
+    xcBatal: 0,
     notaOrder: 0,
     notaKiriman: 0,
     notaActual: 0,
@@ -68,6 +80,10 @@ class CapaianDash {
       ecOrder: Uang.dari(j['ec_order']),
       ecKiriman: Uang.dari(j['ec_kiriman']),
       ecActual: Uang.dari(j['ec_actual']),
+      xcOrder: Uang.dari(j['xc_order']),
+      xcKiriman: Uang.dari(j['xc_kiriman']),
+      xcActual: Uang.dari(j['xc_actual']),
+      xcBatal: Uang.dari(j['xc_batal']),
       notaOrder: Uang.dari(j['nota_order']),
       notaKiriman: Uang.dari(j['nota_kiriman']),
       notaActual: Uang.dari(j['nota_actual']),
@@ -370,6 +386,10 @@ class TokoDash {
   }
 
   String get teksVisit {
+    if (!jadwal && nota > 0) {
+      if (visitMasuk == null) return status == 'batal' ? 'extra batal' : 'extra';
+      return 'extra';
+    }
     if (visitMasuk == null) return jadwal ? 'jadwal' : '—';
     final masuk = _jam(visitMasuk!);
     if (visitKeluar == null) return masuk;

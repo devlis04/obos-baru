@@ -77,8 +77,13 @@ class MutasiRepo {
     return _n(n);
   }
 
-  Future<int> hapus() async {
-    final n = await _sb.rpc('admin_mutasi_hapus').timeout(Jaringan.lambat);
+  Future<int> hapus({int? idBuku}) async {
+    final n = await _sb
+        .rpc(
+          'admin_mutasi_hapus',
+          params: {'p_id_setoran_buku': ?idBuku},
+        )
+        .timeout(Jaringan.lambat);
     return _n(n);
   }
 }

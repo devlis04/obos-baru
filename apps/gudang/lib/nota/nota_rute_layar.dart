@@ -316,6 +316,13 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
                                         nota.labelStatus,
                                         _warnaStatus(nota.labelStatus),
                                       ),
+                                      if (nota.extra) ...[
+                                        const SizedBox(height: 6),
+                                        _chip(
+                                          'Extra',
+                                          Colors.teal.shade800,
+                                        ),
+                                      ],
                                       if (nota.pending) ...[
                                         const SizedBox(height: 6),
                                         _chip(

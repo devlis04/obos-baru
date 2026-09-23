@@ -1,41 +1,29 @@
--- Kalender pengirim: tanggal yang dipilih = data hari itu, bukan dialihkan ke buku terbuka.
--- Jalankan SETELAH 072. Boleh diulang.
+-- Ringkasan pengirim: Batal = nota batal + sisa tebus (packed − actual),
+-- sama seperti kartu setoran admin. TK IRUL terkirim, Ultracilin packed 2
+-- actual 0 → admin Rp 33.000, pengirim sebelumnya Rp 0.
+-- Batal gudang (packing qty 0) tidak di kartu/ringkas/daftar nota.
+-- App pengirim menyembunyikan nilai order. Jalankan SETELAH 090. Boleh diulang.
 
-CREATE OR REPLACE FUNCTION public.pengirim_nota_ikut_buku(
-  p_id_buku bigint,
-  p_tgl date,
-  p_hidup boolean,
-  p_id_setoran_buku bigint,
+CREATE OR REPLACE FUNCTION public.pengirim_bukan_batal_gudang(
   p_status text,
-  p_waktu_order timestamptz,
-  p_waktu_actual timestamptz,
-  p_tanggal_lihat date
+  p_id_transaksi text
 )
 RETURNS boolean
 LANGUAGE sql
-IMMUTABLE
+STABLE
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
 AS $$
-  SELECT
-    (
-      p_id_buku IS NOT NULL
-      AND p_id_setoran_buku = p_id_buku
+  SELECT NOT (
+    coalesce(p_status, '') = 'batal'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.transaksi_items i
+      WHERE i.id_transaksi = btrim(coalesce(p_id_transaksi, ''))
+        AND coalesce(i.qty_packed, 0) > 0
     )
-    OR (
-      p_tgl IS NOT NULL
-      AND p_waktu_order IS NOT NULL
-      AND (p_waktu_order AT TIME ZONE 'Asia/Jakarta')::date = p_tgl
-      AND p_id_setoran_buku IS NULL
-      AND p_status = 'dikirim'
-      AND (p_id_buku IS NULL OR coalesce(p_hidup, false))
-    )
-    OR (
-      p_id_buku IS NULL
-      AND p_id_setoran_buku IS NULL
-      AND p_status IN ('terkirim', 'batal')
-      AND p_waktu_actual IS NOT NULL
-      AND p_tanggal_lihat IS NOT NULL
-      AND (p_waktu_actual AT TIME ZONE 'Asia/Jakarta')::date = p_tanggal_lihat
-    );
+  );
 $$;
 
 CREATE OR REPLACE FUNCTION public.pengirim_kartu_toko(p_tanggal date)
@@ -100,6 +88,7 @@ BEGIN
         v_id_buku, v_tgl, v_hidup, t.id_setoran_buku,
         t.status, t.waktu_order, t.waktu_actual, p_tanggal
       )
+      AND public.pengirim_bukan_batal_gudang(t.status, t.id_transaksi)
   ),
   hitung AS (
     SELECT
@@ -127,18 +116,41 @@ BEGIN
         END
       ), 0)::bigint AS omset_actual,
       coalesce(sum(
-        CASE WHEN n.status = 'batal' THEN (
-          SELECT coalesce(sum(i.subtotal_jual_packed), 0)
-          FROM public.v_transaksi_item i
-          WHERE i.id_transaksi = n.id_transaksi
-        ) ELSE 0 END
+        public.admin_omset_batal(
+          n.status,
+          (
+            SELECT coalesce(sum(i.subtotal_jual_packed), 0)
+            FROM public.v_transaksi_item i
+            WHERE i.id_transaksi = n.id_transaksi
+          ),
+          (
+            SELECT coalesce(sum(i.subtotal_jual_actual), 0)
+            FROM public.v_transaksi_item i
+            WHERE i.id_transaksi = n.id_transaksi
+          )
+        )
       ), 0)::bigint AS omset_batal,
       count(*) FILTER (
         WHERE n.status = 'dikirim' AND NOT n.pending
       )::integer AS wajib_kunci,
       bool_or(n.status = 'dikirim') AS ada_dikirim,
       bool_or(n.pending) AS ada_pending,
-      bool_or(n.status = 'batal') AS ada_batal,
+      bool_or(
+        n.status = 'batal'
+        OR public.admin_omset_batal(
+          n.status,
+          (
+            SELECT coalesce(sum(i.subtotal_jual_packed), 0)
+            FROM public.v_transaksi_item i
+            WHERE i.id_transaksi = n.id_transaksi
+          ),
+          (
+            SELECT coalesce(sum(i.subtotal_jual_actual), 0)
+            FROM public.v_transaksi_item i
+            WHERE i.id_transaksi = n.id_transaksi
+          )
+        ) > 0
+      ) AS ada_batal,
       bool_or(n.status = 'terkirim') AS ada_terkirim
     FROM nota n
     GROUP BY n.id_pelanggan
@@ -248,6 +260,7 @@ BEGIN
         v_id_buku, v_tgl, v_hidup, t.id_setoran_buku,
         t.status, t.waktu_order, t.waktu_actual, p_tanggal
       )
+      AND public.pengirim_bukan_batal_gudang(t.status, t.id_transaksi)
   ),
   item AS (
     SELECT
@@ -272,7 +285,7 @@ BEGIN
     coalesce(sum(i.jual_order), 0)::bigint,
     coalesce(sum(i.jual_packed), 0)::bigint,
     coalesce(sum(CASE WHEN i.status = 'batal' THEN 0 ELSE i.jual_actual END), 0)::bigint,
-    coalesce(sum(CASE WHEN i.status = 'batal' THEN i.jual_packed ELSE 0 END), 0)::bigint,
+    coalesce(sum(public.admin_omset_batal(i.status, i.jual_packed, i.jual_actual)), 0)::bigint,
     coalesce(sum(CASE WHEN i.pending THEN i.jual_packed ELSE 0 END), 0)::bigint,
     v_retur,
     coalesce(sum(i.jual_order - i.beli_order), 0)::bigint,
@@ -369,8 +382,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.pengirim_nota_ikut_buku(bigint, date, boolean, bigint, text, timestamptz, timestamptz, date) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.pengirim_nota_ikut_buku(bigint, date, boolean, bigint, text, timestamptz, timestamptz, date)
+REVOKE ALL ON FUNCTION public.pengirim_bukan_batal_gudang(text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.pengirim_bukan_batal_gudang(text, text)
   TO authenticated, postgres, service_role;
 REVOKE ALL ON FUNCTION public.pengirim_kartu_toko(date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.pengirim_kartu_toko(date)

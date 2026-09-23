@@ -94,6 +94,7 @@ class TokoRepo {
         .whereType<Map>()
         .map((e) => RingkasNota.fromJson(Map<String, dynamic>.from(e)))
         .where((n) => n.idTransaksi.isNotEmpty)
+        .where((n) => !(n.status == 'batal' && n.omsetPacked <= 0))
         .toList();
   }
 

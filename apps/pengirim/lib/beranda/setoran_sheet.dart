@@ -95,11 +95,6 @@ Future<void> tampilkanSheetSetoran({
             ),
             const Divider(height: 24),
             barisUang(
-              label: 'Order',
-              nilai: ringkas.omsetOrder,
-              laba: ringkas.labaOrder,
-            ),
-            barisUang(
               label: 'Kiriman',
               nilai: ringkas.omsetPacked,
               laba: ringkas.labaPacked,

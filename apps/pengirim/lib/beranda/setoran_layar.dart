@@ -679,11 +679,6 @@ class _SetoranLayarState extends State<SetoranLayar> {
                                         ),
                                       const Divider(height: 10),
                                       _barisUang(
-                                        label: 'Order',
-                                        nilai: _ringkas.omsetOrder,
-                                        laba: _ringkas.labaOrder,
-                                      ),
-                                      _barisUang(
                                         label: 'Kiriman',
                                         nilai: _ringkas.omsetPacked,
                                         laba: _ringkas.labaPacked,

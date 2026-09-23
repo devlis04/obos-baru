@@ -24,6 +24,7 @@ class RingkasNota {
     required this.labaOrder,
     required this.labaPacked,
     required this.labaActual,
+    this.extra = false,
   });
 
   final String idTransaksi;
@@ -39,6 +40,7 @@ class RingkasNota {
   final int labaOrder;
   final int labaPacked;
   final int labaActual;
+  final bool extra;
 
   factory RingkasNota.dari(Map<String, dynamic> r) {
     DateTime? w(dynamic v) {
@@ -61,6 +63,7 @@ class RingkasNota {
       labaOrder: _n(r['laba_order']),
       labaPacked: _n(r['laba_packed']),
       labaActual: _n(r['laba_actual']),
+      extra: r['extra'] == true,
     );
   }
 

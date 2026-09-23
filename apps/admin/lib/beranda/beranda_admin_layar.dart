@@ -801,10 +801,17 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
     if (_proses) return;
     setState(() => _proses = true);
     try {
-      await _mutasiRepo.hapus();
-      MutasiSetoran.instance.pasang(const []);
+      final n = await _mutasiRepo.hapus(idBuku: _idBukuLihat);
+      MutasiSetoran.instance.pasang(
+        await _mutasiRepo.lihat(idBuku: _idBukuLihat),
+      );
       if (!mounted) return;
-      tampilPesan(context, 'Mutasi buku ini dihapus.');
+      tampilPesan(
+        context,
+        n <= 0
+            ? 'Tidak ada mutasi yang dihapus.'
+            : 'Mutasi buku ini dihapus.',
+      );
     } catch (e) {
       if (!mounted) return;
       tampilPesan(

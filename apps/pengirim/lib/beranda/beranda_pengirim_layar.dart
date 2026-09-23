@@ -355,8 +355,6 @@ class _BerandaPengirimLayarState extends State<BerandaPengirimLayar> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text('Order : ${Uang.rp(toko.omsetOrder)}', style: gaya),
-        const SizedBox(height: 2),
         Text('Kiriman : ${Uang.rp(toko.omsetPacked)}', style: gaya),
         const SizedBox(height: 2),
         Text('Actual : ${Uang.rp(toko.omsetActual)}', style: gaya),

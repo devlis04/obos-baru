@@ -131,16 +131,6 @@ Widget barisBarangNota(ItemNota it, {int? qtyTebus, int? hargaTebus}) {
       Text(it.nama, style: const TextStyle(fontWeight: FontWeight.w600)),
       const SizedBox(height: 4),
       baris(
-        label: 'Order',
-        qty: it.qtyOrder,
-        harga: it.hargaJualOrder,
-        subtotal: it.subtotalOrder,
-        rasio: Uang.rasioItem(
-          hargaJual: it.hargaJualOrder,
-          hargaBeli: beli,
-        ),
-      ),
-      baris(
         label: 'Kiriman',
         qty: it.qtyPacked,
         harga: it.hargaJualPacked,
@@ -413,16 +403,7 @@ class _IsiSheetRincianState extends State<_IsiSheetRincian> {
                 ),
               ),
             const Divider(height: 24),
-            barisUangNota(
-              'Order',
-              widget.nota.omsetOrder,
-              Uang.rasioOmset(
-                omset: widget.nota.omsetOrder,
-                modal: items.fold(0, (s, i) => s + i.qtyOrder * i.hargaBeli),
-              ),
-            ),
             if (widget.nota.sudahPack) ...[
-              const SizedBox(height: 8),
               barisUangNota(
                 'Kiriman',
                 widget.nota.omsetPacked,

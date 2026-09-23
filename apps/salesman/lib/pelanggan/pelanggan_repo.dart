@@ -60,6 +60,47 @@ class PelangganRepo {
         .toList();
   }
 
+  Future<Set<String>> idKunjunganJadwal({
+    required String rute,
+    required DateTime dari,
+    required DateTime sampai,
+    required Map<String, String> visitToko,
+  }) async {
+    final kode = rute.trim();
+    if (kode.isEmpty) return {};
+    final hasil = <String>{};
+    var from = 0;
+    const ukuran = 200;
+    while (from < 2000) {
+      final to = from + ukuran - 1;
+      final page = await _sb
+          .from('kunjungan_sales')
+          .select('id_pelanggan, tanggal')
+          .eq('rute', kode)
+          .gte('tanggal', MingguKunjungan.iso(dari))
+          .lte('tanggal', MingguKunjungan.iso(sampai))
+          .range(from, to)
+          .timeout(Jaringan.lambat);
+      final list = (page as List).whereType<Map>().toList();
+      for (final row in list) {
+        final id = row['id_pelanggan']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        final tgl = row['tanggal']?.toString() ?? '';
+        final p = tgl.split('-');
+        if (p.length < 3) continue;
+        final hari = DateTime(
+          int.tryParse(p[0]) ?? 0,
+          int.tryParse(p[1]) ?? 0,
+          int.tryParse(p[2]) ?? 0,
+        );
+        if (visitToko[id] == MingguKunjungan.namaHari(hari)) hasil.add(id);
+      }
+      if (list.length < ukuran) break;
+      from += ukuran;
+    }
+    return hasil;
+  }
+
   Future<Set<String>> idKunjunganRentang({
     required String rute,
     required DateTime dari,

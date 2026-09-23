@@ -77,16 +77,16 @@ class _TokoLayarState extends State<TokoLayar> {
   }
 
   Widget _nominal(RingkasNota n) {
-    final rasioOrder = Uang.rasioLaba(omset: n.omsetOrder, laba: n.labaOrder);
     if (!n.sudahPack) {
-      return _uangRasio(Uang.rp(n.omsetOrder), rasioOrder);
+      return _uangRasio(
+        Uang.rp(n.omsetPacked),
+        Uang.rasioLaba(omset: n.omsetPacked, laba: n.labaPacked),
+      );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _uangRasio('Order : ${Uang.rp(n.omsetOrder)}', rasioOrder),
-        const SizedBox(height: 2),
         _uangRasio(
           'Kiriman : ${Uang.rp(n.omsetPacked)}',
           Uang.rasioLaba(omset: n.omsetPacked, laba: n.labaPacked),

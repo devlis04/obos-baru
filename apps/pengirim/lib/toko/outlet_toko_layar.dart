@@ -500,15 +500,6 @@ class _OutletTokoLayarState extends State<OutletTokoLayar> {
                   ),
                 const Divider(height: 24),
                 barisUangNota(
-                  'Order',
-                  nota.nota.omsetOrder,
-                  Uang.rasioOmset(
-                    omset: nota.nota.omsetOrder,
-                    modal: items.fold(0, (s, i) => s + i.qtyOrder * i.hargaBeli),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                barisUangNota(
                   'Kiriman',
                   nota.nota.omsetPacked,
                   Uang.rasioOmset(
@@ -787,21 +778,21 @@ class _OutletTokoLayarState extends State<OutletTokoLayar> {
 
   Widget _nominal(_NotaOutlet nota) {
     final n = nota.nota;
-    final rasioOrder = _rasioDariItem(
-      omset: n.omsetOrder,
-      items: nota.item,
-      qty: (it) => it.qtyOrder,
-      cadangan: n.labaOrder,
-    );
     if (!n.sudahPack) {
-      return _uangRasio(Uang.rp(n.omsetOrder), rasioOrder);
+      return _uangRasio(
+        Uang.rp(n.omsetPacked),
+        _rasioDariItem(
+          omset: n.omsetPacked,
+          items: nota.item,
+          qty: (it) => it.qtyPacked,
+          cadangan: n.labaPacked,
+        ),
+      );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _uangRasio('Order : ${Uang.rp(n.omsetOrder)}', rasioOrder),
-        const SizedBox(height: 2),
         _uangRasio(
           'Kiriman : ${Uang.rp(n.omsetPacked)}',
           _rasioDariItem(

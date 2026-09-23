@@ -254,6 +254,7 @@ BEGIN
       v.waktu_masuk,
       v.waktu_keluar,
       (j.id_pelanggan IS NOT NULL) AS jadwal,
+      (j.id_pelanggan IS NULL AND count(DISTINCT o.id_transaksi) > 0) AS extra,
       coalesce(st.sku, '[]'::jsonb) AS sku,
       coalesce(nb.nota_list, '[]'::jsonb) AS nota_list
     FROM kunci k
@@ -294,10 +295,18 @@ BEGIN
         'visit_masuk', b.waktu_masuk,
         'visit_keluar', b.waktu_keluar,
         'jadwal', b.jadwal,
+        'extra', b.extra,
         'sku', b.sku,
         'nota_list', b.nota_list
       )
-      ORDER BY b.nama, b.id_pelanggan
+      ORDER BY
+        CASE
+          WHEN b.jadwal THEN 0
+          WHEN b.extra THEN 1
+          ELSE 2
+        END,
+        b.nama,
+        b.id_pelanggan
     ),
     '[]'::jsonb
   )

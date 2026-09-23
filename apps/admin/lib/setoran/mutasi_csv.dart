@@ -242,6 +242,7 @@ class MutasiCsv {
       'FEBRU ARI': 'FEBRUARI',
       'SEPTEM BER': 'SEPTEMBER',
       'SEPTEMBE R': 'SEPTEMBER',
+      'SEPTEMB ER': 'SEPTEMBER',
       'OKTO BER': 'OKTOBER',
       'OKTOBE R': 'OKTOBER',
       'NOVEM BER': 'NOVEMBER',

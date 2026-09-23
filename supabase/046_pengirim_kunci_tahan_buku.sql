@@ -41,7 +41,7 @@ BEGIN
     RETURN;
   END IF;
 
-  v_baru := GREATEST(0, LEAST(COALESCE(v_packed, 0), COALESCE(v_batal, 0) + v_qty));
+  v_baru := GREATEST(0, COALESCE(v_batal, 0) + v_qty);
   v_geser := v_baru - COALESCE(v_batal, 0);
   IF v_geser = 0 THEN
     RETURN;

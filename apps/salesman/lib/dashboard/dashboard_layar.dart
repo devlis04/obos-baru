@@ -43,10 +43,16 @@ class _DashboardLayarState extends State<DashboardLayar> {
   int _ecMingguOrder = 0;
   int _ecMingguPacked = 0;
   int _ecMingguActual = 0;
-  int _visitMinggu = 0;
+  int _xcMingguOrder = 0;
+  int _xcMingguPacked = 0;
+  int _xcMingguBatal = 0;
+  int _xcHariOrder = 0;
+  int _xcHariPacked = 0;
+  int _xcHariBatal = 0;
   int _ecHariOrder = 0;
   int _ecHariPacked = 0;
   int _ecHariActual = 0;
+  int _visitMinggu = 0;
   int _visitHari = 0;
 
   int _targetOmset = 0;
@@ -123,13 +129,18 @@ class _DashboardLayarState extends State<DashboardLayar> {
     if (targetVisit < 1) targetVisit = 1;
     final targetHari = _targetHari(_hariKartu, tokoRute);
 
+    final visitMap = {
+      for (final t in tokoRute) t.id: (t.visit ?? '').trim(),
+    };
     final hariKartu = await _dataKartu(
       dari: _hariKartu,
       sampai: _hariKartu,
+      visitMap: visitMap,
     );
     final mingguKartu = await _dataKartu(
       dari: _seninKartu,
       sampai: _seninKartu.add(const Duration(days: 6)),
+      visitMap: visitMap,
     );
     if (!mounted) return;
 
@@ -178,6 +189,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
     _ecMingguPacked = data.ecPacked;
     _ecMingguActual = data.ecActual;
     _visitMinggu = data.visit;
+    _xcMingguOrder = data.xcOrder;
+    _xcMingguPacked = data.xcPacked;
+    _xcMingguBatal = data.xcBatal;
     _pctOmset = _targetOmset > 0 ? data.omsetOrder / _targetOmset : 0;
     _pctLaba = _targetPersenLaba > 0 ? persenOrder / _targetPersenLaba : 0;
     _pctEc = data.ecOrder / _targetEc;
@@ -203,6 +217,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
     _ecHariPacked = data.ecPacked;
     _ecHariActual = data.ecActual;
     _visitHari = data.visit;
+    _xcHariOrder = data.xcOrder;
+    _xcHariPacked = data.xcPacked;
+    _xcHariBatal = data.xcBatal;
   }
 
   double _persenLaba(int omset, int laba) {
@@ -217,10 +234,23 @@ class _DashboardLayarState extends State<DashboardLayar> {
     return '${((laba / modal) * 100).toStringAsFixed(2)}%';
   }
 
+  Map<String, String> get _visitMap => {
+        for (final t in _tokoRute) t.id: (t.visit ?? '').trim(),
+      };
+
+  bool _jadwalToko(String idPelanggan, DateTime? waktu, Map<String, String> visitMap) {
+    if (idPelanggan.isEmpty || waktu == null) return false;
+    final lokal = waktu.toLocal();
+    return visitMap[idPelanggan] ==
+        MingguKunjungan.namaHari(DateTime(lokal.year, lokal.month, lokal.day));
+  }
+
   Future<_Capaian> _dataKartu({
     required DateTime dari,
     required DateTime sampai,
+    Map<String, String>? visitMap,
   }) async {
+    final jadwal = visitMap ?? _visitMap;
     var omsetOrder = 0;
     var labaOrder = 0;
     var omsetPacked = 0;
@@ -230,6 +260,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
     final ecOrder = <String>{};
     final ecPacked = <String>{};
     final ecActual = <String>{};
+    final xcOrder = <String>{};
+    final xcPacked = <String>{};
+    final xcActual = <String>{};
+    final xcBatal = <String>{};
     var visit = 0;
     try {
       final nota = await _nota.untukRentang(
@@ -238,21 +272,41 @@ class _DashboardLayarState extends State<DashboardLayar> {
         ringkas: true,
       );
       for (final n in nota) {
+        final diJadwal = _jadwalToko(n.idPelanggan, n.waktuOrder, jadwal);
+        if (n.status == 'batal' && n.idPelanggan.isNotEmpty && !diJadwal) {
+          xcBatal.add(n.idPelanggan);
+        }
         if (!n.batalSales) {
           omsetOrder += n.totalOrder;
           labaOrder += n.totalOrder - n.modalOrder;
-          if (n.idPelanggan.isNotEmpty) ecOrder.add(n.idPelanggan);
+          if (n.idPelanggan.isNotEmpty) {
+            if (diJadwal) {
+              ecOrder.add(n.idPelanggan);
+            } else {
+              xcOrder.add(n.idPelanggan);
+            }
+          }
         }
         if (!n.batalGudang && n.punyaPacked) {
           omsetPacked += n.totalPacked;
           labaPacked += n.totalPacked - n.modalPacked;
-          if (n.idPelanggan.isNotEmpty) ecPacked.add(n.idPelanggan);
+          if (n.idPelanggan.isNotEmpty) {
+            if (diJadwal) {
+              ecPacked.add(n.idPelanggan);
+            } else {
+              xcPacked.add(n.idPelanggan);
+            }
+          }
         }
         if (!n.batalPengirim) {
           omsetActual += n.totalActual;
           labaActual += n.totalActual - n.modalActual;
           if (n.idPelanggan.isNotEmpty && n.status == 'terkirim') {
-            ecActual.add(n.idPelanggan);
+            if (diJadwal) {
+              ecActual.add(n.idPelanggan);
+            } else {
+              xcActual.add(n.idPelanggan);
+            }
           }
         }
       }
@@ -265,10 +319,11 @@ class _DashboardLayarState extends State<DashboardLayar> {
       }
     }
     try {
-      visit = (await _toko.idKunjunganRentang(
+      visit = (await _toko.idKunjunganJadwal(
         rute: _rute,
         dari: dari,
         sampai: sampai,
+        visitToko: jadwal,
       ))
           .length;
     } catch (_) {}
@@ -276,12 +331,16 @@ class _DashboardLayarState extends State<DashboardLayar> {
       omsetOrder: omsetOrder,
       labaOrder: labaOrder,
       ecOrder: ecOrder.length,
+      xcOrder: xcOrder.length,
       omsetPacked: omsetPacked,
       labaPacked: labaPacked,
       ecPacked: ecPacked.length,
+      xcPacked: xcPacked.length,
       omsetActual: omsetActual,
       labaActual: labaActual,
       ecActual: ecActual.length,
+      xcActual: xcActual.length,
+      xcBatal: xcBatal.length,
       visit: visit,
     );
   }
@@ -786,12 +845,19 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                       const Divider(height: 2),
                                       Expanded(
                                         child: _barisTarget(
-                                          label: 'Kunjungan',
+                                          label: 'Kunjungan visit',
                                           warna: Colors.red,
                                           targetText: '$_targetVisit toko',
+                                          orderText: _xcMingguOrder > 0 ||
+                                                  _xcMingguBatal > 0
+                                              ? 'XC $_xcMingguOrder${_xcMingguBatal > 0 ? ' · batal $_xcMingguBatal' : ''}'
+                                              : 'XC $_xcMingguOrder',
+                                          packedText: 'XC $_xcMingguPacked',
                                           actualText: '$_visitMinggu toko',
                                           persentaseActual: _pctVisitActual,
-                                          tampilkanTahap: false,
+                                          tampilkanTahap: _xcMingguOrder > 0 ||
+                                              _xcMingguPacked > 0 ||
+                                              _xcMingguBatal > 0,
                                         ),
                                       ),
                                     ],
@@ -885,10 +951,15 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                                   const SizedBox(width: 8),
                                                   Expanded(
                                                     child: _kotakHari(
-                                                      label: 'Kunjungan',
+                                                      label: 'Visit · Extra call',
                                                       warna: Colors.red,
                                                       targetText:
                                                           '$_targetVisitHari toko',
+                                                      orderText: _xcHariBatal > 0
+                                                          ? 'XC $_xcHariOrder · batal $_xcHariBatal'
+                                                          : 'XC $_xcHariOrder toko',
+                                                      packedText:
+                                                          'XC $_xcHariPacked toko',
                                                       actualText: '$_visitHari toko',
                                                     ),
                                                   ),
@@ -942,24 +1013,32 @@ class _Capaian {
     required this.omsetOrder,
     required this.labaOrder,
     required this.ecOrder,
+    required this.xcOrder,
     required this.omsetPacked,
     required this.labaPacked,
     required this.ecPacked,
+    required this.xcPacked,
     required this.omsetActual,
     required this.labaActual,
     required this.ecActual,
+    required this.xcActual,
+    required this.xcBatal,
     required this.visit,
   });
 
   final int omsetOrder;
   final int labaOrder;
   final int ecOrder;
+  final int xcOrder;
   final int omsetPacked;
   final int labaPacked;
   final int ecPacked;
+  final int xcPacked;
   final int omsetActual;
   final int labaActual;
   final int ecActual;
+  final int xcActual;
+  final int xcBatal;
   final int visit;
 }
 

@@ -86,6 +86,7 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
         b.idPelanggan.toLowerCase().contains(f) ||
         b.status.toLowerCase().contains(f) ||
         b.teksVisit.toLowerCase().contains(f) ||
+        (b.nota > 0 && !b.jadwal && 'extra'.contains(f)) ||
         angka(b.nota) ||
         angka(b.sku) ||
         angka(b.order) ||
@@ -104,7 +105,17 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
     return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
   }
 
+  int _grup(TokoDash t) {
+    if (t.jadwal) return 0;
+    if (t.nota > 0) return 1;
+    return 2;
+  }
+
   int _banding(TokoDash a, TokoDash b) {
+    if (_sortKolom == 0) {
+      final g = _grup(a).compareTo(_grup(b));
+      if (g != 0) return _sortNaik ? g : -g;
+    }
     final r = switch (_sortKolom) {
       0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
       1 => a.teksVisit.compareTo(b.teksVisit),
