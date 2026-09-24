@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -177,6 +179,17 @@ class _PetaHariLayarState extends State<PetaHariLayar> {
                             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.obos.salesman',
                       ),
+                      if (_areaHari(toko) case final area?)
+                        PolygonLayer(
+                          polygons: [
+                            Polygon(
+                              points: area,
+                              color: Tema.seed.withValues(alpha: 0.18),
+                              borderColor: Tema.seed,
+                              borderStrokeWidth: 2,
+                            ),
+                          ],
+                        ),
                       MarkerLayer(
                         markers: [
                           for (var i = 0; i < toko.length; i++)
@@ -220,4 +233,70 @@ class _PetaHariLayarState extends State<PetaHariLayar> {
             ),
     );
   }
+}
+
+List<LatLng>? _areaHari(List<Pelanggan> toko) {
+  final unik = <String, LatLng>{};
+  for (final p in toko) {
+    final lat = p.latitude!;
+    final lng = p.longitude!;
+    unik['${lat.toStringAsFixed(5)},${lng.toStringAsFixed(5)}'] =
+        LatLng(lat, lng);
+  }
+  final titik = unik.values.toList();
+  if (titik.length < 3) return null;
+  final pts = [...titik]..sort((a, b) {
+    final c = a.longitude.compareTo(b.longitude);
+    if (c != 0) return c;
+    return a.latitude.compareTo(b.latitude);
+  });
+  double silang(LatLng o, LatLng a, LatLng b) {
+    return (a.longitude - o.longitude) * (b.latitude - o.latitude) -
+        (a.latitude - o.latitude) * (b.longitude - o.longitude);
+  }
+
+  final bawah = <LatLng>[];
+  for (final p in pts) {
+    while (bawah.length >= 2 &&
+        silang(bawah[bawah.length - 2], bawah.last, p) <= 0) {
+      bawah.removeLast();
+    }
+    bawah.add(p);
+  }
+  final atas = <LatLng>[];
+  for (final p in pts.reversed) {
+    while (atas.length >= 2 &&
+        silang(atas[atas.length - 2], atas.last, p) <= 0) {
+      atas.removeLast();
+    }
+    atas.add(p);
+  }
+  bawah.removeLast();
+  atas.removeLast();
+  final kulit = [...bawah, ...atas];
+  if (kulit.length < 3) return null;
+  var lat = 0.0;
+  var lng = 0.0;
+  for (final p in kulit) {
+    lat += p.latitude;
+    lng += p.longitude;
+  }
+  final pusat = LatLng(lat / kulit.length, lng / kulit.length);
+  return [
+    for (final p in kulit) _dorong(pusat, p, 80),
+  ];
+}
+
+LatLng _dorong(LatLng pusat, LatLng titik, double meter) {
+  final dy = (titik.latitude - pusat.latitude) * 111320;
+  final dx = (titik.longitude - pusat.longitude) *
+      111320 *
+      math.cos(pusat.latitude * math.pi / 180);
+  final jarak = math.sqrt(dx * dx + dy * dy);
+  if (jarak < 1) return titik;
+  final faktor = (jarak + meter) / jarak;
+  return LatLng(
+    pusat.latitude + (titik.latitude - pusat.latitude) * faktor,
+    pusat.longitude + (titik.longitude - pusat.longitude) * faktor,
+  );
 }

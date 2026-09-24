@@ -11,6 +11,7 @@ import 'pelanggan.dart';
 import 'pelanggan_csv_dialog.dart';
 import 'pelanggan_form.dart';
 import 'pelanggan_repo.dart';
+import 'peta_area.dart';
 
 class PelangganLayar extends StatefulWidget {
   const PelangganLayar({super.key});
@@ -135,13 +136,14 @@ class _PelangganLayarState extends State<PelangganLayar> {
                 ),
                 if (_muat) const LinearProgressIndicator(minHeight: 2),
                 Expanded(
+                  flex: 3,
                   child: _daftar.isEmpty && !_muat
                       ? const Padding(
                           padding: EdgeInsets.fromLTRB(16, 16, 8, 0),
                           child: Text('Tidak ada pelanggan.'),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(8, 4, 4, 12),
+                          padding: const EdgeInsets.fromLTRB(8, 4, 4, 8),
                           itemCount: _daftar.length,
                           itemBuilder: (context, i) {
                             final p = _daftar[i];
@@ -188,30 +190,38 @@ class _PelangganLayarState extends State<PelangganLayar> {
                           },
                         ),
                 ),
+                const Divider(height: 1, thickness: 1),
+                Expanded(
+                  flex: 2,
+                  child: tampilForm
+                      ? PelangganPanel(
+                          key: ValueKey(_pilih!.id),
+                          awal: _pilih!,
+                          onTersimpan: _setelahSimpan,
+                        )
+                      : const Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            child: Text(
+                              'Pilih pelanggan di atas. Toko baru dari aplikasi salesman.',
+                              style: TextStyle(color: Colors.black54, fontSize: 14),
+                            ),
+                          ),
+                        ),
+                ),
               ],
             ),
           ),
           const VerticalDivider(width: 1, thickness: 1),
           Expanded(
-            child: tampilForm
-                ? PelangganPanel(
-                    key: ValueKey(_pilih!.id),
-                    awal: _pilih!,
-                    onTersimpan: _setelahSimpan,
-                  )
-                : const Align(
-                    alignment: Alignment.topLeft,
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(16, 16, 12, 12),
-                      child: Text(
-                        'Pilih pelanggan di kiri. Toko baru dari aplikasi salesman.',
-                        style: TextStyle(color: Colors.black54, fontSize: 14),
-                      ),
-                    ),
-                  ),
+            flex: 2,
+            child: PetaAreaKunjungan(
+              daftar: _daftar,
+              pilih: _pilih,
+              onPilih: (p) => setState(() => _pilih = p),
+            ),
           ),
-          const VerticalDivider(width: 1, thickness: 1),
-          const Expanded(child: SizedBox.expand()),
         ],
       ),
     );

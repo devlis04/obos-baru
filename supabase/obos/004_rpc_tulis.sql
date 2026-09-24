@@ -91,27 +91,15 @@ AS $$
 DECLARE
   v_id bigint;
   v_tgl date;
-  v_lama date;
-  v_today date;
 BEGIN
   PERFORM pg_advisory_xact_lock(88221940);
-  v_today := (timezone('Asia/Jakarta', clock_timestamp()))::date;
   v_id := obos.buku_terbuka();
   IF v_id IS NOT NULL THEN
-    v_tgl := obos.tanggal_order_buku(v_id);
-    SELECT b.tanggal INTO v_lama FROM obos.setoran_buku b WHERE b.id = v_id;
-    IF EXISTS (SELECT 1 FROM obos.setoran_buku x WHERE x.ditutup) THEN
-      v_tgl := GREATEST(COALESCE(v_tgl, v_today), v_today);
-    END IF;
-    IF v_tgl IS NOT NULL AND v_lama IS DISTINCT FROM v_tgl THEN
-      UPDATE obos.setoran_buku SET tanggal = v_tgl WHERE id = v_id;
-      UPDATE obos.stok_opname SET tanggal = v_tgl WHERE id_setoran_buku = v_id;
-    END IF;
     PERFORM obos.foto_pindah(v_id);
     RETURN v_id;
   END IF;
 
-  v_tgl := obos.tanggal_order_buku(NULL);
+  v_tgl := obos.tanggal_buku_baru();
   INSERT INTO obos.setoran_buku (tanggal, ditutup)
   VALUES (v_tgl, false)
   RETURNING id INTO v_id;
