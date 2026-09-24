@@ -543,6 +543,18 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   Expanded(
                     child: _sisiRute(
                       judul: 'Minggu',
+                      aksi: Text(
+                        k.targetOmset > 0
+                            ? 'Target ${Uang.rp(k.targetOmset)}'
+                            : 'Target —',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: _teksIsi,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
                       anak: [
                         _kepalaTiga(),
                         _barisKecil(

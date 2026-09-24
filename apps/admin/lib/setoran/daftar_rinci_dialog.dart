@@ -1369,24 +1369,55 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     super.dispose();
   }
 
-  bool _cocok(SkuSetoranRinci s) {
+  bool _notaPending(NotaSetoranRinci n) =>
+      n.pending > 0 || n.status.toLowerCase() == 'pending';
+
+  int _qtyPending(NotaSetoranRinci n, SkuSetoranRinci s) =>
+      _notaPending(n) ? s.qtyPacked : 0;
+
+  int _nilaiPending(NotaSetoranRinci n, SkuSetoranRinci s) =>
+      _notaPending(n) ? s.packed : 0;
+
+  int _modalPending(NotaSetoranRinci n, SkuSetoranRinci s) =>
+      _notaPending(n) ? s.modalPacked : 0;
+
+  static double _rasioNilai(int omset, int modal) {
+    if (omset <= 0 || modal <= 0) return 0;
+    return (omset - modal) / modal * 100;
+  }
+
+  static String _rasioTeks(int omset, int modal) {
+    return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
+  }
+
+  bool _cocok(SkuSetoranRinci s, {NotaSetoranRinci? nota}) {
     final f = _cari.text.trim().toLowerCase();
     if (f.isEmpty) return true;
     if (s.nama.toLowerCase().contains(f) ||
         s.idBarang.toLowerCase().contains(f)) {
       return true;
     }
-    return _cocokAngka(f, s.qtyPacked) ||
+    return _cocokAngka(f, s.qtyOrder) ||
+        _cocokAngka(f, s.nilaiOrder) ||
+        _cocokAngka(f, s.qtyPacked) ||
         _cocokAngka(f, s.packed) ||
         _cocokAngka(f, s.qtyBatal) ||
         _cocokAngka(f, s.batal) ||
+        (nota != null &&
+            (_cocokAngka(f, _qtyPending(nota, s)) ||
+                _cocokAngka(f, _nilaiPending(nota, s)))) ||
         _cocokAngka(f, s.qtyActual) ||
         _cocokAngka(f, s.actual) ||
         _cocokAngka(f, s.qtyRetur) ||
         _cocokAngka(f, s.nilaiRetur);
   }
 
-  int _banding(SkuSetoranRinci a, SkuSetoranRinci b, bool pakaiRetur) {
+  int _banding(
+    SkuSetoranRinci a,
+    SkuSetoranRinci b,
+    bool pakaiRetur, {
+    NotaSetoranRinci? nota,
+  }) {
     if (pakaiRetur) {
       final r = switch (_sortKolom) {
         0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
@@ -1397,12 +1428,34 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     }
     final r = switch (_sortKolom) {
       0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
-      1 => a.qtyPacked.compareTo(b.qtyPacked),
-      2 => a.packed.compareTo(b.packed),
-      3 => a.qtyBatal.compareTo(b.qtyBatal),
-      4 => a.batal.compareTo(b.batal),
-      5 => a.qtyActual.compareTo(b.qtyActual),
-      _ => a.actual.compareTo(b.actual),
+      1 => a.qtyOrder.compareTo(b.qtyOrder),
+      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
+      3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
+          .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
+      4 => a.qtyPacked.compareTo(b.qtyPacked),
+      5 => a.packed.compareTo(b.packed),
+      6 => _rasioNilai(a.packed, a.modalPacked)
+          .compareTo(_rasioNilai(b.packed, b.modalPacked)),
+      7 => a.qtyBatal.compareTo(b.qtyBatal),
+      8 => a.batal.compareTo(b.batal),
+      9 => (nota == null ? 0 : _qtyPending(nota, a))
+          .compareTo(nota == null ? 0 : _qtyPending(nota, b)),
+      10 => (nota == null ? 0 : _nilaiPending(nota, a))
+          .compareTo(nota == null ? 0 : _nilaiPending(nota, b)),
+      11 => _rasioNilai(
+              nota == null ? 0 : _nilaiPending(nota, a),
+              nota == null ? 0 : _modalPending(nota, a),
+            )
+            .compareTo(
+              _rasioNilai(
+                nota == null ? 0 : _nilaiPending(nota, b),
+                nota == null ? 0 : _modalPending(nota, b),
+              ),
+            ),
+      12 => a.qtyActual.compareTo(b.qtyActual),
+      13 => a.actual.compareTo(b.actual),
+      _ => _rasioNilai(a.actual, a.modalActual)
+          .compareTo(_rasioNilai(b.actual, b.modalActual)),
     };
     return _sortNaik ? r : -r;
   }
@@ -1462,14 +1515,23 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
   Widget _tabelNota(BuildContext context, NotaSetoranRinci nota) {
     const gayaJumlah = TextStyle(fontWeight: FontWeight.bold);
     final pakaiRetur = widget.jenis == 'retur';
-    final sku = nota.sku.where(_cocok).toList()
-      ..sort((a, b) => _banding(a, b, pakaiRetur));
+    final sku = nota.sku.where((s) => _cocok(s, nota: nota)).toList()
+      ..sort((a, b) => _banding(a, b, pakaiRetur, nota: nota));
+    final jumQtyOrder = sku.fold<int>(0, (a, s) => a + s.qtyOrder);
+    final jumOrder = sku.fold<int>(0, (a, s) => a + s.nilaiOrder);
+    final jumModalOrder = sku.fold<int>(0, (a, s) => a + s.modalOrder);
     final jumQtyPacked = sku.fold<int>(0, (a, s) => a + s.qtyPacked);
     final jumPacked = sku.fold<int>(0, (a, s) => a + s.packed);
+    final jumModalPacked = sku.fold<int>(0, (a, s) => a + s.modalPacked);
     final jumQtyBatal = sku.fold<int>(0, (a, s) => a + s.qtyBatal);
     final jumBatal = sku.fold<int>(0, (a, s) => a + s.batal);
+    final jumQtyPending = sku.fold<int>(0, (a, s) => a + _qtyPending(nota, s));
+    final jumPending = sku.fold<int>(0, (a, s) => a + _nilaiPending(nota, s));
+    final jumModalPending =
+        sku.fold<int>(0, (a, s) => a + _modalPending(nota, s));
     final jumQtyActual = sku.fold<int>(0, (a, s) => a + s.qtyActual);
     final jumActual = sku.fold<int>(0, (a, s) => a + s.actual);
+    final jumModalActual = sku.fold<int>(0, (a, s) => a + s.modalActual);
     final jumQtyRetur = sku.fold<int>(0, (a, s) => a + s.qtyRetur);
     final jumRetur = sku.fold<int>(0, (a, s) => a + s.nilaiRetur);
     final judulTeks = [
@@ -1481,24 +1543,40 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     final lebar = pakaiRetur
         ? const [280.0, 100.0, 100.0]
         : const [
-            220.0,
-            88.0,
-            88.0,
-            80.0,
-            80.0,
-            88.0,
-            88.0,
+            200.0,
+            76.0,
+            84.0,
+            56.0,
+            84.0,
+            84.0,
+            56.0,
+            76.0,
+            76.0,
+            76.0,
+            84.0,
+            56.0,
+            84.0,
+            84.0,
+            56.0,
           ];
     final judulKolom = pakaiRetur
         ? const ['Barang', 'qty(retur)', 'Retur']
         : const [
             'Barang',
+            'qty(order)',
+            'Order',
+            '%',
             'qty(kiriman)',
             'Kiriman',
+            '%',
             'qty(batal)',
             'Batal',
+            'qty(pending)',
+            'Pending',
+            '%',
             'qty(actual)',
             'Actual',
+            '%',
           ];
 
     Widget sel(
@@ -1535,12 +1613,20 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
     }
 
     List<Widget> selNilai({
+      required int qtyO,
+      required int order,
+      required int modalOrder,
       required int qtyK,
       required int kiriman,
+      required int modalKiriman,
       required int qtyB,
       required int batal,
+      required int qtyP,
+      required int pending,
+      required int modalPending,
       required int qtyA,
       required int actual,
+      required int modalActual,
       required int qtyR,
       required int retur,
       bool tebal = false,
@@ -1551,13 +1637,23 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
           angkaTeks(Uang.angka(retur), 2, tebal: tebal),
         ];
       }
+      Widget persen(int omset, int modal, int i) =>
+          angkaTeks(_rasioTeks(omset, modal), i, tebal: tebal);
       return [
-        angkaTeks(Uang.qty(qtyK), 1, tebal: tebal),
-        angkaTeks(Uang.angka(kiriman), 2, tebal: tebal),
-        angkaTeks(Uang.qty(qtyB), 3, tebal: tebal),
-        angkaTeks(Uang.angka(batal), 4, tebal: tebal),
-        angkaTeks(Uang.qty(qtyA), 5, tebal: tebal),
-        angkaTeks(Uang.angka(actual), 6, tebal: tebal),
+        angkaTeks(Uang.qty(qtyO), 1, tebal: tebal),
+        angkaTeks(Uang.angka(order), 2, tebal: tebal),
+        persen(order, modalOrder, 3),
+        angkaTeks(Uang.qty(qtyK), 4, tebal: tebal),
+        angkaTeks(Uang.angka(kiriman), 5, tebal: tebal),
+        persen(kiriman, modalKiriman, 6),
+        angkaTeks(Uang.qty(qtyB), 7, tebal: tebal),
+        angkaTeks(Uang.angka(batal), 8, tebal: tebal),
+        angkaTeks(Uang.qty(qtyP), 9, tebal: tebal),
+        angkaTeks(Uang.angka(pending), 10, tebal: tebal),
+        persen(pending, modalPending, 11),
+        angkaTeks(Uang.qty(qtyA), 12, tebal: tebal),
+        angkaTeks(Uang.angka(actual), 13, tebal: tebal),
+        persen(actual, modalActual, 14),
       ];
     }
 
@@ -1632,12 +1728,20 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         [
           sel('Jumlah (${sku.length})', i: 0, tebal: true),
           ...selNilai(
+            qtyO: jumQtyOrder,
+            order: jumOrder,
+            modalOrder: jumModalOrder,
             qtyK: jumQtyPacked,
             kiriman: jumPacked,
+            modalKiriman: jumModalPacked,
             qtyB: jumQtyBatal,
             batal: jumBatal,
+            qtyP: jumQtyPending,
+            pending: jumPending,
+            modalPending: jumModalPending,
             qtyA: jumQtyActual,
             actual: jumActual,
+            modalActual: jumModalActual,
             qtyR: jumQtyRetur,
             retur: jumRetur,
             tebal: true,
@@ -1649,12 +1753,20 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         return baris([
           sel('', i: 0, anak: _namaBarang(nota, s)),
           ...selNilai(
+            qtyO: s.qtyOrder,
+            order: s.nilaiOrder,
+            modalOrder: s.modalOrder,
             qtyK: s.qtyPacked,
             kiriman: s.packed,
+            modalKiriman: s.modalPacked,
             qtyB: s.qtyBatal,
             batal: s.batal,
+            qtyP: _qtyPending(nota, s),
+            pending: _nilaiPending(nota, s),
+            modalPending: _modalPending(nota, s),
             qtyA: s.qtyActual,
             actual: s.actual,
+            modalActual: s.modalActual,
             qtyR: s.qtyRetur,
             retur: s.nilaiRetur,
           ),
