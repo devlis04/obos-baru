@@ -544,9 +544,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
                     child: _sisiRute(
                       judul: 'Minggu',
                       aksi: Text(
-                        k.targetOmset > 0
-                            ? 'Target ${Uang.rp(k.targetOmset)}'
-                            : 'Target —',
+                        'Target ${Uang.rp(k.targetOmset)} · ${k.targetPersen.toStringAsFixed(2)}%',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
