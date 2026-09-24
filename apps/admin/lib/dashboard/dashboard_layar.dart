@@ -200,7 +200,8 @@ class _DashboardLayarState extends State<DashboardLayar> {
         ],
       ),
       drawer: const AdminDrawer(halaman: HalamanAdmin.dashboard),
-      body: Column(
+      body: RepaintBoundary(
+        child: Column(
         children: [
           SizedBox(
             height: 3,
@@ -248,6 +249,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -88,7 +88,8 @@ class _PelangganLayarState extends State<PelangganLayar> {
     return Scaffold(
       appBar: AppBar(title: const Text('Pelanggan')),
       drawer: const AdminDrawer(halaman: HalamanAdmin.pelanggan),
-      body: Row(
+      body: RepaintBoundary(
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
@@ -223,6 +224,7 @@ class _PelangganLayarState extends State<PelangganLayar> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

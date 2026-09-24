@@ -63,7 +63,8 @@ class AdminDrawer extends StatelessWidget {
                       image: AssetImage('assets/icon/app_icon_white.png'),
                       height: 56,
                       fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
+                      filterQuality: FilterQuality.low,
+                      gaplessPlayback: true,
                     ),
                     SizedBox(width: 14),
                     Expanded(

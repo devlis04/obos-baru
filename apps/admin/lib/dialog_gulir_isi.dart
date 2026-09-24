@@ -34,7 +34,8 @@ class DialogGulirIsi extends StatelessWidget {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
+      child: RepaintBoundary(
+        child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: layar.width - 48,
           maxHeight: layar.height - 48,
@@ -89,6 +90,7 @@ class DialogGulirIsi extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -93,7 +93,8 @@ class _BarangLayarState extends State<BarangLayar> {
     return Scaffold(
       appBar: AppBar(title: const Text('Barang')),
       drawer: const AdminDrawer(halaman: HalamanAdmin.barang),
-      body: Row(
+      body: RepaintBoundary(
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
@@ -218,6 +219,7 @@ class _BarangLayarState extends State<BarangLayar> {
           const VerticalDivider(width: 1, thickness: 1),
           const Expanded(child: SizedBox.expand()),
         ],
+      ),
       ),
     );
   }

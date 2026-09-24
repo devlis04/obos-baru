@@ -570,7 +570,8 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         ],
       ),
       drawer: const AdminDrawer(halaman: HalamanAdmin.setoran),
-      body: LayoutBuilder(
+      body: RepaintBoundary(
+        child: LayoutBuilder(
         builder: (context, layar) {
           const padAtas = 6.0;
           const padBawah = 6.0;
@@ -658,6 +659,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
             ],
           );
         },
+      ),
       ),
     );
       },
