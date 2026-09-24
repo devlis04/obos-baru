@@ -766,6 +766,7 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       }
     }
     return _cocokAngka(f, n.sku.length) ||
+        _cocokAngka(f, n.nilaiOrder) ||
         _cocokAngka(f, n.packed) ||
         _cocokAngka(f, n.batal) ||
         _cocokAngka(f, n.pending) ||
@@ -773,15 +774,33 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
         _cocokAngka(f, n.retur);
   }
 
+  static double _rasioNilai(int omset, int modal) {
+    if (omset <= 0 || modal <= 0) return 0;
+    return (omset - modal) / modal * 100;
+  }
+
+  static String _rasioTeks(int omset, int modal) {
+    return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
+  }
+
   int _banding(NotaSetoranRinci a, NotaSetoranRinci b, bool pakaiRetur) {
     final r = switch (_sortKolom) {
       0 => a.id.toLowerCase().compareTo(b.id.toLowerCase()),
       1 => a.sku.length.compareTo(b.sku.length),
-      2 => a.packed.compareTo(b.packed),
-      3 => a.batal.compareTo(b.batal),
-      4 => a.pending.compareTo(b.pending),
-      5 => a.actual.compareTo(b.actual),
-      6 => pakaiRetur
+      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
+      3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
+          .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
+      4 => a.packed.compareTo(b.packed),
+      5 => _rasioNilai(a.packed, a.modalPacked)
+          .compareTo(_rasioNilai(b.packed, b.modalPacked)),
+      6 => a.batal.compareTo(b.batal),
+      7 => a.pending.compareTo(b.pending),
+      8 => _rasioNilai(a.pending, a.modalPending)
+          .compareTo(_rasioNilai(b.pending, b.modalPending)),
+      9 => a.actual.compareTo(b.actual),
+      10 => _rasioNilai(a.actual, a.modalActual)
+          .compareTo(_rasioNilai(b.actual, b.modalActual)),
+      11 => pakaiRetur
           ? a.retur.compareTo(b.retur)
           : a.status.toLowerCase().compareTo(b.status.toLowerCase()),
       _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
@@ -840,10 +859,15 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
     final tampil = widget.toko.notaList.where(_cocok).toList()
       ..sort((a, b) => _banding(a, b, pakaiRetur));
     final jumSku = tampil.fold<int>(0, (a, n) => a + n.sku.length);
+    final jumOrder = tampil.fold<int>(0, (a, n) => a + n.nilaiOrder);
+    final jumModalOrder = tampil.fold<int>(0, (a, n) => a + n.modalOrder);
     final jumPacked = tampil.fold<int>(0, (a, n) => a + n.packed);
+    final jumModalPacked = tampil.fold<int>(0, (a, n) => a + n.modalPacked);
     final jumBatal = tampil.fold<int>(0, (a, n) => a + n.batal);
     final jumPending = tampil.fold<int>(0, (a, n) => a + n.pending);
+    final jumModalPending = tampil.fold<int>(0, (a, n) => a + n.modalPending);
     final jumActual = tampil.fold<int>(0, (a, n) => a + n.actual);
+    final jumModalActual = tampil.fold<int>(0, (a, n) => a + n.modalActual);
     final jumRetur = tampil.fold<int>(0, (a, n) => a + n.retur);
     final judulTeks = [
       'Nota',
@@ -851,28 +875,65 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       widget.toko.ruteSales.trim(),
       widget.toko.rutePengirim.trim(),
     ].where((s) => s.isNotEmpty).join(' ');
-    final iStatus = pakaiRetur ? 7 : 6;
+    final iStatus = pakaiRetur ? 12 : 11;
     final lebar = pakaiRetur
-        ? const [176.0, 44.0, 88.0, 72.0, 88.0, 88.0, 76.0, 80.0]
-        : const [188.0, 44.0, 88.0, 72.0, 88.0, 88.0, 80.0];
+        ? const [
+            176.0,
+            44.0,
+            92.0,
+            56.0,
+            92.0,
+            56.0,
+            72.0,
+            88.0,
+            56.0,
+            92.0,
+            56.0,
+            76.0,
+            80.0,
+          ]
+        : const [
+            176.0,
+            44.0,
+            92.0,
+            56.0,
+            92.0,
+            56.0,
+            72.0,
+            88.0,
+            56.0,
+            92.0,
+            56.0,
+            80.0,
+          ];
     final judulKolom = pakaiRetur
         ? const [
             'Nota',
             'SKU',
+            'Order',
+            '%',
             'Kiriman',
+            '%',
             'Batal',
             'Pending',
+            '%',
             'Actual',
+            '%',
             'Retur',
             'Status',
           ]
         : const [
             'Nota',
             'SKU',
+            'Order',
+            '%',
             'Kiriman',
+            '%',
             'Batal',
             'Pending',
+            '%',
             'Actual',
+            '%',
             'Status',
           ];
 
@@ -929,20 +990,36 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
 
     List<Widget> nilaiNota({
       required int sku,
+      required int order,
+      required int modalOrder,
       required int packed,
+      required int modalPacked,
       required int batal,
       required int pending,
+      required int modalPending,
       required int actual,
+      required int modalActual,
       required int retur,
       bool tebal = false,
     }) {
+      Widget persen(int omset, int modal, int i) => sel(
+            _rasioTeks(omset, modal),
+            i: i,
+            angkaKolom: true,
+            tebal: tebal,
+          );
       return [
         uang(sku, 1, tebal: tebal),
-        uang(packed, 2, tebal: tebal),
-        uang(batal, 3, tebal: tebal),
-        uang(pending, 4, tebal: tebal),
-        uang(actual, 5, tebal: tebal),
-        if (pakaiRetur) uang(retur, 6, tebal: tebal),
+        uang(order, 2, tebal: tebal),
+        persen(order, modalOrder, 3),
+        uang(packed, 4, tebal: tebal),
+        persen(packed, modalPacked, 5),
+        uang(batal, 6, tebal: tebal),
+        uang(pending, 7, tebal: tebal),
+        persen(pending, modalPending, 8),
+        uang(actual, 9, tebal: tebal),
+        persen(actual, modalActual, 10),
+        if (pakaiRetur) uang(retur, 11, tebal: tebal),
       ];
     }
 
@@ -1028,10 +1105,15 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
           ),
           ...nilaiNota(
             sku: jumSku,
+            order: jumOrder,
+            modalOrder: jumModalOrder,
             packed: jumPacked,
+            modalPacked: jumModalPacked,
             batal: jumBatal,
             pending: jumPending,
+            modalPending: jumModalPending,
             actual: jumActual,
+            modalActual: jumModalActual,
             retur: jumRetur,
             tebal: true,
           ),
@@ -1044,10 +1126,15 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
           sel('', i: 0, anak: _namaNota(notaBaris)),
           ...nilaiNota(
             sku: notaBaris.sku.length,
+            order: notaBaris.nilaiOrder,
+            modalOrder: notaBaris.modalOrder,
             packed: notaBaris.packed,
+            modalPacked: notaBaris.modalPacked,
             batal: notaBaris.batal,
             pending: notaBaris.pending,
+            modalPending: notaBaris.modalPending,
             actual: notaBaris.actual,
+            modalActual: notaBaris.modalActual,
             retur: notaBaris.retur,
           ),
           sel(notaBaris.status, i: iStatus, tengah: true),
