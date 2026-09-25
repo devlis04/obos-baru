@@ -53280,7 +53280,7 @@ case 2:return A.q(o.at(-1),r)}})
 return A.t($async$yn,r)},
 gWc(){var s=this,r=s.ax,q=!1
 if(r.a)if(!r.d)if(!s.as.d)if(!s.dx)if(!s.dy)if(A.b1L(r.f).ga55()===0)if(A.boT(s.ax)){r=s.as
-r=r.a&&r.f>0&&r.x===0&&!s.gaiQ()}else r=q
+r=r.a&&r.f>0&&r.x===0&&!s.gaiQ()&&s.ay.d}else r=q
 else r=q
 else r=q
 else r=q
