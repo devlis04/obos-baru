@@ -478,7 +478,8 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       _setoran.total.cek == 0 &&
       chipJumlahTanpaOranye(_setoran) &&
       _opnameSesuai &&
-      !_absensiMasihOranye;
+      !_absensiMasihOranye &&
+      _siklus.siapTutup;
 
   bool get _absensiMasihOranye =>
       _pengirim.any((o) => o.oranye) || _gudang.any((o) => o.oranye);
