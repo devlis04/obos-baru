@@ -50059,9 +50059,9 @@ $2$anak(a,b){return this.D(this,A.A("call","$2$anak",0,[a,b],["anak"],0))},
 $1$sel(a){return this.D(this,A.A("call","$1$sel",0,[a],["sel"],0))},
 $4$tebal(a,b,c,d){return this.D(this,A.A("call","$4$tebal",0,[a,b,c,d],["tebal"],0))},
 $8$actualText$kirimanText$label$orderText$persentaseActual$persentaseOrder$targetText$warna(a,b,c,d,e,f,g,h){return this.D(this,A.A("call","$8$actualText$kirimanText$label$orderText$persentaseActual$persentaseOrder$targetText$warna",0,[a,b,c,d,e,f,g,h],["actualText","kirimanText","label","orderText","persentaseActual","persentaseOrder","targetText","warna"],0))},
-$7$actualText$label$orderText$persentaseActual$tampilkanOrder$targetText$warna(a,b,c,d,e,f,g){return this.D(this,A.A("call","$7$actualText$label$orderText$persentaseActual$tampilkanOrder$targetText$warna",0,[a,b,c,d,e,f,g],["actualText","label","orderText","persentaseActual","tampilkanOrder","targetText","warna"],0))},
+$6$actualText$label$persentaseActual$tampilkanOrder$targetText$warna(a,b,c,d,e,f){return this.D(this,A.A("call","$6$actualText$label$persentaseActual$tampilkanOrder$targetText$warna",0,[a,b,c,d,e,f],["actualText","label","persentaseActual","tampilkanOrder","targetText","warna"],0))},
 $5$actualText$kirimanText$label$orderText$warna(a,b,c,d,e){return this.D(this,A.A("call","$5$actualText$kirimanText$label$orderText$warna",0,[a,b,c,d,e],["actualText","kirimanText","label","orderText","warna"],0))},
-$5$actualText$label$orderText$targetText$warna(a,b,c,d,e){return this.D(this,A.A("call","$5$actualText$label$orderText$targetText$warna",0,[a,b,c,d,e],["actualText","label","orderText","targetText","warna"],0))},
+$4$actualText$label$targetText$warna(a,b,c,d){return this.D(this,A.A("call","$4$actualText$label$targetText$warna",0,[a,b,c,d],["actualText","label","targetText","warna"],0))},
 $1$fontFeatures(a){return this.D(this,A.A("call","$1$fontFeatures",0,[a],["fontFeatures"],0))},
 $1$onlyDirtyChildren(a){return this.D(this,A.A("call","$1$onlyDirtyChildren",0,[a],["onlyDirtyChildren"],0))},
 $1$usedSemanticsIds(a){return this.D(this,A.A("call","$1$usedSemanticsIds",0,[a],["usedSemanticsIds"],0))},
@@ -53718,61 +53718,47 @@ o=r+1
 s.push(new A.aj(p,o<q?n[o]:null))}return s},
 H(a){var s=this,r=null,q=A.Q(a),p=t.p,o=A.aas(A.b([A.hp(r,r,r,B.tT,r,r,s.e?r:s.gXi(),r,r,r,"Segarkan")],p),B.FQ,r)
 return A.Xk(o,new A.f3(A.bH(A.b([A.aH(s.e?new A.ud(r,r,q.ax.b.di(30),r,r,r,r,r):B.ic,3,r),A.aQ(A.b4T(A.yu(new A.aFX(s,q)),s.gXi()),1)],p),B.p,B.j,B.l),r),B.Gz)},
-a_n(a0){var s,r,q,p,o,n,m,l,k,j,i,h=this,g=null,f="Rasio laba",e="Effective call",d=h.x.d,c=d.e,b=A.aQ(A.a_("Total \xb7 "+h.gauf(),1,B.A,g,g,B.cC,g,g,g),1),a=t.p
-b=A.aP(A.b([b,A.hp(g,g,g,B.Oi,g,g,h.e?g:h.gays(),g,g,B.lT,"Pilih minggu")],a),B.p,B.j,B.l,0,g)
-s=d.d
+a_n(a1){var s,r,q,p,o,n,m,l,k,j,i,h=this,g=null,f="Rasio laba",e="Effective call",d="Kunjungan visit",c=h.x.d,b=c.e,a=A.aQ(A.a_("Total \xb7 "+h.gauf(),1,B.A,g,g,B.cC,g,g,g),1),a0=t.p
+a=A.aP(A.b([a,A.hp(g,g,g,B.Oi,g,g,h.e?g:h.gays(),g,g,B.lT,"Pilih minggu")],a0),B.p,B.j,B.l,0,g)
+s=c.d
 r=B.d.ab(s,2)
-q=c.a
-p=c.b
+q=b.a
+p=b.b
 o=B.d.ab(h.iC(q,p),2)
-n=c.c
-m=B.d.ab(h.iC(n,c.d),2)
-l=c.e
-k=c.f
+n=b.c
+m=B.d.ab(h.iC(n,b.d),2)
+l=b.e
+k=b.f
 j=B.d.ab(h.iC(l,k),2)
 p=h.qS(h.iC(q,p),s)
 r=A.aQ(h.D9(h.Kf(j+"%",m+"%",f,o+"%",h.qS(h.iC(l,k),s),p,r+"%",B.zY)),1)
-p=a0.ax.b
-s=d.c
+p=a1.ax.b
+s=c.c
 k=A.bZ(s)
 o=A.bZ(q)
 n=A.bZ(n)
 m=A.bZ(l)
 q=h.qS(q,s)
 k=A.aQ(h.D9(h.Kf("Rp "+m,"Rp "+n,"Total omset","Rp "+o,h.qS(l,s),q,"Rp "+k,p)),1)
-q=c.CW
-s=c.r
-l=c.x
+q=b.CW
+s=b.r
+l=b.x
 o=h.qS(s,q)
-q=A.aQ(h.D9(h.Kf(""+l+" toko",""+c.w+" toko",e,""+s+" toko",h.qS(l,q),o,""+q+" toko",B.zX)),1)
-o=c.cx
-s=c.y
-n=s<=0
-if(!n||c.as>0){m=c.as
-m=m>0?" \xb7 batal "+m:""
-m="XC "+s+m
-s=m}else s=g
-m=c.ch
-l=h.qS(m,o)
-n=!n||c.as>0
-o=A.aQ(A.nl(new A.ak(B.t0,A.bH(A.b([b,B.hu,r,B.hu,k,B.hu,q,B.hu,A.aQ(h.D9(h.ajF(""+m+" toko","Kunjungan visit",s,l,n,""+o+" toko",B.fe)),1)],a),B.p,B.j,B.l),g),B.r,g,B.U),16)
+n=b.cx
+m=b.ch
+n=A.aQ(A.nl(new A.ak(B.t0,A.bH(A.b([a,B.hu,r,B.hu,k,B.hu,A.aQ(h.D9(h.Kf(""+l+" toko",""+b.w+" toko",e,""+s+" toko",h.qS(l,q),o,""+q+" toko",B.zX)),1),B.hu,A.aQ(h.D9(h.ajF(""+m+" toko",d,h.qS(m,n),!1,""+n+" toko",B.fe)),1)],a0),B.p,B.j,B.l),g),B.r,g,B.U),16)
 i=h.x.d.f
-n=A.aQ(A.a_("Total \xb7 "+h.gaue(),1,B.A,g,g,B.cC,g,g,g),1)
-b=A.aP(A.b([n,A.hp(g,g,g,B.Oh,g,g,h.e?g:h.gayr(),g,g,B.lT,"Pilih tanggal")],a),B.p,B.j,B.l,0,g)
+m=A.aQ(A.a_("Total \xb7 "+h.gaue(),1,B.A,g,g,B.cC,g,g,g),1)
+a=A.aP(A.b([m,A.hp(g,g,g,B.Oh,g,g,h.e?g:h.gayr(),g,g,B.lT,"Pilih tanggal")],a0),B.p,B.j,B.l,0,g)
 s=i.a
 r=B.d.ab(h.iC(s,i.b),2)
 q=i.c
-n=B.d.ab(h.iC(q,i.d),2)
+o=B.d.ab(h.iC(q,i.d),2)
 m=i.e
-r=A.aQ(h.a_o(B.d.ab(h.iC(m,i.f),2)+"%",n+"%",f,r+"%",B.zY),1)
+r=A.aQ(h.a_o(B.d.ab(h.iC(m,i.f),2)+"%",o+"%",f,r+"%",B.zY),1)
 s=A.bZ(s)
 q=A.bZ(q)
-p=A.aQ(A.aP(A.b([r,B.aA,A.aQ(h.a_o("Rp "+A.bZ(m),"Rp "+q,"Omset","Rp "+s,p),1)],a),B.p,B.j,B.l,0,g),1)
-s=A.aQ(h.My(""+i.x+" toko",""+i.w+" toko",e,""+i.r+" toko",""+i.CW+" toko",B.zX),1)
-r=i.as
-q=""+i.y
-r=r>0?"XC "+q+" \xb7 batal "+r:"XC "+q+" toko"
-return A.aH(A.bH(A.b([o,B.cz,A.aQ(A.nl(new A.ak(B.t0,A.bH(A.b([b,B.hu,p,B.cg,A.aQ(A.aP(A.b([s,B.aA,A.aQ(h.auv(""+i.ch+" toko","Visit \xb7 Extra call",r,""+i.cx+" toko",B.fe),1)],a),B.p,B.j,B.l,0,g),1)],a),B.p,B.j,B.l),g),B.r,g,B.U),9)],a),B.af,B.j,B.l),g,292)},
+return A.aH(A.bH(A.b([n,B.cz,A.aQ(A.nl(new A.ak(B.t0,A.bH(A.b([a,B.hu,A.aQ(A.aP(A.b([r,B.aA,A.aQ(h.a_o("Rp "+A.bZ(m),"Rp "+q,"Omset","Rp "+s,p),1)],a0),B.p,B.j,B.l,0,g),1),B.cg,A.aQ(A.aP(A.b([A.aQ(h.My(""+i.x+" toko",""+i.w+" toko",e,""+i.r+" toko",""+i.CW+" toko",B.zX),1),B.aA,A.aQ(h.auv(""+i.ch+" toko",d,""+i.cx+" toko",B.fe),1)],a0),B.p,B.j,B.l,0,g),1)],a0),B.p,B.j,B.l),g),B.r,g,B.U),9)],a0),B.af,B.j,B.l),g,292)},
 a_m(){var s,r,q,p,o=this,n=null,m=o.axT()
 if(o.x.e.length===0&&!o.e)s=A.a_("Belum ada akun sales di users.",n,n,n,n,A.c4(n,n,B.c0,n,n,n,n,n,n,n,n,14,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),n,n,n)
 else{s=t.p
@@ -53832,19 +53818,21 @@ s.push(r.WI("Actual",e,i))
 B.b.N(n,s)
 return A.aP(n,B.a6,B.j,B.l,0,q)},
 Kf(a,b,c,d,e,f,g,h){return this.W9(a,b,c,d,e,f,!0,g,h)},
-ajF(a,b,c,d,e,f,g){return this.W9(a,null,b,c,d,0,e,f,g)},
+ajF(a,b,c,d,e,f){return this.W9(a,null,b,null,c,0,d,e,f)},
 C7(a,b,c){var s=null
 return new A.ak(B.MK,A.aP(A.b([A.aH(A.a_(a,s,s,s,s,c,s,s,s),s,70),A.aQ(A.a_(b,1,B.A,s,s,c.aGe(B.QB),s,s,s),1)],t.p),B.p,B.j,B.l,0,s),s)},
 WI(a,b,c){var s=null,r=A.h2(s,s,!1,s,new A.a_S(b,c,s),B.a_l),q=B.d.ab(b*100,0),p=t.p
 return A.bH(A.b([A.aH(A.jf(B.M,A.b([r,A.a_(q+"%",s,s,s,s,A.c4(s,s,c,s,s,s,s,s,s,s,s,b>=1?8:9,s,s,B.Y,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],p),B.r,B.bZ,s),42,42),A.a_(a,s,s,s,s,A.c4(s,s,B.c0,s,s,s,s,s,s,s,s,9,s,s,B.b6,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],p),B.p,B.j,B.ao)},
-My(a,b,c,d,e,f){var s=null,r=A.aXH(B.T,1),q=t.p,p=A.b([A.aP(A.b([A.fG(s,s,B.w,s,s,new A.cY(f,s,s,A.kC(1.5),s,s,B.av),s,6,s,s,s,s,6),B.ib,A.a_(c,s,s,s,s,B.FL,s,s,s)],q),B.p,B.j,B.l,0,s)],q)
-if(e!=null)B.b.N(p,A.b([B.cg,A.a_("Target : "+e,s,s,s,s,A.c4(s,s,B.c0,s,s,s,s,s,s,s,s,12,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],q))
-p.push(A.a_("Order : "+d,s,s,s,s,B.pF,s,s,s))
-if(b!=null)p.push(A.a_("Kiriman : "+b,s,s,s,s,B.pF,s,s,s))
-p.push(A.a_("Actual : "+a,s,s,s,s,B.pF,s,s,s))
-return A.fG(s,A.ah9(B.aG,A.bH(p,B.a6,B.j,B.ao),B.h_),B.w,s,s,new A.cY(B.d0,s,r,B.dR,s,s,B.av),s,1/0,s,B.N4,s,s,1/0)},
+My(a,b,c,d,e,f){var s,r=null,q=A.aXH(B.T,1),p=t.p,o=A.b([A.aP(A.b([A.fG(r,r,B.w,r,r,new A.cY(f,r,r,A.kC(1.5),r,r,B.av),r,6,r,r,r,r,6),B.ib,A.a_(c,r,r,r,r,B.FL,r,r,r)],p),B.p,B.j,B.l,0,r)],p),n=e==null
+if(!n)B.b.N(o,A.b([B.cg,A.a_("Target : "+e,r,r,r,r,A.c4(r,r,B.c0,r,r,r,r,r,r,r,r,12,r,r,r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r)],p))
+p=d==null
+if(!p)o.push(A.a_("Order : "+d,r,r,r,r,B.pF,r,r,r))
+s=b==null
+if(!s)o.push(A.a_("Kiriman : "+b,r,r,r,r,B.pF,r,r,r))
+o.push(A.a_(p&&s&&n?a:"Actual : "+a,r,r,r,r,B.pF,r,r,r))
+return A.fG(r,A.ah9(B.aG,A.bH(o,B.a6,B.j,B.ao),B.h_),B.w,r,r,new A.cY(B.d0,r,q,B.dR,r,r,B.av),r,1/0,r,B.N4,r,r,1/0)},
 a_o(a,b,c,d,e){return this.My(a,b,c,d,null,e)},
-auv(a,b,c,d,e){return this.My(a,null,b,c,d,e)}}
+auv(a,b,c,d){return this.My(a,null,b,null,c,d)}}
 A.aFQ.prototype={
 $0(){return this.a.e=!0},
 $S:0}
