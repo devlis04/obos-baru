@@ -848,16 +848,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           label: 'Kunjungan visit',
                                           warna: Colors.red,
                                           targetText: '$_targetVisit toko',
-                                          orderText: _xcMingguOrder > 0 ||
-                                                  _xcMingguBatal > 0
-                                              ? 'XC $_xcMingguOrder${_xcMingguBatal > 0 ? ' · batal $_xcMingguBatal' : ''}'
-                                              : 'XC $_xcMingguOrder',
-                                          packedText: 'XC $_xcMingguPacked',
                                           actualText: '$_visitMinggu toko',
                                           persentaseActual: _pctVisitActual,
-                                          tampilkanTahap: _xcMingguOrder > 0 ||
-                                              _xcMingguPacked > 0 ||
-                                              _xcMingguBatal > 0,
+                                          tampilkanTahap: false,
                                         ),
                                       ),
                                     ],
@@ -951,15 +944,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                                   const SizedBox(width: 8),
                                                   Expanded(
                                                     child: _kotakHari(
-                                                      label: 'Visit · Extra call',
+                                                      label: 'Kunjungan visit',
                                                       warna: Colors.red,
                                                       targetText:
                                                           '$_targetVisitHari toko',
-                                                      orderText: _xcHariBatal > 0
-                                                          ? 'XC $_xcHariOrder · batal $_xcHariBatal'
-                                                          : 'XC $_xcHariOrder toko',
-                                                      packedText:
-                                                          'XC $_xcHariPacked toko',
                                                       actualText: '$_visitHari toko',
                                                     ),
                                                   ),

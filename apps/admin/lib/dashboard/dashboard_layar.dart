@@ -404,12 +404,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   label: 'Kunjungan visit',
                   warna: Colors.red,
                   targetText: '${m.targetVisit} toko',
-                  orderText: m.xcOrder > 0 || m.xcBatal > 0
-                      ? 'XC ${m.xcOrder}${m.xcBatal > 0 ? ' · batal ${m.xcBatal}' : ''}'
-                      : null,
                   actualText: '${m.visit} toko',
                   persentaseActual: _pct(m.visit, m.targetVisit),
-                  tampilkanOrder: m.xcOrder > 0 || m.xcBatal > 0,
+                  tampilkanOrder: false,
                 ),
               ),
             ),
@@ -497,12 +494,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _kotakHari(
-                      label: 'Visit · Extra call',
+                      label: 'Kunjungan visit',
                       warna: Colors.red,
                       targetText: '${h.targetVisit} toko',
-                      orderText: h.xcBatal > 0
-                          ? 'XC ${h.xcOrder} · batal ${h.xcBatal}'
-                          : 'XC ${h.xcOrder} toko',
                       actualText: '${h.visit} toko',
                     ),
                   ),
