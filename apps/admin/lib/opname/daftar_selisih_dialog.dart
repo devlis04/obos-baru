@@ -87,6 +87,12 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
     }
   }
 
+  bool _sudahPutus(BarisSelisihOpname r) =>
+      r.putusan == 'kasbon' || r.putusan == 'beban';
+
+  int get _belumPutus =>
+      _baris.where((r) => r.selisih < 0 && !_sudahPutus(r)).length;
+
   Future<void> _konfirmasiFisik() async {
     if (widget.ditutup || _prosesSku != null) return;
     final ya = await showDialog<bool>(
@@ -194,7 +200,9 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Selisih opname (${_baris.length})',
+        _belumPutus > 0
+            ? 'Selisih opname ($_belumPutus belum diputuskan)'
+            : 'Selisih opname · sudah diputuskan',
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -246,6 +254,7 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
 
   Widget _kartuBaris(BarisSelisihOpname r) {
     final kurang = r.selisih < 0;
+    final sudah = _sudahPutus(r);
     final sibuk = _prosesSku == r.idBarang;
     final emailPilih = _pilih[r.idBarang];
     const tombol = ButtonStyle(
@@ -311,12 +320,12 @@ class _DaftarSelisihDialogState extends State<DaftarSelisihDialog> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  color: kurang
+                  color: kurang && !sudah
                       ? Colors.orange.shade800
                       : const Color(0xFF2E7D32),
                 ),
               ),
-              if (kurang && !widget.ditutup) ...[
+              if (kurang && !widget.ditutup && !sudah) ...[
                 const SizedBox(height: 6),
                 if (widget.users.isEmpty)
                   const Text(
