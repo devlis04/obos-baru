@@ -16,6 +16,15 @@ bool _cocokAngka(String f, int n) {
       Uang.qty(n).toLowerCase().contains(f);
 }
 
+double _rasioNilai(int omset, int modal) {
+  if (omset <= 0 || modal <= 0) return 0;
+  return (omset - modal) / modal * 100;
+}
+
+String _rasioTeks(int omset, int modal) {
+  return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
+}
+
 Widget _bidangCari({
   required TextEditingController controller,
   required VoidCallback onUbah,
@@ -719,6 +728,7 @@ class DialogNotaToko extends StatefulWidget {
     this.wajibBarang = const {},
     this.wajibNota = const {},
     this.lihatSaja = false,
+    this.tampilOrderPersen = false,
   });
 
   final String jenis;
@@ -729,6 +739,7 @@ class DialogNotaToko extends StatefulWidget {
   final Set<String> wajibBarang;
   final Set<String> wajibNota;
   final bool lihatSaja;
+  final bool tampilOrderPersen;
 
   @override
   State<DialogNotaToko> createState() => _DialogNotaTokoState();
@@ -774,37 +785,42 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
         _cocokAngka(f, n.retur);
   }
 
-  static double _rasioNilai(int omset, int modal) {
-    if (omset <= 0 || modal <= 0) return 0;
-    return (omset - modal) / modal * 100;
-  }
-
-  static String _rasioTeks(int omset, int modal) {
-    return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
-  }
-
   int _banding(NotaSetoranRinci a, NotaSetoranRinci b, bool pakaiRetur) {
-    final r = switch (_sortKolom) {
-      0 => a.id.toLowerCase().compareTo(b.id.toLowerCase()),
-      1 => a.sku.length.compareTo(b.sku.length),
-      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
-      3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
-          .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
-      4 => a.packed.compareTo(b.packed),
-      5 => _rasioNilai(a.packed, a.modalPacked)
-          .compareTo(_rasioNilai(b.packed, b.modalPacked)),
-      6 => a.batal.compareTo(b.batal),
-      7 => a.pending.compareTo(b.pending),
-      8 => _rasioNilai(a.pending, a.modalPending)
-          .compareTo(_rasioNilai(b.pending, b.modalPending)),
-      9 => a.actual.compareTo(b.actual),
-      10 => _rasioNilai(a.actual, a.modalActual)
-          .compareTo(_rasioNilai(b.actual, b.modalActual)),
-      11 => pakaiRetur
-          ? a.retur.compareTo(b.retur)
-          : a.status.toLowerCase().compareTo(b.status.toLowerCase()),
-      _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
-    };
+    final order = widget.tampilOrderPersen;
+    final r = order
+        ? switch (_sortKolom) {
+            0 => a.id.toLowerCase().compareTo(b.id.toLowerCase()),
+            1 => a.sku.length.compareTo(b.sku.length),
+            2 => a.nilaiOrder.compareTo(b.nilaiOrder),
+            3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
+                .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
+            4 => a.packed.compareTo(b.packed),
+            5 => _rasioNilai(a.packed, a.modalPacked)
+                .compareTo(_rasioNilai(b.packed, b.modalPacked)),
+            6 => a.batal.compareTo(b.batal),
+            7 => a.pending.compareTo(b.pending),
+            8 => _rasioNilai(a.pending, a.modalPending)
+                .compareTo(_rasioNilai(b.pending, b.modalPending)),
+            9 => a.actual.compareTo(b.actual),
+            10 => _rasioNilai(a.actual, a.modalActual)
+                .compareTo(_rasioNilai(b.actual, b.modalActual)),
+            11 => pakaiRetur
+                ? a.retur.compareTo(b.retur)
+                : a.status.toLowerCase().compareTo(b.status.toLowerCase()),
+            _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
+          }
+        : switch (_sortKolom) {
+            0 => a.id.toLowerCase().compareTo(b.id.toLowerCase()),
+            1 => a.sku.length.compareTo(b.sku.length),
+            2 => a.packed.compareTo(b.packed),
+            3 => a.batal.compareTo(b.batal),
+            4 => a.pending.compareTo(b.pending),
+            5 => a.actual.compareTo(b.actual),
+            6 => pakaiRetur
+                ? a.retur.compareTo(b.retur)
+                : a.status.toLowerCase().compareTo(b.status.toLowerCase()),
+            _ => a.status.toLowerCase().compareTo(b.status.toLowerCase()),
+          };
     return _sortNaik ? r : -r;
   }
 
@@ -875,67 +891,112 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       widget.toko.ruteSales.trim(),
       widget.toko.rutePengirim.trim(),
     ].where((s) => s.isNotEmpty).join(' ');
-    final iStatus = pakaiRetur ? 12 : 11;
-    final lebar = pakaiRetur
-        ? const [
-            176.0,
-            44.0,
-            92.0,
-            56.0,
-            92.0,
-            56.0,
-            72.0,
-            88.0,
-            56.0,
-            92.0,
-            56.0,
-            76.0,
-            80.0,
-          ]
-        : const [
-            176.0,
-            44.0,
-            92.0,
-            56.0,
-            92.0,
-            56.0,
-            72.0,
-            88.0,
-            56.0,
-            92.0,
-            56.0,
-            80.0,
-          ];
-    final judulKolom = pakaiRetur
-        ? const [
-            'Nota',
-            'SKU',
-            'Order',
-            '%',
-            'Kiriman',
-            '%',
-            'Batal',
-            'Pending',
-            '%',
-            'Actual',
-            '%',
-            'Retur',
-            'Status',
-          ]
-        : const [
-            'Nota',
-            'SKU',
-            'Order',
-            '%',
-            'Kiriman',
-            '%',
-            'Batal',
-            'Pending',
-            '%',
-            'Actual',
-            '%',
-            'Status',
-          ];
+    final orderPersen = widget.tampilOrderPersen;
+    final iStatus = pakaiRetur
+        ? (orderPersen ? 12 : 7)
+        : (orderPersen ? 11 : 6);
+    final lebar = !orderPersen
+        ? (pakaiRetur
+            ? const [
+                176.0,
+                44.0,
+                92.0,
+                72.0,
+                88.0,
+                92.0,
+                76.0,
+                80.0,
+              ]
+            : const [
+                176.0,
+                44.0,
+                92.0,
+                72.0,
+                88.0,
+                92.0,
+                80.0,
+              ])
+        : (pakaiRetur
+            ? const [
+                176.0,
+                44.0,
+                92.0,
+                56.0,
+                92.0,
+                56.0,
+                72.0,
+                88.0,
+                56.0,
+                92.0,
+                56.0,
+                76.0,
+                80.0,
+              ]
+            : const [
+                176.0,
+                44.0,
+                92.0,
+                56.0,
+                92.0,
+                56.0,
+                72.0,
+                88.0,
+                56.0,
+                92.0,
+                56.0,
+                80.0,
+              ]);
+    final judulKolom = !orderPersen
+        ? (pakaiRetur
+            ? const [
+                'Nota',
+                'SKU',
+                'Kiriman',
+                'Batal',
+                'Pending',
+                'Actual',
+                'Retur',
+                'Status',
+              ]
+            : const [
+                'Nota',
+                'SKU',
+                'Kiriman',
+                'Batal',
+                'Pending',
+                'Actual',
+                'Status',
+              ])
+        : (pakaiRetur
+            ? const [
+                'Nota',
+                'SKU',
+                'Order',
+                '%',
+                'Kiriman',
+                '%',
+                'Batal',
+                'Pending',
+                '%',
+                'Actual',
+                '%',
+                'Retur',
+                'Status',
+              ]
+            : const [
+                'Nota',
+                'SKU',
+                'Order',
+                '%',
+                'Kiriman',
+                '%',
+                'Batal',
+                'Pending',
+                '%',
+                'Actual',
+                '%',
+                'Status',
+              ]);
 
     Widget sel(
       String teks, {
@@ -1002,6 +1063,16 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
       required int retur,
       bool tebal = false,
     }) {
+      if (!orderPersen) {
+        return [
+          uang(sku, 1, tebal: tebal),
+          uang(packed, 2, tebal: tebal),
+          uang(batal, 3, tebal: tebal),
+          uang(pending, 4, tebal: tebal),
+          uang(actual, 5, tebal: tebal),
+          if (pakaiRetur) uang(retur, 6, tebal: tebal),
+        ];
+      }
       Widget persen(int omset, int modal, int i) => sel(
             _rasioTeks(omset, modal),
             i: i,
@@ -1167,6 +1238,7 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
                     ruteCek: widget.ruteCek,
                     lihatSaja: widget.lihatSaja,
                     wajibBarang: widget.wajibBarang,
+                    tampilOrderPersen: widget.tampilOrderPersen,
                   ),
                 ),
         child: Text(
@@ -1335,6 +1407,7 @@ class RinciSkuDialog extends StatefulWidget {
     this.ruteCek,
     this.wajibBarang = const {},
     this.lihatSaja = false,
+    this.tampilOrderPersen = false,
   });
 
   final String jenis;
@@ -1345,6 +1418,7 @@ class RinciSkuDialog extends StatefulWidget {
   final String? ruteCek;
   final Set<String> wajibBarang;
   final bool lihatSaja;
+  final bool tampilOrderPersen;
 
   @override
   State<RinciSkuDialog> createState() => _RinciSkuDialogState();
@@ -1380,15 +1454,6 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
 
   int _modalPending(NotaSetoranRinci n, SkuSetoranRinci s) =>
       _notaPending(n) ? s.modalPacked : 0;
-
-  static double _rasioNilai(int omset, int modal) {
-    if (omset <= 0 || modal <= 0) return 0;
-    return (omset - modal) / modal * 100;
-  }
-
-  static String _rasioTeks(int omset, int modal) {
-    return '${_rasioNilai(omset, modal).toStringAsFixed(2)}%';
-  }
 
   bool _cocok(SkuSetoranRinci s, {NotaSetoranRinci? nota}) {
     final f = _cari.text.trim().toLowerCase();
@@ -1426,37 +1491,51 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
       };
       return _sortNaik ? r : -r;
     }
-    final r = switch (_sortKolom) {
-      0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
-      1 => a.qtyOrder.compareTo(b.qtyOrder),
-      2 => a.nilaiOrder.compareTo(b.nilaiOrder),
-      3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
-          .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
-      4 => a.qtyPacked.compareTo(b.qtyPacked),
-      5 => a.packed.compareTo(b.packed),
-      6 => _rasioNilai(a.packed, a.modalPacked)
-          .compareTo(_rasioNilai(b.packed, b.modalPacked)),
-      7 => a.qtyBatal.compareTo(b.qtyBatal),
-      8 => a.batal.compareTo(b.batal),
-      9 => (nota == null ? 0 : _qtyPending(nota, a))
-          .compareTo(nota == null ? 0 : _qtyPending(nota, b)),
-      10 => (nota == null ? 0 : _nilaiPending(nota, a))
-          .compareTo(nota == null ? 0 : _nilaiPending(nota, b)),
-      11 => _rasioNilai(
-              nota == null ? 0 : _nilaiPending(nota, a),
-              nota == null ? 0 : _modalPending(nota, a),
-            )
-            .compareTo(
-              _rasioNilai(
-                nota == null ? 0 : _nilaiPending(nota, b),
-                nota == null ? 0 : _modalPending(nota, b),
-              ),
-            ),
-      12 => a.qtyActual.compareTo(b.qtyActual),
-      13 => a.actual.compareTo(b.actual),
-      _ => _rasioNilai(a.actual, a.modalActual)
-          .compareTo(_rasioNilai(b.actual, b.modalActual)),
-    };
+    final r = widget.tampilOrderPersen
+        ? switch (_sortKolom) {
+            0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
+            1 => a.qtyOrder.compareTo(b.qtyOrder),
+            2 => a.nilaiOrder.compareTo(b.nilaiOrder),
+            3 => _rasioNilai(a.nilaiOrder, a.modalOrder)
+                .compareTo(_rasioNilai(b.nilaiOrder, b.modalOrder)),
+            4 => a.qtyPacked.compareTo(b.qtyPacked),
+            5 => a.packed.compareTo(b.packed),
+            6 => _rasioNilai(a.packed, a.modalPacked)
+                .compareTo(_rasioNilai(b.packed, b.modalPacked)),
+            7 => a.qtyBatal.compareTo(b.qtyBatal),
+            8 => a.batal.compareTo(b.batal),
+            9 => (nota == null ? 0 : _qtyPending(nota, a))
+                .compareTo(nota == null ? 0 : _qtyPending(nota, b)),
+            10 => (nota == null ? 0 : _nilaiPending(nota, a))
+                .compareTo(nota == null ? 0 : _nilaiPending(nota, b)),
+            11 => _rasioNilai(
+                    nota == null ? 0 : _nilaiPending(nota, a),
+                    nota == null ? 0 : _modalPending(nota, a),
+                  )
+                  .compareTo(
+                    _rasioNilai(
+                      nota == null ? 0 : _nilaiPending(nota, b),
+                      nota == null ? 0 : _modalPending(nota, b),
+                    ),
+                  ),
+            12 => a.qtyActual.compareTo(b.qtyActual),
+            13 => a.actual.compareTo(b.actual),
+            _ => _rasioNilai(a.actual, a.modalActual)
+                .compareTo(_rasioNilai(b.actual, b.modalActual)),
+          }
+        : switch (_sortKolom) {
+            0 => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
+            1 => a.qtyPacked.compareTo(b.qtyPacked),
+            2 => a.packed.compareTo(b.packed),
+            3 => a.qtyBatal.compareTo(b.qtyBatal),
+            4 => a.batal.compareTo(b.batal),
+            5 => (nota == null ? 0 : _qtyPending(nota, a))
+                .compareTo(nota == null ? 0 : _qtyPending(nota, b)),
+            6 => (nota == null ? 0 : _nilaiPending(nota, a))
+                .compareTo(nota == null ? 0 : _nilaiPending(nota, b)),
+            7 => a.qtyActual.compareTo(b.qtyActual),
+            _ => a.actual.compareTo(b.actual),
+          };
     return _sortNaik ? r : -r;
   }
 
@@ -1540,44 +1619,69 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
       widget.toko.rutePengirim.trim(),
       nota.id,
     ].where((s) => s.isNotEmpty).join(' ');
+    final orderPersen = widget.tampilOrderPersen;
     final lebar = pakaiRetur
         ? const [280.0, 100.0, 100.0]
-        : const [
-            200.0,
-            76.0,
-            84.0,
-            56.0,
-            84.0,
-            84.0,
-            56.0,
-            76.0,
-            76.0,
-            76.0,
-            84.0,
-            56.0,
-            84.0,
-            84.0,
-            56.0,
-          ];
+        : orderPersen
+            ? const [
+                200.0,
+                76.0,
+                84.0,
+                56.0,
+                84.0,
+                84.0,
+                56.0,
+                76.0,
+                76.0,
+                76.0,
+                84.0,
+                56.0,
+                84.0,
+                84.0,
+                56.0,
+              ]
+            : const [
+                200.0,
+                84.0,
+                84.0,
+                76.0,
+                76.0,
+                76.0,
+                84.0,
+                84.0,
+                84.0,
+              ];
     final judulKolom = pakaiRetur
         ? const ['Barang', 'qty(retur)', 'Retur']
-        : const [
-            'Barang',
-            'qty(order)',
-            'Order',
-            '%',
-            'qty(kiriman)',
-            'Kiriman',
-            '%',
-            'qty(batal)',
-            'Batal',
-            'qty(pending)',
-            'Pending',
-            '%',
-            'qty(actual)',
-            'Actual',
-            '%',
-          ];
+        : orderPersen
+            ? const [
+                'Barang',
+                'qty(order)',
+                'Order',
+                '%',
+                'qty(kiriman)',
+                'Kiriman',
+                '%',
+                'qty(batal)',
+                'Batal',
+                'qty(pending)',
+                'Pending',
+                '%',
+                'qty(actual)',
+                'Actual',
+                '%',
+              ]
+            : const [
+                'Barang',
+                'qty(kiriman)',
+                'Kiriman',
+                'qty(batal)',
+                'Batal',
+                'qty(pending)',
+                'Pending',
+                'qty(actual)',
+                'Actual',
+              ];
 
     Widget sel(
       String teks, {
@@ -1635,6 +1739,18 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
         return [
           angkaTeks(Uang.qty(qtyR), 1, tebal: tebal),
           angkaTeks(Uang.angka(retur), 2, tebal: tebal),
+        ];
+      }
+      if (!orderPersen) {
+        return [
+          angkaTeks(Uang.qty(qtyK), 1, tebal: tebal),
+          angkaTeks(Uang.angka(kiriman), 2, tebal: tebal),
+          angkaTeks(Uang.qty(qtyB), 3, tebal: tebal),
+          angkaTeks(Uang.angka(batal), 4, tebal: tebal),
+          angkaTeks(Uang.qty(qtyP), 5, tebal: tebal),
+          angkaTeks(Uang.angka(pending), 6, tebal: tebal),
+          angkaTeks(Uang.qty(qtyA), 7, tebal: tebal),
+          angkaTeks(Uang.angka(actual), 8, tebal: tebal),
         ];
       }
       Widget persen(int omset, int modal, int i) =>

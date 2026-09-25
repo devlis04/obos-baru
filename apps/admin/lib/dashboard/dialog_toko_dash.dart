@@ -430,6 +430,7 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
                     jenis: 'actual',
                     toko: TokoSetoranRinci.dari(b.isi),
                     tanggal: widget.data.hari,
+                    tampilOrderPersen: true,
                   ),
                 ),
         child: Text(
