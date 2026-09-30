@@ -46,6 +46,7 @@ class _DialogGajiState extends State<_DialogGaji> {
   static const _selaSales = 2.0;
   static const _selaKananKolom = 8.0;
   static const _selaKananTerima = 16.0;
+  static const _selaSnackbar = 60.0;
   bool _sibuk = false;
   bool _muat = true;
   String? _gagal;
@@ -301,33 +302,72 @@ class _DialogGajiState extends State<_DialogGaji> {
     });
   }
 
+  void _tekanHitung() {
+    _hitungUlang();
+    if (!mounted) return;
+    tampilPesan(
+      context,
+      'Gaji dihitung ulang di layar. Belum tersimpan. '
+      'Klik Simpan kasbon atau Simpan patokan.',
+    );
+  }
+
+  void _tutup() {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    Navigator.pop(context);
+    if (messenger == null) return;
+    tampilPesanDi(
+      messenger,
+      'Dialog gaji ditutup. Perubahan yang belum disimpan tidak tersimpan.',
+    );
+  }
+
   Future<void> _simpan() async {
     if (_sibuk) return;
     final s = _dariField();
     setState(() => _sibuk = true);
+    var patokanOk = false;
+    var targetOk = false;
     try {
       await _repo.simpan(s);
-      final target = _targetUntukSimpan();
-      if (target.isNotEmpty) {
-        await _repo.simpanTarget(target);
-      }
-      if (!mounted) return;
-      tampilPesan(context, 'Patokan gaji dan target sales tersimpan.');
-      _hitungUlang();
+      patokanOk = true;
     } catch (e) {
       if (!mounted) return;
       tampilPesan(
         context,
         Jaringan.mati(e)
             ? 'Tidak ada internet. Patokan belum tersimpan.'
-            : pesanGagal(
-                e,
-                'Patokan belum tersimpan. Jalankan SQL 116 dan 118.',
-              ),
+            : 'Patokan belum tersimpan. Jalankan SQL 116.',
       );
-    } finally {
       if (mounted) setState(() => _sibuk = false);
+      return;
     }
+    try {
+      final target = _targetUntukSimpan();
+      if (target.isEmpty) {
+        targetOk = true;
+      } else {
+        await _repo.simpanTarget(target);
+        targetOk = true;
+      }
+    } catch (_) {
+      targetOk = false;
+    }
+    if (!mounted) return;
+    if (patokanOk && targetOk) {
+      tampilPesan(
+        context,
+        'Patokan gaji, omset target, dan rasio tersimpan. '
+        'Kasbon tidak ikut disimpan.',
+      );
+    } else {
+      tampilPesan(
+        context,
+        'Patokan gaji tersimpan. Omset/rasio belum. Jalankan SQL 118.',
+      );
+    }
+    _hitungUlang();
+    if (mounted) setState(() => _sibuk = false);
   }
 
   Future<void> _simpanKasbon() async {
@@ -341,7 +381,11 @@ class _DialogGajiState extends State<_DialogGaji> {
     try {
       await _repo.simpanKasbonMinggu(senin: widget.senin, isi: isi);
       if (!mounted) return;
-      tampilPesan(context, 'Kasbon gaji minggu ini tersimpan.');
+      tampilPesan(
+        context,
+        'Kasbon gaji minggu ini tersimpan. '
+        'Patokan dan omset/rasio tidak ikut disimpan.',
+      );
       _hitungUlang();
     } catch (e) {
       if (!mounted) return;
@@ -359,15 +403,18 @@ class _DialogGajiState extends State<_DialogGaji> {
   @override
   Widget build(BuildContext context) {
     final layar = MediaQuery.sizeOf(context);
+    final selaBawah = _selaSnackbar + MediaQuery.viewInsetsOf(context).bottom;
     return Dialog(
-      insetPadding: const EdgeInsets.all(10),
+      alignment: Alignment.topCenter,
+      insetPadding: EdgeInsets.fromLTRB(10, 10, 10, selaBawah),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minWidth: layar.width - 20,
           maxWidth: layar.width - 20,
-          maxHeight: layar.height - 20,
+          maxHeight: layar.height - 10 - selaBawah,
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
@@ -388,6 +435,7 @@ class _DialogGajiState extends State<_DialogGaji> {
               ),
             if (_isi != null)
               Flexible(
+                fit: FlexFit.loose,
                 child: AbsorbPointer(
                   absorbing: _muat,
                   child: LayoutBuilder(
@@ -491,7 +539,7 @@ class _DialogGajiState extends State<_DialogGaji> {
                 TextButton(
                   onPressed: (_sibuk || _muat || _isi == null)
                       ? null
-                      : _hitungUlang,
+                      : _tekanHitung,
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -500,7 +548,7 @@ class _DialogGajiState extends State<_DialogGaji> {
                   child: const Text('Hitung'),
                 ),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _tutup,
                   icon: const Icon(Icons.close),
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(
