@@ -55046,18 +55046,18 @@ k.push(A.aB(i,".",",")+"%")}k=d.kg("Net %",k)
 j=A.b([A.aa(r[1])],b)
 for(i=s.length,q=0;q<s.length;s.length===i||(0,A.p)(s),++q)j.push(A.aa(s[q].Q))
 j=d.kg("Ben. net",j)
-i=A.b([""+r[11]+"/"+r[9]],b)
-for(h=s.length,q=0;q<s.length;s.length===h||(0,A.p)(s),++q){p=s[q]
-i.push(""+p.at+"/"+p.as)}i=d.kg("Visit",i)
-h=A.b([A.aa(r[2])],b)
-for(g=s.length,q=0;q<s.length;s.length===g||(0,A.p)(s),++q)h.push(A.aa(s[q].ax))
-h=d.kg("Ben. visit",h)
-g=A.b([""+r[3]],b)
-for(f=s.length,q=0;q<s.length;s.length===f||(0,A.p)(s),++q)g.push(""+s[q].ay)
-g=d.kg("EC",g)
-f=A.b([A.aa(r[0])],b)
-for(e=s.length,q=0;q<s.length;s.length===e||(0,A.p)(s),++q)f.push(A.aa(s[q].ch))
-f=d.kg("Ben. EC",f)
+i=A.b([""+r[3]],b)
+for(h=s.length,q=0;q<s.length;s.length===h||(0,A.p)(s),++q)i.push(""+s[q].ay)
+i=d.kg("EC",i)
+h=A.b([A.aa(r[0])],b)
+for(g=s.length,q=0;q<s.length;s.length===g||(0,A.p)(s),++q)h.push(A.aa(s[q].ch))
+h=d.kg("Ben. EC",h)
+g=A.b([""+r[11]+"/"+r[9]],b)
+for(f=s.length,q=0;q<s.length;s.length===f||(0,A.p)(s),++q){p=s[q]
+g.push(""+p.at+"/"+p.as)}g=d.kg("Visit",g)
+f=A.b([A.aa(r[2])],b)
+for(e=s.length,q=0;q<s.length;s.length===e||(0,A.p)(s),++q)f.push(A.aa(s[q].ax))
+f=d.kg("Ben. visit",f)
 b=A.b([A.aa(r[10])],b)
 for(r=s.length,q=0;q<s.length;s.length===r||(0,A.p)(s),++q)b.push(A.aa(s[q].CW))
 return A.b([a,o,n,m,l,k,j,i,h,g,f,d.kg("Total",b)],t.n)},
@@ -55124,7 +55124,7 @@ q.vI()
 s=q.b.c
 q.l()
 return s+2+0},
-aDo(a,a0){var s,r,q,p,o,n,m,l,k,j,i,h,g=this,f=null,e=g.a3Q(a),d=g.a1f(a0),c=t.p,b=A.b([new A.dZ(f,f,A.b([g.Ej("Rute sales",!1,!0),g.hO("Omset target",!0),g.hO("Rasio %",!0),g.hO("Net target",!0),g.hO("Net actual",!0),g.hO("Net %",!0),g.hO("Ben. net",!0),g.hO("Visit",!0),g.hO("Ben. visit",!0),g.hO("EC",!0),g.hO("Ben. EC",!0),g.hO("Total",!0)],c))],t.nk)
+aDo(a,a0){var s,r,q,p,o,n,m,l,k,j,i,h,g=this,f=null,e=g.a3Q(a),d=g.a1f(a0),c=t.p,b=A.b([new A.dZ(f,f,A.b([g.Ej("Rute sales",!1,!0),g.hO("Omset target",!0),g.hO("Rasio %",!0),g.hO("Net target",!0),g.hO("Net actual",!0),g.hO("Net %",!0),g.hO("Ben. net",!0),g.hO("EC",!0),g.hO("Ben. EC",!0),g.hO("Visit",!0),g.hO("Ben. visit",!0),g.hO("Total",!0)],c))],t.nk)
 for(s=a.a,r=s.length,q=t.w,p=0;p<s.length;s.length===r||(0,A.p)(s),++p){o=s[p]
 n=o.b
 m=o.a
@@ -55141,8 +55141,8 @@ m=g.aBI(m)
 j=g.m0(A.aa(o.x))
 i=g.m0(A.aa(o.y))
 h=B.d.a9(o.z*100,2)
-b.push(new A.dZ(f,f,A.b([n,new A.ac(new A.a4(4,4,4,4),new A.c7(f,33*k-8,l,f),f),m,j,i,g.m0(A.aB(h,".",",")+"%"),g.m0(A.aa(o.Q)),g.m0(""+o.at+"/"+o.as),g.m0(A.aa(o.ax)),g.m0(""+o.ay),g.m0(A.aa(o.ch)),g.m0(A.aa(o.CW))],c)))}s=e.a
-b.push(new A.dZ(f,f,A.b([g.a2D("Total",!0,!1,!0),g.ki(A.aa(s[6]),!0,!0),g.ki(s[8],!0,!0),g.ki(A.aa(s[5]),!0,!0),g.ki(A.aa(s[4]),!0,!0),g.ki(A.b9y(s[7]),!0,!0),g.ki(A.aa(s[1]),!0,!0),g.ki(""+s[11]+"/"+s[9],!0,!0),g.ki(A.aa(s[2]),!0,!0),g.ki(""+s[3],!0,!0),g.ki(A.aa(s[0]),!0,!0),g.ki(A.aa(s[10]),!0,!0)],c)))
+b.push(new A.dZ(f,f,A.b([n,new A.ac(new A.a4(4,4,4,4),new A.c7(f,33*k-8,l,f),f),m,j,i,g.m0(A.aB(h,".",",")+"%"),g.m0(A.aa(o.Q)),g.m0(""+o.ay),g.m0(A.aa(o.ch)),g.m0(""+o.at+"/"+o.as),g.m0(A.aa(o.ax)),g.m0(A.aa(o.CW))],c)))}s=e.a
+b.push(new A.dZ(f,f,A.b([g.a2D("Total",!0,!1,!0),g.ki(A.aa(s[6]),!0,!0),g.ki(s[8],!0,!0),g.ki(A.aa(s[5]),!0,!0),g.ki(A.aa(s[4]),!0,!0),g.ki(A.b9y(s[7]),!0,!0),g.ki(A.aa(s[1]),!0,!0),g.ki(""+s[3],!0,!0),g.ki(A.aa(s[0]),!0,!0),g.ki(""+s[11]+"/"+s[9],!0,!0),g.ki(A.aa(s[2]),!0,!0),g.ki(A.aa(s[10]),!0,!0)],c)))
 return A.JP(B.FN,b,d,B.ex)},
 aBH(a){var s=this,r=null,q=s.YL(A.dH(r,B.a4,!1,r,!0,B.q,r,A.dU(),s.KM("kb:"+A.jF(a.a,a.c,a.b),a.r),r,r,r,r,r,2,B.jW,B.D,!0,r,!0,r,!0,r,B.ae,r,r,B.nW,r,B.ez,r,r,r,r,r,r,!1,"\u2022",r,new A.aHp(s),r,r,r,!1,r,r,!1,r,!0,r,B.an,r,r,r,r,r,r,r,r,r,r,r,A.bt(r,r,r,r,r,r,r,r,r,r,r,13*s.geK(),r,r,r,r,1.1,!0,r,r,r,r,r,r,r,r),!0,B.at,B.dL,B.az,r,r,r,r))
 return q},
