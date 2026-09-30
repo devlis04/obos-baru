@@ -292,12 +292,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
     bool tampilkanTahap = true,
   }) {
     final gayaTarget = TextStyle(
-      fontSize: 10,
+      fontSize: 13,
       color: Colors.grey.shade600,
       fontWeight: FontWeight.w500,
     );
     const gayaIsi = TextStyle(
-      fontSize: 10,
+      fontSize: 13,
       color: Colors.black87,
       fontWeight: FontWeight.bold,
     );
@@ -328,7 +328,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
                       Text(
                         label,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -407,19 +407,19 @@ class _DashboardLayarState extends State<DashboardLayar> {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
           child: Stack(
             alignment: Alignment.center,
             children: [
               CustomPaint(
-                size: const Size(32, 32),
+                size: const Size(40, 40),
                 painter: _CincinPainter(percentage: persentase, color: warna),
               ),
               Text(
                 '${(persentase * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
-                  fontSize: persentase >= 1 ? 6 : 7,
+                  fontSize: persentase >= 1 ? 9 : 10,
                   fontWeight: FontWeight.bold,
                   color: warna,
                 ),
@@ -430,7 +430,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 7,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
             color: Colors.grey.shade600,
           ),
@@ -623,9 +623,11 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           ),
                                         ],
                                       ),
-                                      const Divider(height: 4),
+                                      const Divider(height: 6),
                                       Expanded(
-                                        child: _barisTarget(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Rasio laba',
                                           warna: Colors.green,
                                           targetText:
@@ -646,10 +648,13 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           persentasePacked: _pctLabaPacked,
                                           persentaseActual: _pctLabaActual,
                                         ),
+                                        ),
                                       ),
                                       const Divider(height: 2),
                                       Expanded(
-                                        child: _barisTarget(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Total omset',
                                           warna: theme.colorScheme.primary,
                                           targetText: Uang.rp(_targetOmset),
@@ -660,10 +665,13 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           persentasePacked: _pctOmsetPacked,
                                           persentaseActual: _pctOmsetActual,
                                         ),
+                                        ),
                                       ),
                                       const Divider(height: 2),
                                       Expanded(
-                                        child: _barisTarget(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Effective call',
                                           warna: Colors.orangeAccent,
                                           targetText: '$_targetEc toko',
@@ -674,16 +682,20 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           persentasePacked: _pctEcPacked,
                                           persentaseActual: _pctEcActual,
                                         ),
+                                        ),
                                       ),
                                       const Divider(height: 2),
                                       Expanded(
-                                        child: _barisTarget(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Kunjungan visit',
                                           warna: Colors.red,
                                           targetText: '$_targetVisit toko',
                                           actualText: '$_visitMinggu toko',
                                           persentaseActual: _pctVisitActual,
                                           tampilkanTahap: false,
+                                        ),
                                         ),
                                       ),
                                     ],

@@ -277,7 +277,7 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
       appBar: AppBar(title: Text(widget.namaSales)),
       body: Column(
         children: [
-          if (banner && label != null)
+          if (banner)
             Material(
               color: Tema.kuning,
               child: Padding(

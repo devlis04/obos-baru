@@ -122,130 +122,185 @@ class _GajiLayarState extends State<GajiLayar> {
             )
           : RefreshIndicator(
               onRefresh: _muatUlang,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-                children: [
-                  if (_gagal != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                      child: Text(
-                        _gagal!,
-                        style: const TextStyle(color: Tema.redup),
-                      ),
-                    ),
-                  if (minggu != null)
-                    Card(
-                      margin: EdgeInsets.zero,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: constraints.maxHeight,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 2, 6, 8),
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _judulMinggu,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Pilih minggu',
-                                  onPressed: _muat ? null : _pilihTanggal,
-                                  visualDensity: VisualDensity.compact,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 36,
-                                    minHeight: 36,
-                                  ),
-                                  icon: const Icon(
-                                    Icons.date_range_outlined,
-                                    color: Tema.seed,
-                                    size: 22,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (minggu.nama.isNotEmpty)
+                            if (_gagal != null)
                               Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
+                                padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                                 child: Text(
-                                  '${minggu.rute} · ${minggu.nama}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w600,
+                                  _gagal!,
+                                  style: const TextStyle(color: Tema.redup),
+                                ),
+                              ),
+                            if (minggu != null)
+                              Expanded(
+                                child: Card(
+                                  margin: EdgeInsets.zero,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      10,
+                                      2,
+                                      6,
+                                      8,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                _judulMinggu,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              tooltip: 'Pilih minggu',
+                                              onPressed:
+                                                  _muat ? null : _pilihTanggal,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 36,
+                                                minHeight: 36,
+                                              ),
+                                              icon: const Icon(
+                                                Icons.date_range_outlined,
+                                                color: Tema.seed,
+                                                size: 22,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (minggu.nama.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 2,
+                                            ),
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                '${minggu.rute} · ${minggu.nama}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade600,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        const Divider(height: 6),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'Rasio laba',
+                                            warna: Colors.green,
+                                            targetText: _teksRasio(
+                                              minggu.rasioTarget,
+                                            ),
+                                            actualText: _teksRasio(
+                                              minggu.rasioActual,
+                                            ),
+                                            persentase: minggu.pctRasio,
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'Total omset',
+                                            warna: theme.colorScheme.primary,
+                                            targetText: Uang.rp(
+                                              minggu.omsetTarget,
+                                            ),
+                                            actualText: Uang.rp(
+                                              minggu.omsetActual,
+                                            ),
+                                            persentase: minggu.pctOmset,
+                                            benefitText: Uang.rp(
+                                              minggu.benOmset,
+                                            ),
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'Effective call',
+                                            warna: Colors.orangeAccent,
+                                            targetText:
+                                                '${minggu.ecTarget} toko',
+                                            actualText: '${minggu.ec} toko',
+                                            persentase: minggu.pctEc,
+                                            benefitText: Uang.rp(
+                                              minggu.benEc,
+                                            ),
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'Kunjungan visit',
+                                            warna: Colors.red,
+                                            targetText:
+                                                '${minggu.visitTarget} toko',
+                                            actualText:
+                                                '${minggu.visit} toko',
+                                            persentase: minggu.pctVisit,
+                                            benefitText: Uang.rp(
+                                              minggu.benVisit,
+                                            ),
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'BOP pengirim',
+                                            warna: Colors.blueGrey,
+                                            actualText: Uang.rp(
+                                              minggu.bopPengirim,
+                                            ),
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
+                                            label: 'Benefit total',
+                                            warna: Colors.black87,
+                                            actualText: Uang.rp(minggu.total),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Perkiraan benefit Senin–Sabtu. Bisa berubah sampai '
+                                          'packing, kirim, retur, dan BOP rute selesai.',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 11,
+                                            height: 1.35,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            const Divider(height: 4),
-                            _barisCapai(
-                              label: 'Rasio laba',
-                              warna: Colors.green,
-                              targetText: _teksRasio(minggu.rasioTarget),
-                              actualText: _teksRasio(minggu.rasioActual),
-                              persentase: minggu.pctRasio,
-                            ),
-                            const Divider(height: 2),
-                            _barisCapai(
-                              label: 'Total omset',
-                              warna: theme.colorScheme.primary,
-                              targetText: Uang.rp(minggu.omsetTarget),
-                              actualText: Uang.rp(minggu.omsetActual),
-                              persentase: minggu.pctOmset,
-                              benefitText: Uang.rp(minggu.benOmset),
-                            ),
-                            const Divider(height: 2),
-                            _barisCapai(
-                              label: 'Effective call',
-                              warna: Colors.orangeAccent,
-                              targetText: '${minggu.ecTarget} toko',
-                              actualText: '${minggu.ec} toko',
-                              persentase: minggu.pctEc,
-                              benefitText: Uang.rp(minggu.benEc),
-                            ),
-                            const Divider(height: 2),
-                            _barisCapai(
-                              label: 'Kunjungan visit',
-                              warna: Colors.red,
-                              targetText: '${minggu.visitTarget} toko',
-                              actualText: '${minggu.visit} toko',
-                              persentase: minggu.pctVisit,
-                              benefitText: Uang.rp(minggu.benVisit),
-                            ),
-                            const Divider(height: 2),
-                            _barisCapai(
-                              label: 'BOP pengirim',
-                              warna: Colors.blueGrey,
-                              actualText: Uang.rp(minggu.bopPengirim),
-                            ),
-                            const Divider(height: 2),
-                            _barisCapai(
-                              label: 'Benefit total',
-                              warna: Colors.black87,
-                              actualText: Uang.rp(minggu.total),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Perkiraan benefit Senin–Sabtu. Bisa berubah sampai '
-                              'packing, kirim, retur, dan BOP rute selesai.',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 11,
-                                height: 1.35,
-                              ),
-                            ),
                           ],
                         ),
                       ),
                     ),
-                ],
+                  );
+                },
               ),
             ),
     );
@@ -279,6 +334,15 @@ class _GajiLayarState extends State<GajiLayar> {
     );
   }
 
+  Widget _slotCapai(Widget anak) {
+    return Expanded(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: anak,
+      ),
+    );
+  }
+
   Widget _barisCapai({
     required String label,
     required Color warna,
@@ -288,72 +352,69 @@ class _GajiLayarState extends State<GajiLayar> {
     String? benefitText,
   }) {
     final gayaTarget = TextStyle(
-      fontSize: 10,
+      fontSize: 13,
       color: Colors.grey.shade600,
       fontWeight: FontWeight.w500,
     );
     const gayaIsi = TextStyle(
-      fontSize: 10,
+      fontSize: 13,
       color: Colors.black87,
       fontWeight: FontWeight.bold,
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: 262,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: warna,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 262,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: warna,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                      ],
-                    ),
-                    if (targetText != null) ...[
-                      const SizedBox(height: 1),
-                      _barisUang('Target', targetText, gayaTarget),
+                      ),
                     ],
+                  ),
+                  if (targetText != null) ...[
                     const SizedBox(height: 1),
-                    _barisUang('Actual', actualText, gayaIsi),
-                    if (benefitText != null) ...[
-                      const SizedBox(height: 1),
-                      _barisUang('Benefit', benefitText, gayaIsi),
-                    ],
+                    _barisUang('Target', targetText, gayaTarget),
                   ],
-                ),
+                  const SizedBox(height: 1),
+                  _barisUang('Actual', actualText, gayaIsi),
+                  if (benefitText != null) ...[
+                    const SizedBox(height: 1),
+                    _barisUang('Benefit', benefitText, gayaIsi),
+                  ],
+                ],
               ),
             ),
           ),
-          if (persentase != null) ...[
-            const SizedBox(width: 4),
-            _cincin(persentase: persentase, warna: warna),
-          ],
+        ),
+        if (persentase != null) ...[
+          const SizedBox(width: 4),
+          _cincin(persentase: persentase, warna: warna),
         ],
-      ),
+      ],
     );
   }
 
@@ -362,19 +423,19 @@ class _GajiLayarState extends State<GajiLayar> {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
           child: Stack(
             alignment: Alignment.center,
             children: [
               CustomPaint(
-                size: const Size(32, 32),
+                size: const Size(40, 40),
                 painter: _CincinPainter(percentage: persentase, color: warna),
               ),
               Text(
                 '${(persentase * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
-                  fontSize: persentase >= 1 ? 6 : 7,
+                  fontSize: persentase >= 1 ? 9 : 10,
                   fontWeight: FontWeight.bold,
                   color: warna,
                 ),
@@ -385,7 +446,7 @@ class _GajiLayarState extends State<GajiLayar> {
         Text(
           'Actual',
           style: TextStyle(
-            fontSize: 7,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
             color: Colors.grey.shade600,
           ),

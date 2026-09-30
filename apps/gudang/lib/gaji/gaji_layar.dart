@@ -8,20 +8,18 @@ import '../uang.dart';
 import 'gaji_repo.dart';
 
 class GajiLayar extends StatefulWidget {
-  const GajiLayar({super.key, required this.rute});
-
-  final String rute;
+  const GajiLayar({super.key});
 
   @override
   State<GajiLayar> createState() => _GajiLayarState();
 }
 
 class _GajiLayarState extends State<GajiLayar> {
-  final _repo = GajiPengirimRepo(Supabase.instance.client);
+  final _repo = GajiGudangRepo(Supabase.instance.client);
   bool _muat = true;
   String? _gagal;
   late DateTime _hari;
-  IsiGajiPengirim? _minggu;
+  IsiGajiGudang? _minggu;
 
   @override
   void initState() {
@@ -61,7 +59,7 @@ class _GajiLayarState extends State<GajiLayar> {
           ? 'Tidak ada internet. Benefit belum bisa dimuat.'
           : (e is PostgrestException && e.message.trim().isNotEmpty)
               ? e.message.trim()
-              : 'Benefit belum bisa dimuat. Jalankan SQL 140';
+              : 'Benefit belum bisa dimuat. Jalankan SQL 141';
       setState(() {
         _muat = false;
         _gagal = pesan;
@@ -92,7 +90,7 @@ class _GajiLayarState extends State<GajiLayar> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(widget.rute.isEmpty ? 'Benefit' : 'Benefit · ${widget.rute}'),
+        title: const Text('Benefit'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: _muat
@@ -185,23 +183,24 @@ class _GajiLayarState extends State<GajiLayar> {
                                             ),
                                           ],
                                         ),
-                                        if (minggu.nama.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 2,
-                                            ),
-                                            child: Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                '${minggu.rute} · ${minggu.nama}',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors.grey.shade600,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 2,
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              minggu.nama.isNotEmpty
+                                                  ? minggu.nama
+                                                  : 'Gudang',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                           ),
+                                        ),
                                         const Divider(height: 6),
                                         _slotCapai(
                                           _barisCapai(

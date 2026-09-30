@@ -346,67 +346,79 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 ),
               ],
             ),
-            const Divider(height: 4),
+            const Divider(height: 6),
             Expanded(
-              child: _isiTarget(
-                _barisTarget(
-                  label: 'Rasio laba',
-                  warna: Colors.green,
-                  targetText: '${t.targetPersen.toStringAsFixed(2)}%',
-                  orderText: _teksRasio(m.omsetOrder, m.labaOrder),
-                  kirimanText: _teksRasio(m.omsetKiriman, m.labaKiriman),
-                  actualText: _teksRasio(m.omsetActual, m.labaActual),
-                  persentaseOrder: _pct(
-                    _persenLaba(m.omsetOrder, m.labaOrder),
-                    t.targetPersen,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _isiTarget(
+                  _barisTarget(
+                    label: 'Rasio laba',
+                    warna: Colors.green,
+                    targetText: '${t.targetPersen.toStringAsFixed(2)}%',
+                    orderText: _teksRasio(m.omsetOrder, m.labaOrder),
+                    kirimanText: _teksRasio(m.omsetKiriman, m.labaKiriman),
+                    actualText: _teksRasio(m.omsetActual, m.labaActual),
+                    persentaseOrder: _pct(
+                      _persenLaba(m.omsetOrder, m.labaOrder),
+                      t.targetPersen,
+                    ),
+                    persentaseActual: _pct(
+                      _persenLaba(m.omsetActual, m.labaActual),
+                      t.targetPersen,
+                    ),
                   ),
-                  persentaseActual: _pct(
-                    _persenLaba(m.omsetActual, m.labaActual),
-                    t.targetPersen,
+                ),
+              ),
+            ),
+            const Divider(height: 4),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _isiTarget(
+                  _barisTarget(
+                    label: 'Total omset',
+                    warna: theme.colorScheme.primary,
+                    targetText: Uang.rp(t.targetOmset),
+                    orderText: Uang.rp(m.omsetOrder),
+                    kirimanText: Uang.rp(m.omsetKiriman),
+                    actualText: Uang.rp(m.omsetActual),
+                    persentaseOrder: _pct(m.omsetOrder, t.targetOmset),
+                    persentaseActual: _pct(m.omsetActual, t.targetOmset),
                   ),
                 ),
               ),
             ),
             const Divider(height: 4),
             Expanded(
-              child: _isiTarget(
-                _barisTarget(
-                  label: 'Total omset',
-                  warna: theme.colorScheme.primary,
-                  targetText: Uang.rp(t.targetOmset),
-                  orderText: Uang.rp(m.omsetOrder),
-                  kirimanText: Uang.rp(m.omsetKiriman),
-                  actualText: Uang.rp(m.omsetActual),
-                  persentaseOrder: _pct(m.omsetOrder, t.targetOmset),
-                  persentaseActual: _pct(m.omsetActual, t.targetOmset),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _isiTarget(
+                  _barisTarget(
+                    label: 'Effective call',
+                    warna: Colors.orangeAccent,
+                    targetText: '${m.targetEc} toko',
+                    orderText: '${m.ecOrder} toko',
+                    kirimanText: '${m.ecKiriman} toko',
+                    actualText: '${m.ecActual} toko',
+                    persentaseOrder: _pct(m.ecOrder, m.targetEc),
+                    persentaseActual: _pct(m.ecActual, m.targetEc),
+                  ),
                 ),
               ),
             ),
             const Divider(height: 4),
             Expanded(
-              child: _isiTarget(
-                _barisTarget(
-                  label: 'Effective call',
-                  warna: Colors.orangeAccent,
-                  targetText: '${m.targetEc} toko',
-                  orderText: '${m.ecOrder} toko',
-                  kirimanText: '${m.ecKiriman} toko',
-                  actualText: '${m.ecActual} toko',
-                  persentaseOrder: _pct(m.ecOrder, m.targetEc),
-                  persentaseActual: _pct(m.ecActual, m.targetEc),
-                ),
-              ),
-            ),
-            const Divider(height: 4),
-            Expanded(
-              child: _isiTarget(
-                _barisTarget(
-                  label: 'Kunjungan visit',
-                  warna: Colors.red,
-                  targetText: '${m.targetVisit} toko',
-                  actualText: '${m.visit} toko',
-                  persentaseActual: _pct(m.visit, m.targetVisit),
-                  tampilkanOrder: false,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _isiTarget(
+                  _barisTarget(
+                    label: 'Kunjungan visit',
+                    warna: Colors.red,
+                    targetText: '${m.targetVisit} toko',
+                    actualText: '${m.visit} toko',
+                    persentaseActual: _pct(m.visit, m.targetVisit),
+                    tampilkanOrder: false,
+                  ),
                 ),
               ),
             ),
@@ -740,7 +752,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
             : c.maxWidth;
         return FittedBox(
           fit: BoxFit.scaleDown,
-          alignment: Alignment.topLeft,
+          alignment: Alignment.centerLeft,
           child: SizedBox(width: lebar, child: anak),
         );
       },
@@ -817,7 +829,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
       fontWeight: FontWeight.bold,
     );
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(

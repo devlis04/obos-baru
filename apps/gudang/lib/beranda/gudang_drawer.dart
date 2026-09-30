@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:obos_auth/obos_auth.dart';
 import 'package:obos_core/obos_core.dart';
 
+import '../gaji/gaji_layar.dart';
+
 class GudangDrawer extends StatelessWidget {
   const GudangDrawer({
     super.key,
@@ -94,6 +96,19 @@ class GudangDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               onStokOpname();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.payments_outlined, color: Tema.biru),
+            title: const Text('Benefit'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const GajiLayar(),
+                ),
+              );
             },
           ),
           const Spacer(),

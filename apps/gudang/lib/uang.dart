@@ -1,4 +1,10 @@
 class Uang {
+  static int dari(Object? v) {
+    if (v is int) return v;
+    if (v is num) return v.round();
+    return int.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
   static String angka(int nominal) {
     return nominal.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),

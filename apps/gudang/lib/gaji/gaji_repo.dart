@@ -34,8 +34,8 @@ class MingguGaji {
   }
 }
 
-class IsiGajiPengirim {
-  const IsiGajiPengirim({
+class IsiGajiGudang {
+  const IsiGajiGudang({
     required this.senin,
     required this.sabtu,
     required this.rute,
@@ -83,8 +83,8 @@ class IsiGajiPengirim {
   final int kasbon;
   final int terima;
 
-  factory IsiGajiPengirim.dari(Map<String, dynamic> m) {
-    return IsiGajiPengirim(
+  factory IsiGajiGudang.dari(Map<String, dynamic> m) {
+    return IsiGajiGudang(
       senin: _hari(m['senin']),
       sabtu: _hari(m['sabtu']),
       rute: (m['rute']?.toString() ?? '').trim(),
@@ -123,28 +123,28 @@ class IsiGajiPengirim {
   }
 }
 
-class GajiPengirimRepo {
-  GajiPengirimRepo(this._sb);
+class GajiGudangRepo {
+  GajiGudangRepo(this._sb);
 
   final SupabaseClient _sb;
 
-  Future<IsiGajiPengirim> lihat(DateTime hari) async {
+  Future<IsiGajiGudang> lihat(DateTime hari) async {
     final senin = MingguGaji.seninDari(MingguGaji.hari(hari));
     final hasil = await Jaringan.denganUlang(
       () => _sb.rpc(
-        'pengirim_gaji_minggu',
+        'gudang_gaji_minggu',
         params: {'p_senin': MingguGaji.iso(senin)},
       ),
     );
     return _peta(hasil);
   }
 
-  IsiGajiPengirim _peta(Object? hasil) {
+  IsiGajiGudang _peta(Object? hasil) {
     if (hasil is Map) {
-      return IsiGajiPengirim.dari(Map<String, dynamic>.from(hasil));
+      return IsiGajiGudang.dari(Map<String, dynamic>.from(hasil));
     }
     if (hasil is List && hasil.isNotEmpty && hasil.first is Map) {
-      return IsiGajiPengirim.dari(
+      return IsiGajiGudang.dari(
         Map<String, dynamic>.from(hasil.first as Map),
       );
     }
