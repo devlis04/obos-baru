@@ -250,7 +250,7 @@ class _IsiState extends State<_Isi> {
             ],
             _kelompok(
               'Master barang',
-              'Hanya ubah id yang sudah ada: grup, nama, satuan, rincian, kategori, pemasok utama, jual, strata, aktif. SKU baru dari Barang masuk. Kolom id_supplier_utama = id supplier (kosong = tidak diubah, 0 = hapus utama). Ganti utama: modal dan jual ikut (pembulatan Rp 500). Kolom hapus = 1: hapus, atau nonaktif jika sudah dipakai nota.',
+              'Hanya ubah id yang sudah ada: grup, nama, satuan, rincian, kategori, pemasok utama, jual, strata, aktif. SKU baru dari Barang masuk. Kolom id_supplier_utama = id supplier (kosong = tidak diubah, 0 = hapus utama). Ganti utama: modal dan jual ikut (pembulatan 500). Kolom hapus = 1: hapus, atau nonaktif jika sudah dipakai nota.',
               [
                 OutlinedButton(
                   style: _garis,

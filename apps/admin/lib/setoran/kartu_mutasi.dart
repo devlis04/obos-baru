@@ -240,7 +240,6 @@ class KartuMutasi extends StatelessWidget {
   Widget _uang(int n) {
     return Row(
       children: [
-        const SizedBox(width: 22, child: Text('Rp', style: _isi)),
         Expanded(
           child: Text(
             Uang.angka(n),

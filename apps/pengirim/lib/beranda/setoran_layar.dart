@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../lantai.dart';
 import '../toko/retur_toko.dart';
 import '../toko/toko_repo.dart';
 import '../uang.dart';
@@ -28,7 +27,7 @@ class SetoranLayar extends StatefulWidget {
 }
 
 class _SetoranLayarState extends State<SetoranLayar> {
-  static const _bopMaks = 170000;
+  int _bopMaks = 170000;
   final _repo = TokoRepo(Supabase.instance.client);
   final _transferCtrl = TextEditingController();
   final _tunaiCtrl = TextEditingController();
@@ -67,7 +66,14 @@ class _SetoranLayarState extends State<SetoranLayar> {
   int get _retur => _ringkas.omsetRetur;
   int get _kasbonSupir => _angkaTeks(_kasbonSupirCtrl.text);
   int get _kasbonKenek => _angkaTeks(_kasbonKenekCtrl.text);
-  bool get _bopValid => _bop >= 0 && _bop <= _bopMaks;
+  bool get _bopValid {
+    if (_bop < 0) return false;
+    if (_bop <= _bopMaks) return true;
+    return _sudahSetor && _bop == _bopTersimpan && _bopTersimpan > _bopMaks;
+  }
+
+  int get _bopAtas =>
+      _bopTersimpan > _bopMaks ? _bopTersimpan : _bopMaks;
   int get _uangSetor => _transfer + _tunai + _bop;
   int get _actualTampil => _ringkas.actualTampil;
   int get _selisih => _actualTampil - _uangSetor;
@@ -156,6 +162,7 @@ class _SetoranLayarState extends State<SetoranLayar> {
       setState(() {
         _sudahSetor = data.sudahAda;
         _bisaUbah = data.bisaUbah;
+        _bopMaks = data.bopMaks;
         _transferTersimpan = data.transfer;
         _tunaiTersimpan = data.tunai;
         _bopTersimpan = data.bop;
@@ -322,8 +329,8 @@ class _SetoranLayarState extends State<SetoranLayar> {
                     const SizedBox(height: 4),
                     Text(
                       _selisih > 0
-                          ? 'Selisih kurang : Rp ${Uang.angka(perlu)}'
-                          : 'Selisih lebih : Rp ${Uang.angka(perlu)}',
+                          ? 'Selisih kurang : ${Uang.angka(perlu)}'
+                          : 'Selisih lebih : ${Uang.angka(perlu)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.red,
@@ -354,8 +361,8 @@ class _SetoranLayarState extends State<SetoranLayar> {
                       const SizedBox(height: 8),
                       Text(
                         sisa > 0
-                            ? 'Sisa kasbon : Rp ${Uang.angka(sisa)}'
-                            : 'Kasbon lebih : Rp ${Uang.angka(-sisa)}',
+                            ? 'Sisa kasbon : ${Uang.angka(sisa)}'
+                            : 'Kasbon lebih : ${Uang.angka(-sisa)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -417,28 +424,26 @@ class _SetoranLayarState extends State<SetoranLayar> {
       } else if (!_bisaUbah) {
         umpan(context, 'Buku setoran sudah ditutup. Setoran tidak bisa diubah.');
       } else if (!_bopValid) {
-        umpan(context, 'BOP maksimal Rp ${Uang.angka(_bopMaks)} per hari.');
+        umpan(context, 'BOP maksimal ${Uang.angka(_bopMaks)} per hari.');
       } else if (!_kasbonCocok) {
         umpan(
           context,
           'Kasbon supir + kenek harus sama dengan selisih '
-          'Rp ${Uang.angka(_selisih.abs())}.',
+          '${Uang.angka(_selisih.abs())}.',
         );
       }
       return;
     }
-    if (!await pastikanBolehKerja(context)) return;
-    if (!mounted) return;
     final kasbonTeks = _kasbonJumlah > 0
-        ? '\nKasbon supir Rp ${Uang.angka(_kasbonSupir)}\n'
-            'Kasbon kenek Rp ${Uang.angka(_kasbonKenek)}'
+        ? '\nKasbon supir ${Uang.angka(_kasbonSupir)}\n'
+            'Kasbon kenek ${Uang.angka(_kasbonKenek)}'
         : '';
     final ya = await _konfirmasi(
-      'Setor actual $_teksHari Rp ${Uang.angka(_actualTampil)}?\n'
-      'Transfer Rp ${Uang.angka(_transfer)}\n'
-      'Tunai Rp ${Uang.angka(_tunai)}\n'
-      'BOP Rp ${Uang.angka(_bop)}\n'
-      'Retur Rp ${Uang.angka(_retur)}'
+      'Setor actual $_teksHari ${Uang.angka(_actualTampil)}?\n'
+      'Transfer ${Uang.angka(_transfer)}\n'
+      'Tunai ${Uang.angka(_tunai)}\n'
+      'BOP ${Uang.angka(_bop)}\n'
+      'Retur ${Uang.angka(_retur)}'
       '$kasbonTeks'
       '${_ringkas.omsetPending > 0 ? '\n\nMasih ada nota pending. Pending tidak masuk setoran ini.' : ''}',
       _sudahSetor ? 'Simpan setoran' : 'Setor',
@@ -589,7 +594,6 @@ class _SetoranLayarState extends State<SetoranLayar> {
               style: gaya,
               decoration: const InputDecoration(
                 isDense: true,
-                prefixText: 'Rp ',
                 contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               ),
             ),
@@ -606,9 +610,9 @@ class _SetoranLayarState extends State<SetoranLayar> {
       return _sudahSetor ? 'Simpan setoran -' : 'Setor -';
     }
     if (_sudahSetor) {
-      return 'Simpan setoran Rp ${Uang.angka(_actualTampil)}';
+      return 'Simpan setoran ${Uang.angka(_actualTampil)}';
     }
-    return 'Setor Rp ${Uang.angka(_actualTampil)}';
+    return 'Setor ${Uang.angka(_actualTampil)}';
   }
 
   @override
@@ -792,11 +796,11 @@ class _SetoranLayarState extends State<SetoranLayar> {
                             controller: _bopCtrl,
                             onChanged: (_) {
                               if (_isiOtomatis) return;
-                              if (_bop > _bopMaks) {
-                                _isiKolom(_bopCtrl, _bopMaks);
+                              if (_bop > _bopAtas) {
+                                _isiKolom(_bopCtrl, _bopAtas);
                                 umpan(
                                   context,
-                                  'BOP maksimal Rp ${Uang.angka(_bopMaks)} per hari.',
+                                  'BOP maksimal ${Uang.angka(_bopMaks)} per hari.',
                                 );
                               }
                               setState(() {});

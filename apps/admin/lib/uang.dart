@@ -34,7 +34,7 @@ class Uang {
     return '$tanda$n';
   }
 
-  static String rp(int nominal) => 'Rp ${angka(nominal)}';
+  static String rp(int nominal) => angka(nominal);
 
   static int angkaTeks(String s) {
     final digits = s.replaceAll(RegExp(r'[^0-9]'), '');
@@ -102,6 +102,11 @@ class Uang {
   static String setoranJudul(DateTime? d) {
     if (d == null) return 'Setoran';
     return 'Setoran ${hari(d)} ${tanggal(d)}';
+  }
+
+  static String rasioOmset({required int omset, required int modal}) {
+    if (modal <= 0) return '—';
+    return '${(((omset - modal) / modal) * 100).toStringAsFixed(2).replaceAll('.', ',')}%';
   }
 }
 

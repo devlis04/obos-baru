@@ -630,7 +630,7 @@ class _BarangPanelState extends State<BarangPanel> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                'Rp ${Uang.angka(p.harga)}',
+                                Uang.angka(p.harga),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -670,7 +670,7 @@ class _BarangPanelState extends State<BarangPanel> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           _akanSkalakan
-                              ? 'Modal ikut pemasok utama. Setelah simpan, jual dan strata diskalakan (pembulatan Rp 500).'
+                              ? 'Modal ikut pemasok utama. Setelah simpan, jual dan strata diskalakan (pembulatan 500).'
                               : 'Modal ikut harga pemasok utama.',
                           style: TextStyle(
                             fontSize: 14,

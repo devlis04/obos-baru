@@ -87,21 +87,45 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
     await _muatData();
   }
 
+  bool _hariSama(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  DateTime _hariBukuBerikut(DateTime t) {
+    final h = DateTime(t.year, t.month, t.day);
+    if (h.weekday == DateTime.saturday) {
+      return h.add(const Duration(days: 2));
+    }
+    if (h.weekday == DateTime.sunday) {
+      return h.add(const Duration(days: 1));
+    }
+    return h.add(const Duration(days: 1));
+  }
+
+  bool _bukuHidupUntuk(DateTime tgl, DateTime hariIni, DateTime? tanggalBuku) {
+    if (tanggalBuku == null) return false;
+    final label = DateTime(
+      tanggalBuku.year,
+      tanggalBuku.month,
+      tanggalBuku.day,
+    );
+    if (_hariSama(tgl, label)) return true;
+    if (!_hariSama(tgl, hariIni)) return false;
+    if (hariIni.isBefore(label)) return false;
+    return !hariIni.isAfter(_hariBukuBerikut(label));
+  }
+
   Future<void> _muatData({bool diam = false}) async {
     if (!diam) setState(() => _muat = true);
     try {
       final status = await _absensi.status();
       final pilih = _pilihTanggalBuku;
-      final buku = await _kartu.bukuHari(pilih);
       final now = DateTime.now();
-      final tgl = pilih ??
-          buku?.tanggal ??
-          DateTime(now.year, now.month, now.day);
-      final hidup = buku != null &&
-          buku.hidup &&
-          buku.tanggal.year == tgl.year &&
-          buku.tanggal.month == tgl.month &&
-          buku.tanggal.day == tgl.day;
+      final hariIni = DateTime(now.year, now.month, now.day);
+      final buka = await _kartu.bukuHari();
+      final tgl = pilih ?? hariIni;
+      final hidup = buka != null &&
+          buka.hidup &&
+          _bukuHidupUntuk(tgl, hariIni, buka.tanggal);
       final list = await _kartu.untukTanggal(tgl);
       if (!mounted) return;
       setState(() {

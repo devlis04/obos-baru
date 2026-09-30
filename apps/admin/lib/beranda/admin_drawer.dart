@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:obos_auth/obos_auth.dart';
 import 'package:obos_core/obos_core.dart';
 
-enum HalamanAdmin { dashboard, setoran, barang, pelanggan }
+enum HalamanAdmin { dashboard, setoran, margin, barang, pelanggan }
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, required this.halaman});
@@ -26,6 +26,13 @@ class AdminDrawer extends StatelessWidget {
     _tutup(context);
     if (halaman == HalamanAdmin.setoran) return;
     nav.pushNamedAndRemoveUntil('/', (r) => false);
+  }
+
+  void _keMargin(BuildContext context) {
+    final nav = Navigator.of(context);
+    _tutup(context);
+    if (halaman == HalamanAdmin.margin) return;
+    nav.pushNamedAndRemoveUntil('/margin', (r) => false);
   }
 
   void _keBarang(BuildContext context) {
@@ -114,6 +121,12 @@ class AdminDrawer extends StatelessWidget {
             leading: const Icon(Icons.account_balance_wallet_outlined),
             title: const Text('Setoran'),
             onTap: () => _keSetoran(context),
+          ),
+          ListTile(
+            selected: halaman == HalamanAdmin.margin,
+            leading: const Icon(Icons.percent_outlined),
+            title: const Text('Margin'),
+            onTap: () => _keMargin(context),
           ),
           ListTile(
             selected: halaman == HalamanAdmin.barang,

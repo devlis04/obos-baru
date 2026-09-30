@@ -6,6 +6,7 @@ import 'package:obos_core/obos_core.dart';
 import 'barang/barang_layar.dart';
 import 'beranda/beranda_admin_layar.dart';
 import 'dashboard/dashboard_layar.dart';
+import 'margin/margin_layar.dart';
 import 'pelanggan/pelanggan_layar.dart';
 
 class AppAdmin extends StatelessWidget {
@@ -31,6 +32,12 @@ class AppAdmin extends StatelessWidget {
             return MaterialPageRoute<void>(
               settings: settings,
               builder: (_) => const _GerbangDashboard(),
+            );
+          }
+          if (settings.name == '/margin') {
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => const _GerbangMargin(),
             );
           }
           if (settings.name == '/barang') {
@@ -85,6 +92,27 @@ class _GerbangDashboard extends StatelessWidget {
       builder: (context, state) {
         if (state is AuthMasuk) {
           return const DashboardLayar();
+        }
+        if (state is AuthKeluar) {
+          return LoginLayar(konfig: AuthKonfig.admin, pesan: state.pesan);
+        }
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      },
+    );
+  }
+}
+
+class _GerbangMargin extends StatelessWidget {
+  const _GerbangMargin();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthMasuk) {
+          return const MarginLayar();
         }
         if (state is AuthKeluar) {
           return LoginLayar(konfig: AuthKonfig.admin, pesan: state.pesan);

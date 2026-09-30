@@ -597,7 +597,6 @@ class KartuSetoran extends StatelessWidget {
     );
     return Row(
       children: [
-        const SizedBox(width: 22, child: Text('Rp', style: gaya)),
         Expanded(
           child: Text(
             Uang.angka(n),

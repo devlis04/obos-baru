@@ -671,7 +671,7 @@ class _MasukanDialogState extends State<MasukanDialog> {
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                       ],
-                      decoration: _dekor('Ongkir (Rp)'),
+                      decoration: _dekor('Ongkir'),
                     ),
                   ),
                 ],

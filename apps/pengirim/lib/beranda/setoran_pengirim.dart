@@ -9,6 +9,7 @@ class SetoranPengirim {
     required this.bisaUbah,
     this.dicatatOleh = '',
     this.dicatatRute = '',
+    this.bopMaks = 170000,
   });
 
   static const kosong = SetoranPengirim(
@@ -30,6 +31,7 @@ class SetoranPengirim {
   final bool bisaUbah;
   final String dicatatOleh;
   final String dicatatRute;
+  final int bopMaks;
 
   factory SetoranPengirim.fromJson(Map<String, dynamic> json) {
     int n(dynamic v) {
@@ -50,6 +52,7 @@ class SetoranPengirim {
       bisaUbah: b(json['bisa_ubah']),
       dicatatOleh: json['dicatat_oleh']?.toString().trim() ?? '',
       dicatatRute: json['dicatat_rute']?.toString().trim() ?? '',
+      bopMaks: json.containsKey('bop_maks') ? n(json['bop_maks']) : 170000,
     );
   }
 }

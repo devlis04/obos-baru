@@ -8,7 +8,7 @@ class Uang {
     );
   }
 
-  static String rp(int nominal) => 'Rp ${angka(nominal)}';
+  static String rp(int nominal) => angka(nominal);
 }
 
 class TeksRp extends StatelessWidget {
@@ -22,8 +22,6 @@ class TeksRp extends StatelessWidget {
     final gaya = style ?? DefaultTextStyle.of(context).style;
     return Row(
       children: [
-        Text('Rp', style: gaya),
-        const SizedBox(width: 6),
         Expanded(
           child: Text(
             Uang.angka(nilai),

@@ -213,8 +213,6 @@ class _RiwayatLayarState extends State<RiwayatLayar> {
       width: 168,
       child: Row(
         children: [
-          Text('Rp', style: angka),
-          const SizedBox(width: 6),
           Expanded(
             child: Text(
               Uang.angka(nilai),

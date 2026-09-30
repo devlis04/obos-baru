@@ -26,8 +26,6 @@ Widget barisUangNota(String label, int nilai, String rasio) {
             width: 168,
             child: Row(
               children: [
-                const Text('Rp', style: gayaUang),
-                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     Uang.angka(nilai),

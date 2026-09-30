@@ -306,7 +306,7 @@ Widget _isiDialog({
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Total tersimpan Rp ${Uang.angka(tunaiTersimpan)}. '
+                'Total tersimpan ${Uang.angka(tunaiTersimpan)}. '
                 'Rincian pecahan belum ada; isi lalu simpan.',
                 style: TextStyle(
                   fontSize: 11,
@@ -356,7 +356,6 @@ Widget _uangSel(int n, {bool tebal = false}) {
   );
   return Row(
     children: [
-      SizedBox(width: 22, child: Text('Rp', style: gaya)),
       Expanded(
         child: Text(
           Uang.angka(n),

@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../jaringan.dart';
 import '../pesan.dart';
+import '../toko/toko_repo.dart';
 import 'absensi_repo.dart';
 
 class ScanAbsensiLayar extends StatefulWidget {
@@ -262,6 +263,25 @@ class _ScanAbsensiLayarState extends State<ScanAbsensiLayar> {
         );
         await _hidupkanKamera();
         return;
+      }
+
+      if (widget.keluar) {
+        try {
+          final setor = await TokoRepo(Supabase.instance.client).setoranLihat();
+          if (!setor.sudahAda) {
+            _pesan('Simpan setoran dulu, baru scan pulang.');
+            await _hidupkanKamera();
+            return;
+          }
+        } catch (e) {
+          if (Jaringan.mati(e)) {
+            _pesan(
+              'Tidak ada internet. Sambungkan internet, lalu scan lagi.',
+            );
+            await _hidupkanKamera();
+            return;
+          }
+        }
       }
 
       final hasil = await _repo.scan(

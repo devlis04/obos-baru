@@ -251,6 +251,8 @@ class _DashboardLayarState extends State<DashboardLayar> {
     Map<String, String>? visitMap,
   }) async {
     final jadwal = visitMap ?? _visitMap;
+    final satuHari = DateTime(dari.year, dari.month, dari.day) ==
+        DateTime(sampai.year, sampai.month, sampai.day);
     var omsetOrder = 0;
     var labaOrder = 0;
     var omsetPacked = 0;
@@ -280,9 +282,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
           omsetOrder += n.totalOrder;
           labaOrder += n.totalOrder - n.modalOrder;
           if (n.idPelanggan.isNotEmpty) {
-            if (diJadwal) {
+            if (!satuHari || diJadwal) {
               ecOrder.add(n.idPelanggan);
-            } else {
+            }
+            if (!diJadwal) {
               xcOrder.add(n.idPelanggan);
             }
           }
@@ -291,9 +294,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
           omsetPacked += n.totalPacked;
           labaPacked += n.totalPacked - n.modalPacked;
           if (n.idPelanggan.isNotEmpty) {
-            if (diJadwal) {
+            if (!satuHari || diJadwal) {
               ecPacked.add(n.idPelanggan);
-            } else {
+            }
+            if (!diJadwal) {
               xcPacked.add(n.idPelanggan);
             }
           }
@@ -302,9 +306,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
           omsetActual += n.totalActual;
           labaActual += n.totalActual - n.modalActual;
           if (n.idPelanggan.isNotEmpty && n.status == 'terkirim') {
-            if (diJadwal) {
+            if (!satuHari || diJadwal) {
               ecActual.add(n.idPelanggan);
-            } else {
+            }
+            if (!diJadwal) {
               xcActual.add(n.idPelanggan);
             }
           }

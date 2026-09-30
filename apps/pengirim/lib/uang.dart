@@ -6,7 +6,7 @@ class Uang {
     );
   }
 
-  static String rp(int nominal) => 'Rp ${angka(nominal)}';
+  static String rp(int nominal) => angka(nominal);
 
   static String rasioOmset({required int omset, required int modal}) {
     if (modal <= 0) return '-';

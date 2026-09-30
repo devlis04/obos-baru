@@ -43,10 +43,10 @@ class KartuOpname extends StatelessWidget {
         '${data.skuMinusBelum} dari ${data.skuSelisih} SKU belum diputuskan'
       else
         '${data.skuSelisih} SKU',
-      if (data.nilaiKasbon > 0) 'Kasbon Rp ${Uang.angka(data.nilaiKasbon)}',
-      if (data.nilaiBeban > 0) 'Potong margin Rp ${Uang.angka(data.nilaiBeban)}',
+      if (data.nilaiKasbon > 0) 'Kasbon ${Uang.angka(data.nilaiKasbon)}',
+      if (data.nilaiBeban > 0) 'Potong margin ${Uang.angka(data.nilaiBeban)}',
       if (data.nilaiMarginPlus > 0)
-        'Tambah margin Rp ${Uang.angka(data.nilaiMarginPlus)}',
+        'Tambah margin ${Uang.angka(data.nilaiMarginPlus)}',
     ];
     return bagian.join('  ·  ');
   }
