@@ -134,8 +134,8 @@ class _DialogGajiState extends State<_DialogGaji> {
       setState(() {
         _muat = false;
         _gagal = Jaringan.mati(e)
-            ? 'Tidak ada internet. Gaji belum bisa dihitung.'
-            : pesanGagal(e, 'Gaji belum bisa dihitung. Jalankan SQL 116.');
+            ? 'Tidak ada internet. Benefit belum bisa dihitung.'
+            : pesanGagal(e, 'Benefit belum bisa dihitung. Jalankan SQL 116.');
       });
     }
   }
@@ -307,7 +307,7 @@ class _DialogGajiState extends State<_DialogGaji> {
     if (!mounted) return;
     tampilPesan(
       context,
-      'Gaji dihitung ulang di layar. Belum tersimpan. '
+      'Benefit dihitung ulang di layar. Belum tersimpan. '
       'Klik Simpan kasbon atau Simpan patokan.',
     );
   }
@@ -318,7 +318,7 @@ class _DialogGajiState extends State<_DialogGaji> {
     if (messenger == null) return;
     tampilPesanDi(
       messenger,
-      'Dialog gaji ditutup. Perubahan yang belum disimpan tidak tersimpan.',
+      'Dialog benefit ditutup. Perubahan yang belum disimpan tidak tersimpan.',
     );
   }
 
@@ -357,13 +357,13 @@ class _DialogGajiState extends State<_DialogGaji> {
     if (patokanOk && targetOk) {
       tampilPesan(
         context,
-        'Patokan gaji, omset target, dan rasio tersimpan. '
+        'Patokan benefit, omset target, dan rasio tersimpan. '
         'Kasbon tidak ikut disimpan.',
       );
     } else {
       tampilPesan(
         context,
-        'Patokan gaji tersimpan. Omset/rasio belum. Jalankan SQL 118.',
+        'Patokan benefit tersimpan. Omset/rasio belum. Jalankan SQL 118.',
       );
     }
     _hitungUlang();
@@ -383,7 +383,7 @@ class _DialogGajiState extends State<_DialogGaji> {
       if (!mounted) return;
       tampilPesan(
         context,
-        'Kasbon gaji minggu ini tersimpan. '
+        'Kasbon benefit minggu ini tersimpan. '
         'Patokan dan omset/rasio tidak ikut disimpan.',
       );
       _hitungUlang();
@@ -392,8 +392,8 @@ class _DialogGajiState extends State<_DialogGaji> {
       tampilPesan(
         context,
         Jaringan.mati(e)
-            ? 'Tidak ada internet. Kasbon gaji belum tersimpan.'
-            : pesanGagal(e, 'Kasbon gaji belum tersimpan. Jalankan SQL 122.'),
+            ? 'Tidak ada internet. Kasbon benefit belum tersimpan.'
+            : pesanGagal(e, 'Kasbon benefit belum tersimpan. Jalankan SQL 122.'),
       );
     } finally {
       if (mounted) setState(() => _sibuk = false);
@@ -506,7 +506,7 @@ class _DialogGajiState extends State<_DialogGaji> {
             child: Padding(
               padding: const EdgeInsets.only(left: 2),
               child: Text(
-                'Gaji · ${Uang.pendek(widget.senin)} – ${Uang.tanggal(widget.sabtu)}',
+                'Benefit · ${Uang.pendek(widget.senin)} – ${Uang.tanggal(widget.sabtu)}',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: _font),
               ),
             ),
@@ -591,7 +591,7 @@ class _DialogGajiState extends State<_DialogGaji> {
         ),
         sela,
         Text(
-          'Gaji semua ${Uang.rp(isi.gajiSemua)}',
+          'Benefit semua ${Uang.rp(isi.gajiSemua)}',
           style: _gayaKepala,
           textAlign: TextAlign.left,
         ),
@@ -829,7 +829,7 @@ class _DialogGajiState extends State<_DialogGaji> {
         out.add(_lebarKolom('Absen', _teksOrang(list, jenis: 'absen')));
       }
       out.addAll([
-        _lebarKolom('Gaji', [
+        _lebarKolom('Benefit', [
           ..._teksOrang(list, jenis: 'gaji'),
           Uang.rp(gaji),
         ], ekstra: _selaKananKolom),
@@ -1182,16 +1182,16 @@ class _DialogGajiState extends State<_DialogGaji> {
           children: [
             _selSales('Rute pengirim', angka: false, kepala: true),
             _selSales('Absen', kepala: true),
-            _selSelaKanan('Gaji', kepala: true),
+            _selSelaKanan('Benefit', kepala: true),
             _selSales('Kasbon', kepala: true),
             _selSelaKanan('Terima', kepala: true, selaKanan: _selaKananTerima),
             _selSales('Rute gudang', angka: false, kepala: true),
             _selSales('Absen', kepala: true),
-            _selSelaKanan('Gaji', kepala: true),
+            _selSelaKanan('Benefit', kepala: true),
             _selSales('Kasbon', kepala: true),
             _selSelaKanan('Terima', kepala: true, selaKanan: _selaKananTerima),
             _selSales('Rute admin', angka: false, kepala: true),
-            _selSelaKanan('Gaji', kepala: true),
+            _selSelaKanan('Benefit', kepala: true),
             _selSales('Kasbon', kepala: true),
             _selSelaKanan('Terima', kepala: true, selaKanan: _selaKananTerima),
             _selKosong(),

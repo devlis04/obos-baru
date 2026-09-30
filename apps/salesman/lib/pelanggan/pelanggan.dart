@@ -83,6 +83,8 @@ class MingguKunjungan {
 
   static DateTime minggu() => senin().add(const Duration(days: 6));
 
+  static DateTime sabtuDari(DateTime w) => seninDari(w).add(const Duration(days: 5));
+
   static DateTime seninSepuluhMinggu() =>
       senin().subtract(const Duration(days: 7 * 9));
 

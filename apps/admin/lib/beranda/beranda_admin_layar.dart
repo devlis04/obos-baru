@@ -193,26 +193,24 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       try {
         setoran = await _setoranRepo.ringkas(idBuku: idBuku);
         if (gen != _muatGen) return;
-        if (!diam) {
-          CekRinciSetoran.instance.gabungJson(
-            setoran.cek,
-            idBuku: setoran.idSetoranBuku,
-            tanggal: setoran.tanggal,
-            bukuTutup: setoran.ditutup,
-          );
-          TunaiAdminSetoran.instance.gabungJson(
-            setoran.tunaiAdmin,
-            idBuku: setoran.idSetoranBuku,
-            tanggal: setoran.tanggal,
-            bukuTutup: setoran.ditutup,
-          );
-          KasbonCekSetoran.instance.gabungJson(
-            setoran.kasbon,
-            idBuku: setoran.idSetoranBuku,
-            tanggal: setoran.tanggal,
-            bukuTutup: setoran.ditutup,
-          );
-        }
+        CekRinciSetoran.instance.gabungJson(
+          setoran.cek,
+          idBuku: setoran.idSetoranBuku,
+          tanggal: setoran.tanggal,
+          bukuTutup: setoran.ditutup,
+        );
+        TunaiAdminSetoran.instance.gabungJson(
+          setoran.tunaiAdmin,
+          idBuku: setoran.idSetoranBuku,
+          tanggal: setoran.tanggal,
+          bukuTutup: setoran.ditutup,
+        );
+        KasbonCekSetoran.instance.gabungJson(
+          setoran.kasbon,
+          idBuku: setoran.idSetoranBuku,
+          tanggal: setoran.tanggal,
+          bukuTutup: setoran.ditutup,
+        );
         try {
           siklus = await _setoranRepo.siklus();
         } catch (_) {

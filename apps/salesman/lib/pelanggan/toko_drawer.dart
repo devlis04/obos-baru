@@ -4,6 +4,7 @@ import 'package:obos_auth/obos_auth.dart';
 import 'package:obos_core/obos_core.dart';
 
 import '../dashboard/dashboard_layar.dart';
+import '../gaji/gaji_layar.dart';
 import 'pelanggan_bloc.dart';
 import 'pelanggan_event.dart';
 
@@ -150,6 +151,19 @@ class TokoDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute<void>(
                   builder: (_) => DashboardLayar(rute: rute),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.payments_outlined, color: Tema.biru),
+            title: const Text('Benefit'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => GajiLayar(rute: rute),
                 ),
               );
             },

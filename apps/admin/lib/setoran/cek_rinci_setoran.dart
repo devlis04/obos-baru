@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import '../uang.dart';
+import 'kunci_kartu_setoran.dart';
 import 'setoran_repo.dart';
 
 /// Centang cek admin per buku · jenis · rute. Chip hijau setelah semua toko
@@ -60,7 +61,12 @@ class CekRinciSetoran extends ChangeNotifier {
     int? idBuku,
   }) {
     final sini = _centang[_kunci(tanggal, jenis, rute, idBuku: idBuku)];
-    if (sini == null || sini.isEmpty) return {};
+    if (sini == null || sini.isEmpty) {
+      if (idBuku == null) return {};
+      final lama = _centang[_kunci(tanggal, jenis, rute)];
+      if (lama == null || lama.isEmpty) return {};
+      return Set.of(lama);
+    }
     return Set.of(sini);
   }
 
@@ -70,7 +76,9 @@ class CekRinciSetoran extends ChangeNotifier {
     String? rute,
     int? idBuku,
   }) {
-    return _hijau[_kunci(tanggal, jenis, rute, idBuku: idBuku)] == true;
+    return _hijau[_kunci(tanggal, jenis, rute, idBuku: idBuku)] == true ||
+        (idBuku != null &&
+            _hijau[_kunci(tanggal, jenis, rute)] == true);
   }
 
   void simpanTutup({
@@ -145,18 +153,20 @@ class CekRinciSetoran extends ChangeNotifier {
   }
 
   Map<String, dynamic> keJson({int? idBuku}) {
-    final prefix = idBuku == null ? null : 'b$idBuku|';
-    return {
-      'centang': {
-        for (final e in _centang.entries)
-          if (prefix == null || e.key.startsWith(prefix)) e.key: e.value.toList(),
-      },
-      'hijau': {
-        for (final e in _hijau.entries)
-          if (e.value && (prefix == null || e.key.startsWith(prefix)))
-            e.key: true,
-      },
-    };
+    final centang = <String, dynamic>{};
+    final hijau = <String, dynamic>{};
+    for (final e in _centang.entries) {
+      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      if (k == null || e.value.isEmpty) continue;
+      centang[k] = e.value.toList();
+    }
+    for (final e in _hijau.entries) {
+      if (!e.value) continue;
+      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      if (k == null) continue;
+      hijau[k] = true;
+    }
+    return {'centang': centang, 'hijau': hijau};
   }
 
   void gabungJson(
@@ -167,20 +177,6 @@ class CekRinciSetoran extends ChangeNotifier {
   }) {
     if (raw is! Map) return;
     var ubah = false;
-    final iso = tanggal == null ? null : Uang.isoHari(tanggal);
-
-    String? kunciMasuk(String k) {
-      if (idBuku == null) return k;
-      if (k.startsWith('b$idBuku|')) return k;
-      if (bukuTutup &&
-          iso != null &&
-          k.startsWith('$iso|') &&
-          !k.startsWith('b')) {
-        return 'b$idBuku|${k.substring(iso.length + 1)}';
-      }
-      return null;
-    }
-
     final c = raw['centang'];
     if (c is Map) {
       for (final e in c.entries) {
@@ -188,7 +184,7 @@ class CekRinciSetoran extends ChangeNotifier {
         if (v is! List) continue;
         final masuk = {for (final x in v) x.toString()};
         if (masuk.isEmpty) continue;
-        final k = kunciMasuk(e.key.toString());
+        final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
         if (k == null) continue;
         final lama = _centang[k] ?? {};
         _centang[k] = {...lama, ...masuk};
@@ -199,7 +195,7 @@ class CekRinciSetoran extends ChangeNotifier {
     if (h is Map) {
       for (final e in h.entries) {
         if (e.value != true) continue;
-        final k = kunciMasuk(e.key.toString());
+        final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
         if (k == null) continue;
         _hijau[k] = true;
         ubah = true;

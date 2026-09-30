@@ -113,7 +113,7 @@ class AdminDrawer extends StatelessWidget {
           ListTile(
             selected: halaman == HalamanAdmin.dashboard,
             leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard'),
+            title: const Text('Ringkasan penjualan'),
             onTap: () => _keDashboard(context),
           ),
           ListTile(
@@ -125,7 +125,7 @@ class AdminDrawer extends StatelessWidget {
           ListTile(
             selected: halaman == HalamanAdmin.margin,
             leading: const Icon(Icons.percent_outlined),
-            title: const Text('Margin'),
+            title: const Text('Margin buku'),
             onTap: () => _keMargin(context),
           ),
           ListTile(

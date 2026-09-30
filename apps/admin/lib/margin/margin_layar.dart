@@ -244,7 +244,7 @@ class _MarginLayarState extends State<MarginLayar> {
         title: const Text('Margin buku'),
         actions: [
           IconButton(
-            tooltip: 'Gaji minggu ini',
+            tooltip: 'Benefit minggu ini',
             onPressed: _muat
                 ? null
                 : () => bukaDialogGaji(

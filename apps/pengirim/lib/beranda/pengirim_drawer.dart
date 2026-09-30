@@ -5,6 +5,7 @@ import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../absensi/absensi_repo.dart';
+import '../gaji/gaji_layar.dart';
 import '../jaringan.dart';
 import '../umpan.dart';
 
@@ -165,6 +166,19 @@ class PengirimDrawer extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.payments_outlined, color: Tema.biru),
+            title: const Text('Benefit'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => GajiLayar(rute: rutePengirim),
+                ),
+              );
+            },
           ),
           const Spacer(),
           const Divider(),

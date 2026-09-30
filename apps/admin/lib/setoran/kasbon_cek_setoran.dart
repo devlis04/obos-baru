@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import '../uang.dart';
+import 'kunci_kartu_setoran.dart';
 import 'setoran_repo.dart';
 
 /// Centang kasbon admin per buku · rute · peran. Chip hijau jika semua klaim dicek.
@@ -29,7 +30,9 @@ class KasbonCekSetoran extends ChangeNotifier {
     required String peran,
     int? idBuku,
   }) {
-    return _centang[_kunci(tanggal, rute, peran, idBuku: idBuku)] == true;
+    return _centang[_kunci(tanggal, rute, peran, idBuku: idBuku)] == true ||
+        (idBuku != null &&
+            _centang[_kunci(tanggal, rute, peran)] == true);
   }
 
   void setCentang({
@@ -98,10 +101,11 @@ class KasbonCekSetoran extends ChangeNotifier {
   }
 
   Map<String, dynamic> keJson({int? idBuku}) {
-    final prefix = idBuku == null ? null : 'b$idBuku|';
     return {
       for (final e in _centang.entries)
-        if (e.value && (prefix == null || e.key.startsWith(prefix))) e.key: true,
+        if (e.value)
+          if (kunciKartuBuku(e.key, idBuku: idBuku) != null)
+            kunciKartuBuku(e.key, idBuku: idBuku)!: true,
     };
   }
 
@@ -113,22 +117,10 @@ class KasbonCekSetoran extends ChangeNotifier {
   }) {
     if (raw is! Map) return;
     var ubah = false;
-    final iso = tanggal == null ? null : Uang.isoHari(tanggal);
     for (final e in raw.entries) {
       if (e.value != true) continue;
-      var k = e.key.toString();
-      if (idBuku != null) {
-        if (k.startsWith('b$idBuku|')) {
-          // kunci buku ini
-        } else if (bukuTutup &&
-            iso != null &&
-            k.startsWith('$iso|') &&
-            !k.startsWith('b')) {
-          k = 'b$idBuku|${k.substring(iso.length + 1)}';
-        } else {
-          continue;
-        }
-      }
+      final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
+      if (k == null) continue;
       _centang[k] = true;
       ubah = true;
     }

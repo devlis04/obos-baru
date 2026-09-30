@@ -56,12 +56,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
   }
 
   String get _judulMinggu {
-    if (_mingguIni) return 'Pencapaian minggu ini';
+    if (_mingguIni) return 'Pencapaian Minggu Ini';
     return 'Pencapaian ${Uang.pendek(_senin)} – ${Uang.tanggal(_isi.sabtu)}';
   }
 
   String get _judulHari {
-    if (_hariIni) return 'Pencapaian hari ini';
+    if (_hariIni) return 'Pencapaian Hari Ini';
     return 'Pencapaian ${Uang.hariTanggal(_hari)}';
   }
 
@@ -82,8 +82,8 @@ class _DashboardLayarState extends State<DashboardLayar> {
       tampilPesan(
         context,
         Jaringan.mati(e)
-            ? 'Tidak ada internet. Dashboard belum bisa dimuat.'
-            : pesanGagal(e, 'Dashboard belum bisa dimuat.'),
+            ? 'Tidak ada internet. Ringkasan penjualan belum bisa dimuat.'
+            : pesanGagal(e, 'Ringkasan penjualan belum bisa dimuat. Jalankan supabase/133_ringkas_tanggal_buku.sql.'),
       );
     }
   }
@@ -190,7 +190,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Ringkasan penjualan'),
         actions: [
           IconButton(
             tooltip: 'Segarkan',

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import '../uang.dart';
+import 'kunci_kartu_setoran.dart';
 
 const pecahanTunaiAdmin = [
   (nilai: 100000, jenis: 'Lembar', label: '100.000'),
@@ -47,10 +48,10 @@ class TunaiAdminSetoran extends ChangeNotifier {
   }
 
   IsiTunaiAdmin ambil(DateTime? tanggal, String rute, {int? idBuku}) {
-    if (idBuku != null) {
-      return _isi[_kunci(tanggal, rute, idBuku: idBuku)] ??
-          const IsiTunaiAdmin();
-    }
+    final buku = idBuku == null
+        ? null
+        : _isi[_kunci(tanggal, rute, idBuku: idBuku)];
+    if (_berisi(buku)) return buku!;
     return _isi[_kunci(tanggal, rute)] ?? const IsiTunaiAdmin();
   }
 
@@ -143,15 +144,17 @@ class TunaiAdminSetoran extends ChangeNotifier {
   }
 
   Map<String, dynamic> keJson({int? idBuku}) {
-    final prefix = idBuku == null ? null : 'b$idBuku|';
-    return {
-      for (final e in _isi.entries)
-        if (prefix == null || e.key.startsWith(prefix))
-          e.key: {
-            'tunai': e.value.tunai,
-            'pecahan': e.value.pecahan,
-          },
-    };
+    final out = <String, dynamic>{};
+    for (final e in _isi.entries) {
+      if (!_berisi(e.value)) continue;
+      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      if (k == null) continue;
+      out[k] = {
+        'tunai': e.value.tunai,
+        'pecahan': e.value.pecahan,
+      };
+    }
+    return out;
   }
 
   IsiTunaiAdmin? _dariMap(Object? v) {
@@ -177,23 +180,11 @@ class TunaiAdminSetoran extends ChangeNotifier {
   }) {
     if (raw is! Map) return;
     var ubah = false;
-    final iso = tanggal == null ? null : Uang.isoHari(tanggal);
     for (final e in raw.entries) {
       final isi = _dariMap(e.value);
-      if (isi == null) continue;
-      var k = e.key.toString();
-      if (idBuku != null) {
-        if (k.startsWith('b$idBuku|')) {
-          // kunci buku ini
-        } else if (bukuTutup &&
-            iso != null &&
-            k.startsWith('$iso|') &&
-            !k.startsWith('b')) {
-          k = 'b$idBuku|${k.substring(iso.length + 1)}';
-        } else {
-          continue;
-        }
-      }
+      if (isi == null || !_berisi(isi)) continue;
+      final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
+      if (k == null) continue;
       if (_berisi(_isi[k]) && !_berisi(isi)) continue;
       _isi[k] = isi;
       ubah = true;

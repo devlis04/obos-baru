@@ -196,7 +196,7 @@ class DashboardRepo {
           .timeout(const Duration(seconds: 30)),
     );
     if (hasil is! Map) {
-      throw Exception('Dashboard belum bisa dimuat.');
+      throw Exception('Ringkasan penjualan belum bisa dimuat.');
     }
     return _baca(Map<String, dynamic>.from(hasil));
   }
