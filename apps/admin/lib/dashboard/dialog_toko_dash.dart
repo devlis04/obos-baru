@@ -86,7 +86,13 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
         b.idPelanggan.toLowerCase().contains(f) ||
         b.status.toLowerCase().contains(f) ||
         b.teksVisit.toLowerCase().contains(f) ||
-        (b.nota > 0 && !b.jadwal && 'extra'.contains(f)) ||
+        (b.nota > 0 &&
+            !b.jadwal &&
+            b.sisaDari == null &&
+            b.tambahDari == null &&
+            'extra'.contains(f)) ||
+        (b.sisaDari != null && 'sisa'.contains(f)) ||
+        (b.tambahDari != null && 'tamb'.contains(f)) ||
         angka(b.nota) ||
         angka(b.sku) ||
         angka(b.order) ||
@@ -107,8 +113,10 @@ class _DialogTokoDashState extends State<DialogTokoDash> {
 
   int _grup(TokoDash t) {
     if (t.jadwal) return 0;
-    if (t.nota > 0) return 1;
-    return 2;
+    if (t.sisaDari != null) return 1;
+    if (t.tambahDari != null) return 2;
+    if (t.nota > 0) return 3;
+    return 4;
   }
 
   int _banding(TokoDash a, TokoDash b) {

@@ -298,6 +298,8 @@ class TokoDash {
     required this.isi,
     this.visitMasuk,
     this.visitKeluar,
+    this.sisaDari,
+    this.tambahDari,
   });
 
   final String idPelanggan;
@@ -318,6 +320,8 @@ class TokoDash {
   final bool jadwal;
   final DateTime? visitMasuk;
   final DateTime? visitKeluar;
+  final DateTime? sisaDari;
+  final DateTime? tambahDari;
   final Map<String, dynamic> isi;
 
   factory TokoDash.dari(Map<String, dynamic> m) {
@@ -353,6 +357,8 @@ class TokoDash {
       jadwal: m['jadwal'] == true,
       visitMasuk: DateTime.tryParse(m['visit_masuk']?.toString() ?? ''),
       visitKeluar: DateTime.tryParse(m['visit_keluar']?.toString() ?? ''),
+      sisaDari: Uang.hariDari(m['sisa_dari']),
+      tambahDari: Uang.hariDari(m['tambah_dari']),
       isi: m,
     );
   }
@@ -386,6 +392,16 @@ class TokoDash {
   }
 
   String get teksVisit {
+    if (sisaDari != null) {
+      final h = sisaDari!.day.toString().padLeft(2, '0');
+      final b = sisaDari!.month.toString().padLeft(2, '0');
+      return 'Sisa $h/$b';
+    }
+    if (tambahDari != null) {
+      final h = tambahDari!.day.toString().padLeft(2, '0');
+      final b = tambahDari!.month.toString().padLeft(2, '0');
+      return 'Tamb. $h/$b';
+    }
     if (!jadwal && nota > 0) {
       if (visitMasuk == null) return status == 'batal' ? 'extra batal' : 'extra';
       return 'extra';

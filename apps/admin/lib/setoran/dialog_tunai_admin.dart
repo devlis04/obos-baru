@@ -24,6 +24,7 @@ Future<void> bukaDialogTunaiAdmin({
       rute: rute,
       idBuku: idBuku,
       lihatSaja: lihatSaja,
+      tunaiPengirim: tunaiPengirim,
     ),
   );
 }
@@ -34,12 +35,14 @@ class _DialogTunaiRute extends StatefulWidget {
     required this.rute,
     this.idBuku,
     this.lihatSaja = false,
+    this.tunaiPengirim = 0,
   });
 
   final DateTime? tanggal;
   final String rute;
   final int? idBuku;
   final bool lihatSaja;
+  final int tunaiPengirim;
 
   @override
   State<_DialogTunaiRute> createState() => _DialogTunaiRuteState();
@@ -99,11 +102,15 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
 
   @override
   Widget build(BuildContext context) {
+    final totalTampil =
+        widget.lihatSaja && _pecahanKosong ? _tunaiTersimpan : _total;
     return _isiDialog(
       judul: 'Tunai ${widget.rute}',
       pecahanKosong: _pecahanKosong,
       tunaiTersimpan: _tunaiTersimpan,
-      total: _total,
+      tunaiPengirim: widget.tunaiPengirim,
+      lihatSaja: widget.lihatSaja,
+      total: totalTampil,
       anakPecahan: [
         for (var i = 0; i < pecahanTunaiAdmin.length; i++)
           _barisPecahan(
@@ -127,7 +134,7 @@ class _DialogTunaiRuteState extends State<_DialogTunaiRute> {
       aksi: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
+          child: Text(widget.lihatSaja ? 'Tutup' : 'Batal'),
         ),
         if (!widget.lihatSaja)
           FilledButton(
@@ -161,6 +168,8 @@ Future<void> _dialogJumlah(
         judul: 'Tunai admin semua rute',
         pecahanKosong: false,
         tunaiTersimpan: 0,
+        tunaiPengirim: 0,
+        lihatSaja: true,
         total: total,
         anakPecahan: [
           for (var i = 0; i < pecahanTunaiAdmin.length; i++)
@@ -242,6 +251,8 @@ Widget _isiDialog({
   required List<Widget> aksi,
   required bool pecahanKosong,
   required int tunaiTersimpan,
+  required int tunaiPengirim,
+  required bool lihatSaja,
   List<Widget> extra = const [],
 }) {
   return AlertDialog(
@@ -306,8 +317,13 @@ Widget _isiDialog({
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Total tersimpan ${Uang.angka(tunaiTersimpan)}. '
-                'Rincian pecahan belum ada; isi lalu simpan.',
+                lihatSaja
+                    ? 'Buku dikunci. Rincian lembar/koin tidak tersimpan; '
+                        'total memakai tunai pengirim '
+                        '${Uang.angka(tunaiTersimpan > 0 ? tunaiTersimpan : tunaiPengirim)}. '
+                        'Tidak perlu diisi ulang.'
+                    : 'Total tersimpan ${Uang.angka(tunaiTersimpan)}. '
+                        'Rincian pecahan belum ada; isi lalu Pakai.',
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.2,

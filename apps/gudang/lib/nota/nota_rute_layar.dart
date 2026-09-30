@@ -19,12 +19,14 @@ class NotaRuteLayar extends StatefulWidget {
     required this.rute,
     required this.namaSales,
     this.bukuHidup = true,
+    this.tanggalLabelBuku,
   });
 
   final DateTime tanggal;
   final String rute;
   final String namaSales;
   final bool bukuHidup;
+  final DateTime? tanggalLabelBuku;
 
   @override
   State<NotaRuteLayar> createState() => _NotaRuteLayarState();
@@ -68,6 +70,34 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
     final jam =
         '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
     return '$tgl $jam';
+  }
+
+  String _ddmm(DateTime d) {
+    final h = d.day.toString().padLeft(2, '0');
+    final b = d.month.toString().padLeft(2, '0');
+    return '$h/$b';
+  }
+
+  DateTime _hari(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  String? _teksBedaHari(RingkasNota nota) {
+    final layar = _hari(widget.tanggal);
+    final wo = nota.waktuOrder;
+    if (wo != null) {
+      final ketik = _hari(wo.toLocal());
+      if (ketik.isBefore(layar)) return 'Sisa ${_ddmm(ketik)}';
+      if (ketik.isAfter(layar) && nota.sudahPack) {
+        return 'Tamb. ${_ddmm(ketik)}';
+      }
+    }
+    final buku = nota.tanggalBuku;
+    if (nota.sisaKirimanPada(widget.tanggal) &&
+        buku != null &&
+        !_hari(buku).isAtSameMomentAs(layar) &&
+        (wo == null || _hari(wo.toLocal()).isAtSameMomentAs(layar))) {
+      return 'Buku ${_ddmm(buku)}';
+    }
+    return null;
   }
 
   Color _warnaStatus(String label) {
@@ -239,9 +269,31 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
 
   @override
   Widget build(BuildContext context) {
+    final label = widget.tanggalLabelBuku;
+    final banner = widget.bukuHidup &&
+        label != null &&
+        !_hari(label).isAtSameMomentAs(_hari(widget.tanggal));
     return Scaffold(
       appBar: AppBar(title: Text(widget.namaSales)),
-      body: _muat
+      body: Column(
+        children: [
+          if (banner && label != null)
+            Material(
+              color: Tema.kuning,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                child: Text(
+                  'Buku masih ${_ddmm(label)}/${label.year}. '
+                  'Simpan packing masuk ke buku itu.',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: _muat
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () => _muatData(diam: true),
@@ -330,14 +382,11 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
                                           Colors.orange.shade800,
                                         ),
                                       ],
-                                      if (widget.bukuHidup &&
-                                          nota.sisaKirimanPada(
-                                            widget.tanggal,
-                                          )) ...[
+                                      if (_teksBedaHari(nota) != null) ...[
                                         const SizedBox(height: 6),
                                         _chip(
-                                          'Sisa kemarin',
-                                          Colors.blueGrey.shade700,
+                                          _teksBedaHari(nota)!,
+                                          Colors.orange.shade800,
                                         ),
                                       ],
                                       const SizedBox(height: 6),
@@ -352,6 +401,9 @@ class _NotaRuteLayarState extends State<NotaRuteLayar> {
                       },
                     ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

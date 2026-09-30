@@ -41,6 +41,7 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
   bool _muat = true;
   List<RingkasRute> _rute = [];
   DateTime? _pilihTanggalBuku;
+  DateTime? _labelBuku;
   late DateTime _tanggal;
   bool _hidup = true;
 
@@ -132,6 +133,7 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
         _status = status;
         _tanggal = tgl;
         _hidup = hidup;
+        _labelBuku = buka?.tanggal;
         _rute = list;
         _muat = false;
       });
@@ -347,6 +349,7 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
                 rute: r.rute,
                 namaSales: r.namaSales,
                 bukuHidup: _hidup,
+                tanggalLabelBuku: _labelBuku,
               ),
             ),
           );
@@ -444,6 +447,23 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_hidup &&
+                      _labelBuku != null &&
+                      !_hariSama(_tanggal, _labelBuku!))
+                    Material(
+                      color: Tema.kuning,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                        child: Text(
+                          'Buku masih ${Uang.tanggal(_labelBuku!)}. '
+                          'Simpan packing masuk ke buku itu.',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (_rute.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),

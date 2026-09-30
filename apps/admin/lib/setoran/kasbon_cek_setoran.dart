@@ -24,15 +24,27 @@ class KasbonCekSetoran extends ChangeNotifier {
     return '$tgl|$rute|$peran';
   }
 
+  bool _ada(DateTime? tanggal, String rute, String peran, {int? idBuku}) {
+    return _centang[_kunci(tanggal, rute, peran, idBuku: idBuku)] == true ||
+        (idBuku != null &&
+            _centang[_kunci(tanggal, rute, peran)] == true);
+  }
+
   bool centang({
     required DateTime? tanggal,
     required String rute,
     required String peran,
     int? idBuku,
   }) {
-    return _centang[_kunci(tanggal, rute, peran, idBuku: idBuku)] == true ||
-        (idBuku != null &&
-            _centang[_kunci(tanggal, rute, peran)] == true);
+    if (_ada(tanggal, rute, peran, idBuku: idBuku)) return true;
+    if (peran == 'kasbon') {
+      return _ada(tanggal, rute, 'supir', idBuku: idBuku) ||
+          _ada(tanggal, rute, 'kenek', idBuku: idBuku);
+    }
+    if (peran == 'supir' || peran == 'kenek') {
+      return _ada(tanggal, rute, 'kasbon', idBuku: idBuku);
+    }
+    return false;
   }
 
   void setCentang({
@@ -86,7 +98,7 @@ class KasbonCekSetoran extends ChangeNotifier {
       final m = jsonDecode(raw);
       if (m is! Map) return;
       for (final e in m.entries) {
-        if (e.value == true) _centang[e.key.toString()] = true;
+        if (flagKartu(e.value)) _centang[e.key.toString()] = true;
       }
     } catch (_) {}
   }
@@ -100,12 +112,12 @@ class KasbonCekSetoran extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Map<String, dynamic> keJson({int? idBuku}) {
+  Map<String, dynamic> keJson({int? idBuku, DateTime? tanggal}) {
     return {
       for (final e in _centang.entries)
         if (e.value)
-          if (kunciKartuBuku(e.key, idBuku: idBuku) != null)
-            kunciKartuBuku(e.key, idBuku: idBuku)!: true,
+          if (kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal) != null)
+            kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal)!: true,
     };
   }
 
@@ -117,12 +129,42 @@ class KasbonCekSetoran extends ChangeNotifier {
   }) {
     if (raw is! Map) return;
     var ubah = false;
-    for (final e in raw.entries) {
-      if (e.value != true) continue;
-      final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
-      if (k == null) continue;
+    void taruh(String key, Object? val) {
+      if (!flagKartu(val)) return;
+      final k = kunciKartuBuku(key, idBuku: idBuku, tanggal: tanggal);
+      if (k == null) return;
       _centang[k] = true;
       ubah = true;
+    }
+
+    for (final e in raw.entries) {
+      final v = e.value;
+      if (v is Map) {
+        for (final p in v.entries) {
+          taruh('${e.key}|${p.key}', p.value);
+        }
+      } else {
+        taruh(e.key.toString(), v);
+      }
+    }
+    if (!ubah) return;
+    _tulis();
+    notifyListeners();
+  }
+
+  void pulihkanDariKlaim({
+    required DateTime? tanggal,
+    required List<BarisSetoranRute> rute,
+    int? idBuku,
+  }) {
+    var ubah = false;
+    for (final b in rute) {
+      for (final o in b.orangKasbon) {
+        if (o.klaim <= 0) continue;
+        if (_ada(tanggal, b.rute, o.peran, idBuku: idBuku)) continue;
+        _centang[_kunci(tanggal, b.rute, o.peran, idBuku: idBuku)] = true;
+        ubah = true;
+      }
     }
     if (!ubah) return;
     _tulis();

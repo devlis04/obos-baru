@@ -211,6 +211,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
           tanggal: setoran.tanggal,
           bukuTutup: setoran.ditutup,
         );
+        pulihkanChipSetoran(setoran);
         try {
           siklus = await _setoranRepo.siklus();
         } catch (_) {
@@ -444,9 +445,18 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
     try {
       await _setoranRepo.simpanKartu(
         idBuku: id,
-        cek: CekRinciSetoran.instance.keJson(idBuku: id),
-        tunai: TunaiAdminSetoran.instance.keJson(idBuku: id),
-        kasbon: KasbonCekSetoran.instance.keJson(idBuku: id),
+        cek: CekRinciSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
+        tunai: TunaiAdminSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
+        kasbon: KasbonCekSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
       );
       if (!mounted) return;
       tampilPesan(context, 'Kartu setoran disimpan.');

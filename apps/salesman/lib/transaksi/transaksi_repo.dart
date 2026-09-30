@@ -45,11 +45,6 @@ class TransaksiRepo {
       'waktu_order, waktu_packed, waktu_actual, pending, '
       'transaksi_items($_kolomItem)';
 
-  static const _kolomCapaian =
-      'id_transaksi, id_pelanggan, nama_pelanggan, rute, status, '
-      'waktu_order, waktu_packed, waktu_actual, pending, '
-      'transaksi_items($_kolomItem)';
-
   List<Map<String, dynamic>> _itemsKeranjang({
     required Map<String, int> keranjang,
     required List<Barang> daftar,
@@ -263,23 +258,28 @@ class TransaksiRepo {
   Future<List<Nota>> untukRentang({
     required DateTime dari,
     required DateTime sampai,
-    bool ringkas = false,
   }) async {
-    final awal = dari.isUtc ? dari : dari.toUtc();
-    final akhir = sampai.isUtc ? sampai : sampai.toUtc();
     var cloud = <Nota>[];
     try {
-      cloud = await _unduh(
-        dari: awal,
-        sampai: akhir,
-        kolom: ringkas ? _kolomCapaian : _kolom,
-        batas: Jaringan.cepat,
-      );
+      final hasil = await _sb.rpc(
+        'salesman_nota_rentang',
+        params: {
+          'p_dari': MingguKunjungan.iso(MingguKunjungan.hari(dari)),
+          'p_sampai': MingguKunjungan.iso(MingguKunjungan.hari(sampai)),
+        },
+      ).timeout(Jaringan.cepat);
+      if (hasil is List) {
+        cloud = [
+          for (final e in hasil)
+            if (e is Map) Nota.fromJson(Map<String, dynamic>.from(e)),
+        ];
+      }
     } catch (_) {}
     final list = _gabung(cloud, await TransaksiCache.semua());
+    final cloudId = {for (final n in cloud) n.id};
     return [
       for (final n in list)
-        if (_diRentang(n.waktuOrder, dari, sampai)) n,
+        if (cloudId.contains(n.id) || _diRentang(n.waktuOrder, dari, sampai)) n,
     ];
   }
 

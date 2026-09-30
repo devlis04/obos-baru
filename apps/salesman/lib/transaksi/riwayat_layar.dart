@@ -140,6 +140,28 @@ class _RiwayatLayarState extends State<RiwayatLayar> {
   Widget _chipStatus(Nota nota) =>
       _chip(nota.labelStatus, _warnaStatus(nota.labelStatus));
 
+  String? _teksBedaHari(Nota nota) {
+    final halaman = widget.tanggal;
+    final wo = nota.waktuOrder;
+    if (halaman == null || wo == null) return null;
+    final ketik = MingguKunjungan.hari(wo.isUtc ? wo.toLocal() : wo);
+    final hari = MingguKunjungan.hari(halaman);
+    final h = ketik.day.toString().padLeft(2, '0');
+    final b = ketik.month.toString().padLeft(2, '0');
+    if (ketik.isBefore(hari)) return 'Sisa $h/$b';
+    if (ketik.isAfter(hari) && nota.punyaPacked) return 'Tamb. $h/$b';
+    return null;
+  }
+
+  Widget _chipSisa(Nota nota) {
+    final teks = _teksBedaHari(nota);
+    if (teks == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: _chip(teks, Colors.orange.shade800),
+    );
+  }
+
   Widget _uangRasio(String uang, String rasio) {
     return Wrap(
       alignment: WrapAlignment.end,
@@ -718,6 +740,10 @@ class _RiwayatLayarState extends State<RiwayatLayar> {
                     Row(
                       children: [
                         _chipStatus(nota),
+                        if (_teksBedaHari(nota) != null) ...[
+                          const SizedBox(width: 6),
+                          _chip(_teksBedaHari(nota)!, Colors.orange.shade800),
+                        ],
                         if (nota.lokal) ...[
                           const SizedBox(width: 6),
                           _chip('Belum unggah', Colors.orange.shade800),
@@ -938,6 +964,7 @@ class _RiwayatLayarState extends State<RiwayatLayar> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       _chipStatus(nota),
+                                      _chipSisa(nota),
                                       if (nota.lokal)
                                         Padding(
                                           padding: const EdgeInsets.only(top: 6),

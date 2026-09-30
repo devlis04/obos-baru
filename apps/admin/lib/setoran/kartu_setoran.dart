@@ -86,6 +86,28 @@ bool chipJumlahTanpaOranye(RingkasSetoran data) {
       );
 }
 
+/// Hanya buku yang sudah ditutup: isi total tunai/kasbon/retur yang snapshotnya
+/// kosong. Buku hidup tidak ikut, supaya hitung pecahan tetap oranye sampai dicek.
+void pulihkanChipSetoran(RingkasSetoran data) {
+  if (!data.adaBuku || data.rute.isEmpty || !data.ditutup) return;
+  CekRinciSetoran.instance.pulihkanHijau(
+    tanggal: data.tanggal,
+    jenis: 'retur',
+    rute: data.rute,
+    idBuku: data.idSetoranBuku,
+  );
+  TunaiAdminSetoran.instance.pulihkanDariPengirim(
+    tanggal: data.tanggal,
+    rute: data.rute,
+    idBuku: data.idSetoranBuku,
+  );
+  KasbonCekSetoran.instance.pulihkanDariKlaim(
+    tanggal: data.tanggal,
+    rute: data.rute,
+    idBuku: data.idSetoranBuku,
+  );
+}
+
 class KartuSetoran extends StatelessWidget {
   const KartuSetoran({
     super.key,

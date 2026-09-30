@@ -25,6 +25,7 @@ class RingkasNota {
     required this.labaPacked,
     required this.labaActual,
     this.extra = false,
+    this.tanggalBuku,
   });
 
   final String idTransaksi;
@@ -41,11 +42,16 @@ class RingkasNota {
   final int labaPacked;
   final int labaActual;
   final bool extra;
+  final DateTime? tanggalBuku;
 
   factory RingkasNota.dari(Map<String, dynamic> r) {
     DateTime? w(dynamic v) {
       final s = v?.toString();
       if (s == null || s.isEmpty) return null;
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(s) && s.length >= 10) {
+        final p = DateTime.tryParse(s.substring(0, 10));
+        if (p != null) return DateTime(p.year, p.month, p.day);
+      }
       return DateTime.tryParse(s);
     }
 
@@ -64,6 +70,7 @@ class RingkasNota {
       labaPacked: _n(r['laba_packed']),
       labaActual: _n(r['laba_actual']),
       extra: r['extra'] == true,
+      tanggalBuku: w(r['tanggal_buku']),
     );
   }
 
@@ -82,12 +89,17 @@ class RingkasNota {
   bool _hariSama(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  /// Sisa kiriman buku kemarin: sudah di truk, jangan packing ulang.
-  bool sisaKirimanPada(DateTime tanggalBuku) {
+  DateTime _hari(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Sisa/tambahan kiriman: sudah packing, jangan packing ulang.
+  bool sisaKirimanPada(DateTime tanggalLayar) {
     if (status != 'dikirim' || waktuActual != null) return false;
+    final layar = _hari(tanggalLayar);
+    final buku = tanggalBuku;
+    if (buku != null && !_hariSama(_hari(buku), layar)) return true;
     final w = waktuOrder;
     if (w == null) return false;
-    return !_hariSama(w.toLocal(), tanggalBuku);
+    return !_hariSama(_hari(w.toLocal()), layar);
   }
 
   bool bolehPackPada(DateTime tanggalBuku) {

@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../jaringan.dart';
 import '../uang.dart';
+import 'kunci_kartu_setoran.dart';
 
 int _n(dynamic v) {
   if (v is int) return v;
@@ -222,8 +223,8 @@ class RingkasSetoran {
       adaBuku: m['ada_buku'] == true,
       idSetoranBuku: (m['id_setoran_buku'] as num?)?.toInt(),
       tanggal: tgl,
-      ditutup: m['ditutup'] == true,
-      dariSnapshot: m['dari_snapshot'] == true,
+      ditutup: flagKartu(m['ditutup']),
+      dariSnapshot: flagKartu(m['dari_snapshot']),
       cek: m['cek'],
       tunaiAdmin: m['tunai_admin'],
       kasbon: m['kasbon'],

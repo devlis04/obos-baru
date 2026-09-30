@@ -5,6 +5,7 @@ import 'package:web/web.dart' as web;
 
 import '../uang.dart';
 import 'kunci_kartu_setoran.dart';
+import 'setoran_repo.dart';
 
 const pecahanTunaiAdmin = [
   (nilai: 100000, jenis: 'Lembar', label: '100.000'),
@@ -143,11 +144,15 @@ class TunaiAdminSetoran extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Map<String, dynamic> keJson({int? idBuku}) {
+  Map<String, dynamic> keJson({int? idBuku, DateTime? tanggal}) {
     final out = <String, dynamic>{};
     for (final e in _isi.entries) {
       if (!_berisi(e.value)) continue;
-      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      final k = kunciKartuBuku(
+        e.key,
+        idBuku: idBuku,
+        tanggal: tanggal,
+      );
       if (k == null) continue;
       out[k] = {
         'tunai': e.value.tunai,
@@ -157,7 +162,12 @@ class TunaiAdminSetoran extends ChangeNotifier {
     return out;
   }
 
-  IsiTunaiAdmin? _dariMap(Object? v) {
+  IsiTunaiAdmin? _dariNilai(Object? v) {
+    if (v is num && v > 0) return IsiTunaiAdmin(tunai: v.round());
+    if (v is String) {
+      final n = int.tryParse(v.replaceAll('.', '')) ?? 0;
+      if (n > 0) return IsiTunaiAdmin(tunai: n);
+    }
     if (v is! Map) return null;
     final pecahan = <int>[];
     final p = v['pecahan'];
@@ -181,12 +191,35 @@ class TunaiAdminSetoran extends ChangeNotifier {
     if (raw is! Map) return;
     var ubah = false;
     for (final e in raw.entries) {
-      final isi = _dariMap(e.value);
+      final isi = _dariNilai(e.value);
       if (isi == null || !_berisi(isi)) continue;
-      final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
+      final k = kunciKartuBuku(
+        e.key.toString(),
+        idBuku: idBuku,
+        tanggal: tanggal,
+      );
       if (k == null) continue;
       if (_berisi(_isi[k]) && !_berisi(isi)) continue;
       _isi[k] = isi;
+      ubah = true;
+    }
+    if (!ubah) return;
+    _tulis();
+    notifyListeners();
+  }
+
+  void pulihkanDariPengirim({
+    required DateTime? tanggal,
+    required List<BarisSetoranRute> rute,
+    int? idBuku,
+  }) {
+    var ubah = false;
+    for (final b in rute) {
+      if (b.rute.isEmpty || b.tunai <= 0) continue;
+      if (_berisi(ambil(tanggal, b.rute, idBuku: idBuku))) continue;
+      _isi[_kunci(tanggal, b.rute, idBuku: idBuku)] = IsiTunaiAdmin(
+        tunai: b.tunai,
+      );
       ubah = true;
     }
     if (!ubah) return;

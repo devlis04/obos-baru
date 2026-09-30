@@ -137,7 +137,7 @@ class CekRinciSetoran extends ChangeNotifier {
       final h = m['hijau'];
       if (h is Map) {
         for (final e in h.entries) {
-          _hijau[e.key.toString()] = e.value == true;
+          _hijau[e.key.toString()] = flagKartu(e.value);
         }
       }
     } catch (_) {}
@@ -152,17 +152,17 @@ class CekRinciSetoran extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Map<String, dynamic> keJson({int? idBuku}) {
+  Map<String, dynamic> keJson({int? idBuku, DateTime? tanggal}) {
     final centang = <String, dynamic>{};
     final hijau = <String, dynamic>{};
     for (final e in _centang.entries) {
-      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      final k = kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal);
       if (k == null || e.value.isEmpty) continue;
       centang[k] = e.value.toList();
     }
     for (final e in _hijau.entries) {
       if (!e.value) continue;
-      final k = kunciKartuBuku(e.key, idBuku: idBuku);
+      final k = kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal);
       if (k == null) continue;
       hijau[k] = true;
     }
@@ -184,7 +184,11 @@ class CekRinciSetoran extends ChangeNotifier {
         if (v is! List) continue;
         final masuk = {for (final x in v) x.toString()};
         if (masuk.isEmpty) continue;
-        final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
+        final k = kunciKartuBuku(
+          e.key.toString(),
+          idBuku: idBuku,
+          tanggal: tanggal,
+        );
         if (k == null) continue;
         final lama = _centang[k] ?? {};
         _centang[k] = {...lama, ...masuk};
@@ -194,12 +198,42 @@ class CekRinciSetoran extends ChangeNotifier {
     final h = raw['hijau'];
     if (h is Map) {
       for (final e in h.entries) {
-        if (e.value != true) continue;
-        final k = kunciKartuBuku(e.key.toString(), idBuku: idBuku);
+        if (!flagKartu(e.value)) continue;
+        final k = kunciKartuBuku(
+          e.key.toString(),
+          idBuku: idBuku,
+          tanggal: tanggal,
+        );
         if (k == null) continue;
         _hijau[k] = true;
         ubah = true;
       }
+    }
+    if (!ubah) return;
+    _tulis();
+    notifyListeners();
+  }
+
+  void pulihkanHijau({
+    required DateTime? tanggal,
+    required String jenis,
+    required List<BarisSetoranRute> rute,
+    int? idBuku,
+  }) {
+    var ubah = false;
+    for (final b in rute) {
+      if (b.rute.isEmpty) continue;
+      if (jenis == 'retur' && b.retur <= 0) continue;
+      if (hijau(
+        tanggal: tanggal,
+        jenis: jenis,
+        rute: b.rute,
+        idBuku: idBuku,
+      )) {
+        continue;
+      }
+      _hijau[_kunci(tanggal, jenis, b.rute, idBuku: idBuku)] = true;
+      ubah = true;
     }
     if (!ubah) return;
     _tulis();
