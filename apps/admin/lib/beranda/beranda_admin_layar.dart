@@ -14,6 +14,7 @@ import '../pesan.dart';
 import '../masukan/masukan_csv.dart';
 import '../setoran/absensi_repo.dart';
 import '../setoran/cek_rinci_setoran.dart';
+import '../setoran/kunci_kartu_setoran.dart';
 import '../setoran/kartu_absensi.dart';
 import '../setoran/kartu_mutasi.dart';
 import '../setoran/kartu_setoran.dart';
@@ -76,6 +77,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       });
     }
     _dengarOpname();
+    ChipSetoranPersist.instance.atur(_simpanChipDiam);
     _jagaKartu = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!_halamanAktif) return;
       unawaited(_muatData(diam: true));
@@ -85,6 +87,8 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
 
   @override
   void dispose() {
+    ChipSetoranPersist.instance.batal();
+    ChipSetoranPersist.instance.atur(null);
     WidgetsBinding.instance.removeObserver(this);
     _tundaSegar?.cancel();
     _jagaKartu?.cancel();
@@ -165,6 +169,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       return;
     }
     _sedangMuat = true;
+    ChipSetoranPersist.instance.diam(true);
     final gen = _muatGen;
     final idMinta = _idBukuLihat;
     if (!diam && mounted) setState(() => _muat = true);
@@ -307,6 +312,7 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
       );
     } finally {
       _sedangMuat = false;
+      ChipSetoranPersist.instance.diam(false);
       if (_muatUlang && mounted) {
         final penuh = _muatUlangPenuh;
         _muatUlang = false;
@@ -314,6 +320,28 @@ class _BerandaAdminLayarState extends State<BerandaAdminLayar>
         unawaited(_muatData(diam: !penuh));
       }
     }
+  }
+
+  Future<void> _simpanChipDiam() async {
+    final id = _setoran.idSetoranBuku;
+    if (id == null || _setoran.ditutup) return;
+    try {
+      await _setoranRepo.simpanKartu(
+        idBuku: id,
+        cek: CekRinciSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
+        tunai: TunaiAdminSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
+        kasbon: KasbonCekSetoran.instance.keJson(
+          idBuku: id,
+          tanggal: _setoran.tanggal,
+        ),
+      );
+    } catch (_) {}
   }
 
   bool _samaOrang(List<OrangAbsensi> a, List<OrangAbsensi> b) {

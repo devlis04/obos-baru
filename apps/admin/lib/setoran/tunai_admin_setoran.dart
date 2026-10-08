@@ -59,6 +59,11 @@ class TunaiAdminSetoran extends ChangeNotifier {
   static bool _berisi(IsiTunaiAdmin? v) {
     if (v == null) return false;
     if (v.tunai > 0) return true;
+    return _adaPecahan(v);
+  }
+
+  static bool _adaPecahan(IsiTunaiAdmin? v) {
+    if (v == null) return false;
     for (final n in v.pecahan) {
       if (n > 0) return true;
     }
@@ -109,6 +114,7 @@ class TunaiAdminSetoran extends ChangeNotifier {
     );
     _tulis();
     notifyListeners();
+    ChipSetoranPersist.instance.minta();
   }
 
   void _muat() {
@@ -188,9 +194,10 @@ class TunaiAdminSetoran extends ChangeNotifier {
     DateTime? tanggal,
     bool bukuTutup = false,
   }) {
-    if (raw is! Map) return;
+    final peta = petaChip(raw);
+    if (peta == null) return;
     var ubah = false;
-    for (final e in raw.entries) {
+    for (final e in peta.entries) {
       final isi = _dariNilai(e.value);
       if (isi == null || !_berisi(isi)) continue;
       final k = kunciKartuBuku(
@@ -199,7 +206,9 @@ class TunaiAdminSetoran extends ChangeNotifier {
         tanggal: tanggal,
       );
       if (k == null) continue;
-      if (_berisi(_isi[k]) && !_berisi(isi)) continue;
+      final lama = _isi[k];
+      if (_berisi(lama) && !_berisi(isi)) continue;
+      if (_adaPecahan(lama) && !_adaPecahan(isi)) continue;
       _isi[k] = isi;
       ubah = true;
     }

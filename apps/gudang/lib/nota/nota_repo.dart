@@ -91,7 +91,7 @@ class RingkasNota {
 
   DateTime _hari(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  /// Sisa/tambahan kiriman: sudah packing, jangan packing ulang.
+  /// Chip Sisa/Tamb. di daftar. Packing ulang ditahan pemanggil lewat bukuHidup.
   bool sisaKirimanPada(DateTime tanggalLayar) {
     if (status != 'dikirim' || waktuActual != null) return false;
     final layar = _hari(tanggalLayar);
@@ -102,9 +102,9 @@ class RingkasNota {
     return !_hariSama(_hari(w.toLocal()), layar);
   }
 
-  bool bolehPackPada(DateTime tanggalBuku) {
-    if (!bisaPack) return false;
-    return !sisaKirimanPada(tanggalBuku);
+  bool bolehPackPada(DateTime tanggalLayar) {
+    // tanggalLayar dipakai pemanggil; chip Sisa/Tamb. tidak menahan packing.
+    return bisaPack;
   }
 }
 

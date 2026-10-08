@@ -55,13 +55,10 @@ class KasbonCekSetoran extends ChangeNotifier {
     int? idBuku,
   }) {
     final k = _kunci(tanggal, rute, peran, idBuku: idBuku);
-    if (nilai) {
-      _centang[k] = true;
-    } else {
-      _centang.remove(k);
-    }
+    _centang[k] = nilai;
     _tulis();
     notifyListeners();
+    ChipSetoranPersist.instance.minta();
   }
 
   bool hijau({
@@ -115,9 +112,8 @@ class KasbonCekSetoran extends ChangeNotifier {
   Map<String, dynamic> keJson({int? idBuku, DateTime? tanggal}) {
     return {
       for (final e in _centang.entries)
-        if (e.value)
-          if (kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal) != null)
-            kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal)!: true,
+        if (kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal) != null)
+          kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal)!: e.value,
     };
   }
 
@@ -127,17 +123,19 @@ class KasbonCekSetoran extends ChangeNotifier {
     DateTime? tanggal,
     bool bukuTutup = false,
   }) {
-    if (raw is! Map) return;
+    final peta = petaChip(raw);
+    if (peta == null) return;
     var ubah = false;
     void taruh(String key, Object? val) {
-      if (!flagKartu(val)) return;
       final k = kunciKartuBuku(key, idBuku: idBuku, tanggal: tanggal);
       if (k == null) return;
-      _centang[k] = true;
+      final nyala = flagKartu(val);
+      if (_centang[k] == nyala) return;
+      _centang[k] = nyala;
       ubah = true;
     }
 
-    for (final e in raw.entries) {
+    for (final e in peta.entries) {
       final v = e.value;
       if (v is Map) {
         for (final p in v.entries) {

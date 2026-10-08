@@ -96,6 +96,7 @@ class CekRinciSetoran extends ChangeNotifier {
     _hijau[k] = target.isNotEmpty && target.every(_centang[k]!.contains);
     _tulis();
     notifyListeners();
+    ChipSetoranPersist.instance.minta();
   }
 
   void gabungBarang({
@@ -115,6 +116,7 @@ class CekRinciSetoran extends ChangeNotifier {
     _hijau[k] = wajib.isNotEmpty && wajib.every(s.contains);
     _tulis();
     notifyListeners();
+    ChipSetoranPersist.instance.minta();
   }
 
   void _muat() {
@@ -157,14 +159,13 @@ class CekRinciSetoran extends ChangeNotifier {
     final hijau = <String, dynamic>{};
     for (final e in _centang.entries) {
       final k = kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal);
-      if (k == null || e.value.isEmpty) continue;
+      if (k == null) continue;
       centang[k] = e.value.toList();
     }
     for (final e in _hijau.entries) {
-      if (!e.value) continue;
       final k = kunciKartuBuku(e.key, idBuku: idBuku, tanggal: tanggal);
       if (k == null) continue;
-      hijau[k] = true;
+      hijau[k] = e.value;
     }
     return {'centang': centang, 'hijau': hijau};
   }
@@ -175,38 +176,50 @@ class CekRinciSetoran extends ChangeNotifier {
     DateTime? tanggal,
     bool bukuTutup = false,
   }) {
-    if (raw is! Map) return;
+    final peta = petaChip(raw);
+    if (peta == null) return;
     var ubah = false;
-    final c = raw['centang'];
+    final c = peta['centang'];
     if (c is Map) {
       for (final e in c.entries) {
         final v = e.value;
         if (v is! List) continue;
         final masuk = {for (final x in v) x.toString()};
-        if (masuk.isEmpty) continue;
         final k = kunciKartuBuku(
           e.key.toString(),
           idBuku: idBuku,
           tanggal: tanggal,
         );
         if (k == null) continue;
+        if (masuk.isEmpty) {
+          if (_centang[k]?.isNotEmpty == true) {
+            _centang[k] = {};
+            ubah = true;
+          }
+          continue;
+        }
         final lama = _centang[k] ?? {};
         _centang[k] = {...lama, ...masuk};
         ubah = true;
       }
     }
-    final h = raw['hijau'];
+    final h = peta['hijau'];
     if (h is Map) {
       for (final e in h.entries) {
-        if (!flagKartu(e.value)) continue;
         final k = kunciKartuBuku(
           e.key.toString(),
           idBuku: idBuku,
           tanggal: tanggal,
         );
         if (k == null) continue;
-        _hijau[k] = true;
-        ubah = true;
+        final nyala = flagKartu(e.value);
+        if (nyala) {
+          if (_hijau[k] != true) ubah = true;
+          _hijau[k] = true;
+        } else if (_hijau[k] == true) {
+          _hijau[k] = false;
+          ubah = true;
+        }
       }
     }
     if (!ubah) return;
