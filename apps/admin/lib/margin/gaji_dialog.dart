@@ -94,52 +94,93 @@ class _DialogGajiState extends State<_DialogGaji> {
     );
   }
 
-  Future<void> _muatAwal() async {
+  Future<T?> _coba<T>(Future<T> Function() fn, List<Object> galat) async {
     try {
-      final hasil = await Future.wait<Object>([
-        _repo.setelan(senin: widget.senin),
-        _repo.dashboard(senin: widget.senin, hari: widget.sabtu),
-        _repo.absen(senin: widget.senin, sabtu: widget.sabtu),
-        _repo.kasbon(senin: widget.senin, sabtu: widget.sabtu),
-      ]);
-      if (!mounted) return;
-      final setelan = hasil[0] as GajiSetelan;
-      final dash = hasil[1] as IsiDashboard;
-      final absen = hasil[2] as List<GajiAbsen>;
-      final kasbon = hasil[3] as Map<String, int>;
-      final isi = hitungGaji(
-        setelan: setelan,
-        ruteMargin: widget.rute,
-        dash: dash,
-        absen: absen,
-        kasbonOrang: kasbon,
-        rumusExcel: gajiPakaiExcel(widget.senin),
-      );
-      _pasangField(setelan);
-      _pasangTarget(isi.sales, timpa: true);
-      _pasangKasbon([
-        ...isi.pengirim,
-        ...isi.gudang,
-        ...isi.admin,
-      ], timpa: true);
-      _buangUkur();
-      setState(() {
-        _setelan = setelan;
-        _dash = dash;
-        _absen = absen;
-        _isi = isi;
-        _gagal = null;
-        _muat = false;
-      });
+      return await fn();
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _muat = false;
-        _gagal = Jaringan.mati(e)
-            ? 'Tidak ada internet. Benefit belum bisa dihitung.'
-            : pesanGagal(e, 'Benefit belum bisa dihitung. Jalankan SQL 116.');
-      });
+      galat.add(e);
+      return null;
     }
+  }
+
+  Future<void> _muatAwal() async {
+    final galat = <Object>[];
+    GajiSetelan? setelan;
+    IsiDashboard? dash;
+    List<GajiAbsen>? absen;
+    Map<String, int>? kasbon;
+    await Future.wait([
+      _coba(() => _repo.setelan(senin: widget.senin), galat).then((v) {
+        setelan = v;
+      }),
+      _coba(
+        () => _repo.dashboard(
+          senin: widget.senin,
+          hari: widget.sabtu,
+          rute: widget.rute,
+        ),
+        galat,
+      ).then((v) {
+        dash = v;
+      }),
+      _coba(
+        () => _repo.absen(senin: widget.senin, sabtu: widget.sabtu),
+        galat,
+      ).then((v) {
+        absen = v;
+      }),
+      _coba(
+        () => _repo.kasbon(senin: widget.senin, sabtu: widget.sabtu),
+        galat,
+      ).then((v) {
+        kasbon = v;
+      }),
+    ]);
+    if (!mounted) return;
+    final s = setelan ?? _setelan;
+    final d = dash ?? _drafDash();
+    final a = absen ?? const <GajiAbsen>[];
+    final k = kasbon ?? const <String, int>{};
+    if (dash == null) {
+      final e = galat.isEmpty ? null : galat.first;
+      setState(() {
+        _setelan = s;
+        _dash = d;
+        _absen = a;
+        _muat = false;
+        _gagal = e == null
+            ? 'Benefit belum bisa dihitung. Jalankan SQL 150.'
+            : Jaringan.mati(e)
+                ? 'Koneksi ke server putus. Benefit belum bisa dihitung.'
+                : pesanGagal(e, 'Benefit belum bisa dihitung. Jalankan SQL 150.');
+      });
+      _pasangField(s);
+      return;
+    }
+    final isi = hitungGaji(
+      setelan: s,
+      ruteMargin: widget.rute,
+      dash: d,
+      absen: a,
+      kasbonOrang: k,
+      rumusExcel: gajiPakaiExcel(widget.senin),
+    );
+    _pasangField(s);
+    _pasangTarget(isi.sales, timpa: true);
+    _pasangKasbon([
+      ...isi.pengirim,
+      ...isi.gudang,
+      ...isi.admin,
+    ], timpa: true);
+    _buangUkur();
+    setState(() {
+      _setelan = s;
+      _dash = d;
+      _absen = a;
+      _isi = isi;
+      _gagal = null;
+      _muat = false;
+    });
   }
 
   @override

@@ -68,6 +68,35 @@ class CapaianDash {
     targetVisit: 1,
   );
 
+  factory CapaianDash.gaji({
+    required int visit,
+    required int toko,
+    required int ec,
+  }) {
+    final t = toko < 1 ? 1 : toko;
+    return CapaianDash(
+      omsetOrder: 0,
+      labaOrder: 0,
+      omsetKiriman: 0,
+      labaKiriman: 0,
+      omsetActual: 0,
+      labaActual: 0,
+      ecOrder: 0,
+      ecKiriman: 0,
+      ecActual: ec,
+      xcOrder: 0,
+      xcKiriman: 0,
+      xcActual: 0,
+      xcBatal: 0,
+      notaOrder: 0,
+      notaKiriman: 0,
+      notaActual: 0,
+      visit: visit,
+      targetEc: t,
+      targetVisit: t,
+    );
+  }
+
   factory CapaianDash.dari(Map<String, dynamic>? j) {
     if (j == null) return kosong;
     return CapaianDash(
@@ -184,17 +213,15 @@ class DashboardRepo {
     required DateTime senin,
     required DateTime hari,
   }) async {
-    final hasil = await Jaringan.denganUlang(
-      () => _sb
-          .rpc(
-            'admin_dashboard',
-            params: {
-              'p_senin': Uang.isoHari(senin),
-              'p_hari': Uang.isoHari(hari),
-            },
-          )
-          .timeout(const Duration(seconds: 30)),
-    );
+    final hasil = await _sb
+        .rpc(
+          'admin_dashboard',
+          params: {
+            'p_senin': Uang.isoHari(senin),
+            'p_hari': Uang.isoHari(hari),
+          },
+        )
+        .timeout(const Duration(seconds: 45));
     if (hasil is! Map) {
       throw Exception('Ringkasan penjualan belum bisa dimuat.');
     }

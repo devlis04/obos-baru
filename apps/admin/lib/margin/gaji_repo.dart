@@ -199,23 +199,37 @@ class GajiRepo {
 
   final SupabaseClient _sb;
 
-  Future<GajiSetelan> setelan({DateTime? senin}) async {
-    final hasil = await Jaringan.denganUlang(() {
-      if (senin != null) {
-        return _sb.rpc(
-          'admin_gaji_setelan_minggu',
-          params: {'p_senin': Uang.isoHari(senin)},
-        ).timeout(Jaringan.lambat);
-      }
-      return _sb.rpc('admin_gaji_setelan').timeout(Jaringan.lambat);
-    });
+  GajiSetelan? _dariHasilSetelan(Object? hasil) {
     if (hasil is Map) {
       return GajiSetelan.dari(Map<String, dynamic>.from(hasil));
     }
     if (hasil is List && hasil.isNotEmpty && hasil.first is Map) {
       return GajiSetelan.dari(Map<String, dynamic>.from(hasil.first as Map));
     }
-    return GajiSetelan.awal;
+    return null;
+  }
+
+  Future<GajiSetelan> _rpcSetelan([DateTime? senin]) async {
+    final hasil = senin != null
+        ? await _sb.rpc(
+            'admin_gaji_setelan_minggu',
+            params: {'p_senin': Uang.isoHari(senin)},
+          ).timeout(Jaringan.cepat)
+        : await Jaringan.denganUlang(() {
+            return _sb.rpc('admin_gaji_setelan').timeout(Jaringan.lambat);
+          });
+    return _dariHasilSetelan(hasil) ?? GajiSetelan.awal;
+  }
+
+  Future<GajiSetelan> setelan({DateTime? senin}) async {
+    if (senin != null) {
+      try {
+        return await _rpcSetelan(senin);
+      } catch (_) {
+        return _rpcSetelan();
+      }
+    }
+    return _rpcSetelan();
   }
 
   Future<void> simpan(GajiSetelan s) {
@@ -327,11 +341,130 @@ class GajiRepo {
     ];
   }
 
+  double _rasio(Object? v) {
+    if (v is num) return v.toDouble();
+    return double.tryParse(v?.toString().replaceAll(',', '.') ?? '') ?? 0;
+  }
+
+  Map<String, dynamic>? _petaPertama(Object? hasil) {
+    if (hasil is Map) return Map<String, dynamic>.from(hasil);
+    if (hasil is List && hasil.isNotEmpty && hasil.first is Map) {
+      return Map<String, dynamic>.from(hasil.first as Map);
+    }
+    return null;
+  }
+
+  IsiDashboard? _dashDariRuteMinggu(
+    Object? hasil,
+    DateTime senin,
+    DateTime hari,
+  ) {
+    if (hasil is! List) return null;
+    final rute = <KartuDash>[];
+    for (final e in hasil) {
+      if (e is! Map) continue;
+      final m = Map<String, dynamic>.from(e);
+      final kode = (m['rute']?.toString() ?? '').trim();
+      if (kode.isEmpty) continue;
+      final toko = Uang.dari(m['toko']);
+      rute.add(
+        KartuDash(
+          rute: kode,
+          nama: (m['nama']?.toString() ?? '').trim(),
+          targetOmset: Uang.dari(m['omset']),
+          targetPersen: _rasio(m['rasio']),
+          minggu: CapaianDash.gaji(
+            visit: Uang.dari(m['visit']),
+            toko: toko,
+            ec: Uang.dari(m['ec']),
+          ),
+          hari: CapaianDash.kosong,
+        ),
+      );
+    }
+    if (rute.isEmpty) return null;
+    return IsiDashboard(
+      senin: senin,
+      sabtu: senin.add(const Duration(days: 5)),
+      hari: hari,
+      total: KartuDash.totalKosong,
+      rute: rute,
+    );
+  }
+
+  Future<IsiDashboard> _dashDariPatokan({
+    required DateTime senin,
+    required DateTime hari,
+    required List<BarisMarginRute> rute,
+  }) async {
+    final kartu = <KartuDash>[];
+    for (final r in rute) {
+      var omset = 0;
+      var rasio = 0.0;
+      var toko = 0;
+      try {
+        final h = await _sb.rpc(
+          'gaji_target_pada',
+          params: {
+            'p_rute': r.rute,
+            'p_senin': Uang.isoHari(senin),
+          },
+        ).timeout(Jaringan.cepat);
+        final m = _petaPertama(h);
+        if (m != null) {
+          omset = Uang.dari(m['omset']);
+          rasio = _rasio(m['rasio']);
+        }
+      } catch (_) {}
+      try {
+        final n = await _sb.rpc(
+          'gaji_n_toko_rute',
+          params: {
+            'p_rute': r.rute,
+            'p_senin': Uang.isoHari(senin),
+          },
+        ).timeout(Jaringan.cepat);
+        toko = Uang.dari(n);
+      } catch (_) {}
+      kartu.add(
+        KartuDash(
+          rute: r.rute,
+          nama: r.nama,
+          targetOmset: omset,
+          targetPersen: rasio,
+          minggu: CapaianDash.gaji(visit: 0, toko: toko, ec: 0),
+          hari: CapaianDash.kosong,
+        ),
+      );
+    }
+    return IsiDashboard(
+      senin: senin,
+      sabtu: senin.add(const Duration(days: 5)),
+      hari: hari,
+      total: KartuDash.totalKosong,
+      rute: kartu,
+    );
+  }
+
   Future<IsiDashboard> dashboard({
     required DateTime senin,
     required DateTime hari,
-  }) {
-    return DashboardRepo(_sb).isi(senin: senin, hari: hari);
+    List<BarisMarginRute> rute = const [],
+  }) async {
+    try {
+      final hasil = await _sb.rpc(
+        'admin_gaji_rute_minggu',
+        params: {'p_senin': Uang.isoHari(senin)},
+      ).timeout(const Duration(seconds: 45));
+      final isi = _dashDariRuteMinggu(hasil, senin, hari);
+      if (isi != null) return isi;
+    } catch (_) {}
+    try {
+      return await DashboardRepo(_sb).isi(senin: senin, hari: hari);
+    } catch (e) {
+      if (rute.isEmpty) rethrow;
+      return _dashDariPatokan(senin: senin, hari: hari, rute: rute);
+    }
   }
 }
 

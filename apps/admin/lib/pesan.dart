@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,8 +26,14 @@ void tampilPesanDi(ScaffoldMessengerState messenger, String teks) {
 }
 
 String pesanGagal(Object e, String cadangan) {
-  if (e is PostgrestException && e.message.trim().isNotEmpty) {
-    return e.message.trim();
+  if (e is PostgrestException) {
+    final m = e.message.trim();
+    if (m.isNotEmpty) return m;
+    final h = (e.hint ?? '').trim();
+    if (h.isNotEmpty) return h;
+  }
+  if (e is TimeoutException) {
+    return 'Server lambat merespons. $cadangan';
   }
   return cadangan;
 }
