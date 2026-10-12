@@ -18,6 +18,8 @@ class GajiSetelan {
     required this.admin,
     required this.omsetSemua,
     required this.rasioSales,
+    required this.visitTarget,
+    required this.ecTarget,
   });
 
   final int bopMobil;
@@ -31,6 +33,8 @@ class GajiSetelan {
   final int admin;
   final int omsetSemua;
   final double rasioSales;
+  final double visitTarget;
+  final double ecTarget;
 
   static const awal = GajiSetelan(
     bopMobil: 1020000,
@@ -44,6 +48,8 @@ class GajiSetelan {
     admin: 800000,
     omsetSemua: 0,
     rasioSales: 0,
+    visitTarget: 90,
+    ecTarget: 70,
   );
 
   factory GajiSetelan.dari(Map<String, dynamic> m) {
@@ -59,6 +65,8 @@ class GajiSetelan {
       admin: Uang.dari(m['admin']),
       omsetSemua: Uang.dari(m['omset_semua']),
       rasioSales: _desimal(m['rasio_sales']),
+      visitTarget: _desimal(m['visit_target']) == 0 ? 90 : _desimal(m['visit_target']),
+      ecTarget: _desimal(m['ec_target']) == 0 ? 70 : _desimal(m['ec_target']),
     );
   }
 
@@ -191,8 +199,14 @@ class GajiRepo {
 
   final SupabaseClient _sb;
 
-  Future<GajiSetelan> setelan() async {
+  Future<GajiSetelan> setelan({DateTime? senin}) async {
     final hasil = await Jaringan.denganUlang(() {
+      if (senin != null) {
+        return _sb.rpc(
+          'admin_gaji_setelan_minggu',
+          params: {'p_senin': Uang.isoHari(senin)},
+        ).timeout(Jaringan.lambat);
+      }
       return _sb.rpc('admin_gaji_setelan').timeout(Jaringan.lambat);
     });
     if (hasil is Map) {
@@ -218,8 +232,10 @@ class GajiRepo {
           'p_gudang': s.gudang,
           'p_gudang_slot': s.gudangSlot,
           'p_admin': s.admin,
-          'p_omset_semua': 0,
-          'p_rasio_sales': 0,
+          'p_omset_semua': s.omsetSemua,
+          'p_rasio_sales': s.rasioSales,
+          'p_visit_target': s.visitTarget,
+          'p_ec_target': s.ecTarget,
         },
       ).timeout(Jaringan.lambat);
     });
@@ -333,6 +349,16 @@ String kunciKasbon(String email, String rute, String nama) {
 String _pctTeks(double n) =>
     '${(n * 100).toStringAsFixed(2).replaceAll('.', ',')}%';
 
+bool gajiPakaiExcel(DateTime senin) {
+  final s = DateTime(senin.year, senin.month, senin.day);
+  return !s.isBefore(DateTime(2026, 10, 12));
+}
+
+int gajiMround(num n, int kelipatan) {
+  if (kelipatan == 0) return n.round();
+  return ((n / kelipatan).round()) * kelipatan;
+}
+
 IsiGaji hitungGaji({
   required GajiSetelan setelan,
   required List<BarisMarginRute> ruteMargin,
@@ -341,6 +367,7 @@ IsiGaji hitungGaji({
   Map<String, int> omsetRute = const {},
   Map<String, double> rasioRute = const {},
   Map<String, int> kasbonOrang = const {},
+  bool rumusExcel = false,
 }) {
   final netAkt = {for (final r in ruteMargin) r.rute: r.netMargin};
   final petaPeng = {for (final r in ruteMargin) r.rute: r.rutePengirim};
@@ -387,15 +414,18 @@ IsiGaji hitungGaji({
     grup.putIfAbsent(p, () => []).add(i);
   }
   for (final idx in grup.values) {
-    final denom = idx.fold<int>(0, (a, i) => a + draf[i].margin);
+    final denom = rumusExcel
+        ? idx.fold<int>(0, (a, i) => a + (draf[i].margin - draf[i].ongkir))
+        : idx.fold<int>(0, (a, i) => a + draf[i].margin);
     var sisa = setelan.bopMobil;
     for (var k = 0; k < idx.length; k++) {
       final i = idx[k];
+      final bagian = rumusExcel ? draf[i].margin - draf[i].ongkir : draf[i].margin;
       final v = k == idx.length - 1
           ? sisa
           : denom <= 0
               ? setelan.bopMobil ~/ idx.length
-              : ((draf[i].margin / denom) * setelan.bopMobil).round();
+              : ((bagian / denom) * setelan.bopMobil).round();
       sisa -= v;
       draf[i].bop = v;
     }
@@ -405,16 +435,42 @@ IsiGaji hitungGaji({
   var totNetT = 0;
   var totNetA = 0;
   for (final d in draf) {
+    totNetT += d.margin - d.bop - d.ongkir;
+    totNetA += d.netActual;
+  }
+  for (final d in draf) {
     final netT = d.margin - d.bop - d.ongkir;
     final pct = netT == 0 ? 0.0 : d.netActual / netT;
-    final benNet = (setelan.salesNet * pct).round();
-    final benV = d.toko <= 0
-        ? 0
-        : ((setelan.salesVisit * d.visit) / d.toko).round();
-    final benE =
-        d.toko <= 0 ? 0 : ((setelan.salesEc * d.ec) / d.toko).round();
-    totNetT += netT;
-    totNetA += d.netActual;
+    late final int benNet;
+    late final int benV;
+    late final int benE;
+    if (rumusExcel) {
+      final ah = totNetT <= 0
+          ? 0
+          : gajiMround(setelan.omsetSemua * netT / totNetT, 5000);
+      benNet = gajiMround(pct * ah, 500);
+      final scanPct = d.toko <= 0 ? 0.0 : d.visit * 100.0 / d.toko;
+      final ecPct = d.toko <= 0 ? 0.0 : d.ec * 100.0 / d.toko;
+      benV = d.toko <= 0 || setelan.visitTarget <= 0
+          ? 0
+          : gajiMround(
+              pct * setelan.salesVisit * (scanPct / setelan.visitTarget),
+              500,
+            );
+      benE = d.toko <= 0 || setelan.ecTarget <= 0
+          ? 0
+          : gajiMround(
+              pct * setelan.salesEc * (ecPct / setelan.ecTarget),
+              500,
+            );
+    } else {
+      benNet = (setelan.salesNet * pct).round();
+      benV = d.toko <= 0
+          ? 0
+          : ((setelan.salesVisit * d.visit) / d.toko).round();
+      benE =
+          d.toko <= 0 ? 0 : ((setelan.salesEc * d.ec) / d.toko).round();
+    }
     sales.add(
       BarisGajiSales(
         rute: d.rute,
@@ -458,18 +514,25 @@ IsiGaji hitungGaji({
     final t = netTPas[e.key] ?? 0;
     final a = netAPas[e.key] ?? 0;
     final pct = t == 0 ? 0.0 : a / t;
-    final penuh = (setelan.pengirim * pct).round();
+    final penuh = rumusExcel
+        ? gajiMround(setelan.pengirim * pct, 500)
+        : (setelan.pengirim * pct).round();
     final orang = e.value;
     final hadir = [for (final o in orang) if (o.hari > 0) o];
-    final pool = penuh * 2;
+    final pool = rumusExcel ? penuh : penuh * 2;
     final hari = hadir.fold<int>(0, (n, o) => n + o.hari);
     var sisa = pool;
     final gaji = <String, int>{};
     for (var i = 0; i < hadir.length; i++) {
       final o = hadir[i];
-      final v = i == hadir.length - 1
-          ? sisa
-          : ((pool * o.hari) / hari).round();
+      final int v;
+      if (rumusExcel) {
+        v = hari <= 0 ? 0 : gajiMround((pool * o.hari) / hari, 500);
+      } else if (i == hadir.length - 1) {
+        v = sisa;
+      } else {
+        v = ((pool * o.hari) / hari).round();
+      }
       sisa -= v;
       gaji[o.email] = v;
     }
@@ -492,18 +555,23 @@ IsiGaji hitungGaji({
   final gd = absen.where((a) => a.peran == 'gudang').toList()
     ..sort((a, b) => a.rute.toLowerCase().compareTo(b.rute.toLowerCase()));
   final slot = setelan.gudangSlot;
-  final poolG = (setelan.gudang * rasioP * slot).round();
+  final poolG = rumusExcel
+      ? gajiMround(setelan.gudang * rasioP, 500)
+      : (setelan.gudang * rasioP * slot).round();
   final hadirG = [for (final o in gd) if (o.hari > 0) o];
   final hariG = hadirG.fold<int>(0, (n, o) => n + o.hari);
   var sisaG = poolG;
   final gajiG = <String, int>{};
   for (var i = 0; i < hadirG.length; i++) {
     final o = hadirG[i];
-    final v = i == hadirG.length - 1
-        ? sisaG
-        : hariG <= 0
-            ? 0
-            : ((poolG * o.hari) / hariG).round();
+    final int v;
+    if (rumusExcel) {
+      v = hariG <= 0 ? 0 : gajiMround((poolG * o.hari) / hariG, 500);
+    } else if (i == hadirG.length - 1) {
+      v = sisaG;
+    } else {
+      v = hariG <= 0 ? 0 : ((poolG * o.hari) / hariG).round();
+    }
     sisaG -= v;
     gajiG[o.email] = v;
   }
@@ -514,7 +582,9 @@ IsiGaji hitungGaji({
         nama: o.nama,
         rute: o.rute,
         hari: o.hari,
-        penuh: (setelan.gudang * rasioP).round(),
+        penuh: rumusExcel
+            ? gajiMround(setelan.gudang * rasioP, 500)
+            : (setelan.gudang * rasioP).round(),
         gaji: gajiG[o.email] ?? 0,
         kasbon: kasbonOrang[kunciKasbon(o.email, o.rute, o.nama)] ?? 0,
       ),
@@ -529,8 +599,12 @@ IsiGaji hitungGaji({
         nama: o.nama,
         rute: o.rute,
         hari: o.hari,
-        penuh: (setelan.admin * rasioP).round(),
-        gaji: (setelan.admin * rasioP).round(),
+        penuh: rumusExcel
+            ? gajiMround(setelan.admin * rasioP, 500)
+            : (setelan.admin * rasioP).round(),
+        gaji: rumusExcel
+            ? gajiMround(setelan.admin * rasioP, 500)
+            : (setelan.admin * rasioP).round(),
         kasbon: kasbonOrang[kunciKasbon(o.email, o.rute, o.nama)] ?? 0,
       ),
   ];

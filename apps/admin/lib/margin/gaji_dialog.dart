@@ -68,6 +68,7 @@ class _DialogGajiState extends State<_DialogGaji> {
       ruteMargin: widget.rute,
       dash: _dash!,
       absen: const [],
+      rumusExcel: gajiPakaiExcel(widget.senin),
     );
     _pasangTarget(_isi!.sales, timpa: true);
     _muatAwal();
@@ -96,7 +97,7 @@ class _DialogGajiState extends State<_DialogGaji> {
   Future<void> _muatAwal() async {
     try {
       final hasil = await Future.wait<Object>([
-        _repo.setelan(),
+        _repo.setelan(senin: widget.senin),
         _repo.dashboard(senin: widget.senin, hari: widget.sabtu),
         _repo.absen(senin: widget.senin, sabtu: widget.sabtu),
         _repo.kasbon(senin: widget.senin, sabtu: widget.sabtu),
@@ -112,6 +113,7 @@ class _DialogGajiState extends State<_DialogGaji> {
         dash: dash,
         absen: absen,
         kasbonOrang: kasbon,
+        rumusExcel: gajiPakaiExcel(widget.senin),
       );
       _pasangField(setelan);
       _pasangTarget(isi.sales, timpa: true);
@@ -168,6 +170,9 @@ class _DialogGajiState extends State<_DialogGaji> {
     p('gud', s.gudang);
     p('slot', s.gudangSlot);
     p('adm', s.admin);
+    p('pool', s.omsetSemua);
+    p('vispct', s.visitTarget.round());
+    p('ecpct', s.ecTarget.round());
   }
 
   TextEditingController _c(String k, int n) {
@@ -190,8 +195,10 @@ class _DialogGajiState extends State<_DialogGaji> {
       gudang: n('gud', _setelan.gudang),
       gudangSlot: n('slot', _setelan.gudangSlot).clamp(1, 99),
       admin: n('adm', _setelan.admin),
-      omsetSemua: 0,
-      rasioSales: 0,
+      omsetSemua: n('pool', _setelan.omsetSemua),
+      rasioSales: _setelan.rasioSales,
+      visitTarget: n('vispct', _setelan.visitTarget.round()).toDouble(),
+      ecTarget: n('ecpct', _setelan.ecTarget.round()).toDouble(),
     );
   }
 
@@ -297,6 +304,7 @@ class _DialogGajiState extends State<_DialogGaji> {
         omsetRute: _omsetDariField(),
         rasioRute: _rasioDariField(),
         kasbonOrang: _kasbonDariField(),
+        rumusExcel: gajiPakaiExcel(widget.senin),
       );
       _buangUkur();
     });
@@ -324,6 +332,13 @@ class _DialogGajiState extends State<_DialogGaji> {
 
   Future<void> _simpan() async {
     if (_sibuk) return;
+    if (!gajiPakaiExcel(widget.senin)) {
+      tampilPesan(
+        context,
+        'Minggu lama memakai snapshot. Patokan dan target tidak diubah.',
+      );
+      return;
+    }
     final s = _dariField();
     setState(() => _sibuk = true);
     var patokanOk = false;
@@ -608,9 +623,12 @@ class _DialogGajiState extends State<_DialogGaji> {
   static const _patokanIsi = [
     ('BOP / mobil', 'bop'),
     ('Ongkir semua', 'ongkir'),
+    ('Kolam omset', 'pool'),
     ('Sales net', 'snet'),
     ('Sales visit', 'svis'),
     ('Sales EC', 'sec'),
+    ('Scan %', 'vispct'),
+    ('EC %', 'ecpct'),
     ('Pengirim', 'kirim'),
     ('Gudang', 'gud'),
     ('Slot gudang', 'slot'),
@@ -864,9 +882,12 @@ class _DialogGajiState extends State<_DialogGaji> {
     for (final k in const [
       'bop',
       'ongkir',
+      'pool',
       'snet',
       'svis',
       'sec',
+      'vispct',
+      'ecpct',
       'kirim',
       'gud',
       'slot',
@@ -884,9 +905,12 @@ class _DialogGajiState extends State<_DialogGaji> {
     final awal = switch (kunci) {
       'bop' => _setelan.bopMobil,
       'ongkir' => _setelan.ongkirSemua,
+      'pool' => _setelan.omsetSemua,
       'snet' => _setelan.salesNet,
       'svis' => _setelan.salesVisit,
       'sec' => _setelan.salesEc,
+      'vispct' => _setelan.visitTarget.round(),
+      'ecpct' => _setelan.ecTarget.round(),
       'kirim' => _setelan.pengirim,
       'gud' => _setelan.gudang,
       'slot' => _setelan.gudangSlot,
