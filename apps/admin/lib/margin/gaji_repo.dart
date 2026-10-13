@@ -587,13 +587,13 @@ IsiGaji hitungGaji({
       benV = d.toko <= 0 || setelan.visitTarget <= 0
           ? 0
           : gajiMround(
-              pct * setelan.salesVisit * (scanPct / setelan.visitTarget),
+              setelan.salesVisit * (scanPct / setelan.visitTarget),
               500,
             );
       benE = d.toko <= 0 || setelan.ecTarget <= 0
           ? 0
           : gajiMround(
-              pct * setelan.salesEc * (ecPct / setelan.ecTarget),
+              setelan.salesEc * (ecPct / setelan.ecTarget),
               500,
             );
     } else {

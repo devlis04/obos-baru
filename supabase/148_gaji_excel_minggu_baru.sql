@@ -1,5 +1,5 @@
--- Gaji senin >= 12-10-2026: rumus Excel (Visit/EC × net% vs 90/70, kolam 8jt,
--- ongkir 1,6jt, BOP 1jt/truk, pengirim/gudang 1,8jt, admin 900rb, MROUND 500/5000).
+-- Gaji senin >= 12-10-2026: rumus Excel (Visit/EC vs 90/70 tanpa net%, kolam 7jt,
+-- EC 300rb, ongkir 1,6jt, BOP 1jt/truk, pengirim/gudang 1,8jt, admin 900rb).
 -- Senin < 12-10: rumus lama + snapshot toko/target/patokan. 4 poin tidak dihitung.
 -- Jalankan SETELAH 147. Boleh diulang: snapshot tidak ditimpa; patokan baru
 -- hanya diisi sekali. Jangan UPDATE pelanggan di sini.
@@ -13,11 +13,11 @@ ALTER TABLE public.gaji_setelan
     CHECK (ec_target > 0);
 
 COMMENT ON COLUMN public.gaji_setelan.omset_semua IS
-  'Kolam benefit omset semua rute (Excel 8jt). 0 = rumus lama sales_net per rute.';
+  'Kolam benefit omset semua rute (Excel 7jt). 0 = rumus lama sales_net per rute.';
 COMMENT ON COLUMN public.gaji_setelan.visit_target IS
-  'Target scan % (Excel 90). Benefit visit = plafon × net% × (scan% / angka ini).';
+  'Target scan % (Excel 90). Benefit visit = plafon × (scan% / angka ini), tanpa net%.';
 COMMENT ON COLUMN public.gaji_setelan.ec_target IS
-  'Target EC % (Excel 70).';
+  'Target EC % (Excel 70). Benefit EC = plafon × (EC% / angka ini), tanpa net%.';
 
 CREATE TABLE IF NOT EXISTS public.gaji_setelan_snap (
   id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
@@ -78,7 +78,8 @@ BEGIN
     UPDATE public.gaji_setelan SET
       bop_mobil = 1000000,
       ongkir_semua = 1600000,
-      omset_semua = 8000000,
+      omset_semua = 7000000,
+      sales_ec = 300000,
       pengirim = 1800000,
       gudang = 1800000,
       admin = 900000,
@@ -795,7 +796,7 @@ BEGIN
       v_ben_v := 0;
     ELSE
       v_ben_v := public.gaji_mround(
-        v_pct * v_sales_visit * ((v_visit::numeric * 100 / v_toko) / v_visit_tgt),
+        v_sales_visit * ((v_visit::numeric * 100 / v_toko) / v_visit_tgt),
         500
       );
     END IF;
@@ -803,7 +804,7 @@ BEGIN
       v_ben_e := 0;
     ELSE
       v_ben_e := public.gaji_mround(
-        v_pct * v_sales_ec * ((v_ec::numeric * 100 / v_toko) / v_ec_tgt),
+        v_sales_ec * ((v_ec::numeric * 100 / v_toko) / v_ec_tgt),
         500
       );
     END IF;
