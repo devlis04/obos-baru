@@ -301,7 +301,12 @@ class GajiRepo {
           params: {'p_senin': Uang.isoHari(senin)},
         ).timeout(Jaringan.lambat);
       });
-      lapangan.addAll(_petaEmailNilai(hasil));
+      final overlay = _petaEmailNilai(hasil);
+      for (final e in overlay.entries) {
+        if (e.value > (lapangan[e.key] ?? 0)) {
+          lapangan[e.key] = e.value;
+        }
+      }
     } catch (_) {}
     return lapangan;
   }
