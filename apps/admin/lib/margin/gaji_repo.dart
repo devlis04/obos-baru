@@ -129,6 +129,7 @@ class BarisGajiSales {
     required this.benVisit,
     required this.ec,
     required this.benEc,
+    required this.benInsentif,
     required this.total,
   });
 
@@ -149,6 +150,7 @@ class BarisGajiSales {
   final int benVisit;
   final int ec;
   final int benEc;
+  final int benInsentif;
   final int total;
 }
 
@@ -382,6 +384,7 @@ class GajiRepo {
             visit: Uang.dari(m['visit']),
             toko: toko,
             ec: Uang.dari(m['ec']),
+            omsetActual: Uang.dari(m['omset_actual']),
           ),
           hari: CapaianDash.kosong,
         ),
@@ -497,6 +500,17 @@ int gajiMround(num n, int kelipatan) {
   return ((n / kelipatan).round()) * kelipatan;
 }
 
+int gajiInsentifOmset({
+  required bool rumusExcel,
+  required int netActual,
+  required int netTarget,
+}) {
+  if (!rumusExcel || netTarget <= 0) return 0;
+  final pct = netActual / netTarget;
+  if (pct < 0.80) return 0;
+  return (pct * 300000).round();
+}
+
 IsiGaji hitungGaji({
   required GajiSetelan setelan,
   required List<BarisMarginRute> ruteMargin,
@@ -508,6 +522,7 @@ IsiGaji hitungGaji({
   bool rumusExcel = false,
 }) {
   final netAkt = {for (final r in ruteMargin) r.rute: r.netMargin};
+  final omsetAkt = {for (final r in ruteMargin) r.rute: r.omset};
   final petaPeng = {for (final r in ruteMargin) r.rute: r.rutePengirim};
 
   final draf = <_DrafSales>[];
@@ -520,6 +535,9 @@ IsiGaji hitungGaji({
         pengirim: petaPeng[k.rute] ?? '',
         omset: omsetRute[k.rute] ?? k.targetOmset,
         persen: rasioRute[k.rute] ?? k.targetPersen,
+        omsetActual: k.minggu.omsetActual > 0
+            ? k.minggu.omsetActual
+            : (omsetAkt[k.rute] ?? 0),
         netActual: netAkt[k.rute] ?? 0,
         toko: k.minggu.targetVisit,
         visit: k.minggu.visit,
@@ -609,6 +627,11 @@ IsiGaji hitungGaji({
       benE =
           d.toko <= 0 ? 0 : ((setelan.salesEc * d.ec) / d.toko).round();
     }
+    final benIns = gajiInsentifOmset(
+      rumusExcel: rumusExcel,
+      netActual: d.netActual,
+      netTarget: netT,
+    );
     sales.add(
       BarisGajiSales(
         rute: d.rute,
@@ -628,7 +651,8 @@ IsiGaji hitungGaji({
         benVisit: benV,
         ec: d.ec,
         benEc: benE,
-        total: benNet + benV + benE,
+        benInsentif: benIns,
+        total: benNet + benV + benE + benIns,
       ),
     );
   }
@@ -772,6 +796,7 @@ class _DrafSales {
     required this.pengirim,
     required this.omset,
     required this.persen,
+    required this.omsetActual,
     required this.netActual,
     required this.toko,
     required this.visit,
@@ -784,6 +809,7 @@ class _DrafSales {
   int omset;
   double persen;
   int margin = 0;
+  final int omsetActual;
   final int netActual;
   final int toko;
   final int visit;

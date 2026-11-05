@@ -62,7 +62,7 @@ class _GajiLayarState extends State<GajiLayar> {
             ? 'Tidak ada internet. Benefit belum bisa dimuat.'
             : e is PostgrestException && e.message.trim().isNotEmpty
                 ? e.message.trim()
-                : 'Benefit belum bisa dimuat. Jalankan SQL 134.';
+                : 'Benefit belum bisa dimuat. Jalankan SQL 158.';
       });
       tampilPesan(context, _gagal!);
     }
@@ -205,6 +205,20 @@ class _GajiLayarState extends State<GajiLayar> {
                                         const Divider(height: 6),
                                         _slotCapai(
                                           _barisCapai(
+                                            label: 'Total omset',
+                                            warna: theme.colorScheme.primary,
+                                            targetText: Uang.rp(
+                                              minggu.omsetTarget,
+                                            ),
+                                            actualText: Uang.rp(
+                                              minggu.omsetActual,
+                                            ),
+                                            persentase: minggu.pctOmset,
+                                          ),
+                                        ),
+                                        const Divider(height: 2),
+                                        _slotCapai(
+                                          _barisCapai(
                                             label: 'Rasio laba',
                                             warna: Colors.green,
                                             targetText: _teksRasio(
@@ -219,17 +233,20 @@ class _GajiLayarState extends State<GajiLayar> {
                                         const Divider(height: 2),
                                         _slotCapai(
                                           _barisCapai(
-                                            label: 'Total omset',
-                                            warna: theme.colorScheme.primary,
+                                            label: 'Net',
+                                            warna: Colors.teal,
                                             targetText: Uang.rp(
-                                              minggu.omsetTarget,
+                                              minggu.netTarget,
                                             ),
                                             actualText: Uang.rp(
-                                              minggu.omsetActual,
+                                              minggu.netActual,
                                             ),
-                                            persentase: minggu.pctOmset,
+                                            persentase: minggu.pctNet,
                                             benefitText: Uang.rp(
                                               minggu.benOmset,
+                                            ),
+                                            benefitInsentifText: Uang.rp(
+                                              minggu.benInsentif,
                                             ),
                                           ),
                                         ),
@@ -306,7 +323,12 @@ class _GajiLayarState extends State<GajiLayar> {
     );
   }
 
-  Widget _barisUang(String judul, String nilai, TextStyle style) {
+  Widget _barisUang(
+    String judul,
+    String nilai,
+    TextStyle style, {
+    double lebarJudul = 56,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(left: 14),
       child: SizedBox(
@@ -314,7 +336,7 @@ class _GajiLayarState extends State<GajiLayar> {
         child: Row(
           children: [
             SizedBox(
-              width: 56,
+              width: lebarJudul,
               child: Text(judul, style: style),
             ),
             Expanded(
@@ -350,6 +372,7 @@ class _GajiLayarState extends State<GajiLayar> {
     String? targetText,
     double? persentase,
     String? benefitText,
+    String? benefitInsentifText,
   }) {
     final gayaTarget = TextStyle(
       fontSize: 13,
@@ -404,6 +427,15 @@ class _GajiLayarState extends State<GajiLayar> {
                   if (benefitText != null) ...[
                     const SizedBox(height: 1),
                     _barisUang('Benefit', benefitText, gayaIsi),
+                  ],
+                  if (benefitInsentifText != null) ...[
+                    const SizedBox(height: 1),
+                    _barisUang(
+                      'Benefit insentif',
+                      benefitInsentifText,
+                      gayaIsi,
+                      lebarJudul: 108,
+                    ),
                   ],
                 ],
               ),

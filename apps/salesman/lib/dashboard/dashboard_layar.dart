@@ -628,6 +628,23 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                         child: Align(
                                           alignment: Alignment.centerLeft,
                                           child: _barisTarget(
+                                          label: 'Total omset',
+                                          warna: theme.colorScheme.primary,
+                                          targetText: Uang.rp(_targetOmset),
+                                          orderText: Uang.rp(_omsetMingguOrder),
+                                          packedText: Uang.rp(_omsetMingguPacked),
+                                          actualText: Uang.rp(_omsetMingguActual),
+                                          persentaseOrder: _pctOmset,
+                                          persentasePacked: _pctOmsetPacked,
+                                          persentaseActual: _pctOmsetActual,
+                                        ),
+                                        ),
+                                      ),
+                                      const Divider(height: 2),
+                                      Expanded(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Rasio laba',
                                           warna: Colors.green,
                                           targetText:
@@ -647,23 +664,6 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                           persentaseOrder: _pctLaba,
                                           persentasePacked: _pctLabaPacked,
                                           persentaseActual: _pctLabaActual,
-                                        ),
-                                        ),
-                                      ),
-                                      const Divider(height: 2),
-                                      Expanded(
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: _barisTarget(
-                                          label: 'Total omset',
-                                          warna: theme.colorScheme.primary,
-                                          targetText: Uang.rp(_targetOmset),
-                                          orderText: Uang.rp(_omsetMingguOrder),
-                                          packedText: Uang.rp(_omsetMingguPacked),
-                                          actualText: Uang.rp(_omsetMingguActual),
-                                          persentaseOrder: _pctOmset,
-                                          persentasePacked: _pctOmsetPacked,
-                                          persentaseActual: _pctOmsetActual,
                                         ),
                                         ),
                                       ),
@@ -741,6 +741,18 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                                 children: [
                                                   Expanded(
                                                     child: _kotakHari(
+                                                      label: 'Omset',
+                                                      warna: theme.colorScheme.primary,
+                                                      orderText: Uang.rp(_omsetHariOrder),
+                                                      packedText:
+                                                          Uang.rp(_omsetHariPacked),
+                                                      actualText:
+                                                          Uang.rp(_omsetHariActual),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: _kotakHari(
                                                       label: 'Rasio laba',
                                                       warna: Colors.green,
                                                       orderText: _teksRasio(
@@ -755,18 +767,6 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                                         _omsetHariActual,
                                                         _labaHariActual,
                                                       ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Expanded(
-                                                    child: _kotakHari(
-                                                      label: 'Omset',
-                                                      warna: theme.colorScheme.primary,
-                                                      orderText: Uang.rp(_omsetHariOrder),
-                                                      packedText:
-                                                          Uang.rp(_omsetHariPacked),
-                                                      actualText:
-                                                          Uang.rp(_omsetHariActual),
                                                     ),
                                                   ),
                                                 ],

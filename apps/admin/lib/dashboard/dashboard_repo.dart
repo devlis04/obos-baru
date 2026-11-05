@@ -72,6 +72,7 @@ class CapaianDash {
     required int visit,
     required int toko,
     required int ec,
+    int omsetActual = 0,
   }) {
     final t = toko < 1 ? 1 : toko;
     return CapaianDash(
@@ -79,7 +80,7 @@ class CapaianDash {
       labaOrder: 0,
       omsetKiriman: 0,
       labaKiriman: 0,
-      omsetActual: 0,
+      omsetActual: omsetActual,
       labaActual: 0,
       ecOrder: 0,
       ecKiriman: 0,

@@ -605,7 +605,7 @@ class SetoranRepo {
         'p_rute': rute,
         ..._pBuku(idBuku),
       },
-    ).timeout(Jaringan.lambat);
+    ).timeout(const Duration(seconds: 45));
     if (hasil is! Map) {
       return RinciSetoran(jenis: jenis, rute: rute);
     }

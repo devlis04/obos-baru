@@ -110,9 +110,10 @@ class _BerandaGudangLayarState extends State<BerandaGudangLayar> {
       tanggalBuku.day,
     );
     if (_hariSama(tgl, label)) return true;
-    if (!_hariSama(tgl, hariIni)) return false;
-    if (hariIni.isBefore(label)) return false;
-    return !hariIni.isAfter(_hariBukuBerikut(label));
+    final akhir = _hariBukuBerikut(label);
+    if (hariIni.isBefore(label) || hariIni.isAfter(akhir)) return false;
+    if (tgl.isBefore(label) || tgl.isAfter(akhir)) return false;
+    return true;
   }
 
   Future<void> _muatData({bool diam = false}) async {

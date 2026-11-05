@@ -753,6 +753,7 @@ class _DialogGajiState extends State<_DialogGaji> {
     int benV,
     int ec,
     int benE,
+    int benIns,
     int total,
   })
   _totSales(IsiGaji isi) {
@@ -766,6 +767,7 @@ class _DialogGajiState extends State<_DialogGaji> {
     var benV = 0;
     var ec = 0;
     var benE = 0;
+    var benIns = 0;
     var total = 0;
     for (final s in isi.sales) {
       final o = Uang.angkaTeks(
@@ -782,6 +784,7 @@ class _DialogGajiState extends State<_DialogGaji> {
       benV += s.benVisit;
       ec += s.ec;
       benE += s.benEc;
+      benIns += s.benInsentif;
       total += s.total;
     }
     return (
@@ -796,6 +799,7 @@ class _DialogGajiState extends State<_DialogGaji> {
       benV: benV,
       ec: ec,
       benE: benE,
+      benIns: benIns,
       total: total,
     );
   }
@@ -847,6 +851,10 @@ class _DialogGajiState extends State<_DialogGaji> {
       _lebarKolom('Ben. visit', [
         Uang.rp(t.benV),
         for (final s in isi.sales) Uang.rp(s.benVisit),
+      ]),
+      _lebarKolom('Ins. omset', [
+        Uang.rp(t.benIns),
+        for (final s in isi.sales) Uang.rp(s.benInsentif),
       ]),
       _lebarKolom('Total', [
         Uang.rp(t.total),
@@ -1115,6 +1123,7 @@ class _DialogGajiState extends State<_DialogGaji> {
             _selSales('Ben. EC', kepala: true),
             _selSales('Visit', kepala: true),
             _selSales('Ben. visit', kepala: true),
+            _selSales('Ins. omset', kepala: true),
             _selSales('Total', kepala: true),
           ],
         ),
@@ -1135,6 +1144,7 @@ class _DialogGajiState extends State<_DialogGaji> {
               _selSales(Uang.rp(s.benEc)),
               _selSales('${s.visit}/${s.toko}'),
               _selSales(Uang.rp(s.benVisit)),
+              _selSales(Uang.rp(s.benInsentif)),
               _selSales(Uang.rp(s.total)),
             ],
           ),
@@ -1151,6 +1161,7 @@ class _DialogGajiState extends State<_DialogGaji> {
             _selSales(Uang.rp(t.benE), tebal: true, abu: true),
             _selSales('${t.visit}/${t.toko}', tebal: true, abu: true),
             _selSales(Uang.rp(t.benV), tebal: true, abu: true),
+            _selSales(Uang.rp(t.benIns), tebal: true, abu: true),
             _selSales(Uang.rp(t.total), tebal: true, abu: true),
           ],
         ),

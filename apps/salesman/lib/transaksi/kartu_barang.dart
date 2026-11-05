@@ -51,6 +51,12 @@ class KartuBarang extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    _chip(
+                      'Sisa stok ${_teksQty(barang.stok)}',
+                      Icons.inventory_2_outlined,
+                      warna: barang.stok <= 0 ? Colors.red : Tema.seed,
+                    ),
+                    const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
@@ -160,25 +166,34 @@ class KartuBarang extends StatelessWidget {
     );
   }
 
-  static Widget _chip(String label, IconData icon) {
+  static String _teksQty(num n) {
+    if (n == n.roundToDouble()) return '${n.round()}';
+    return n
+        .toStringAsFixed(4)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '')
+        .replaceAll('.', ',');
+  }
+
+  static Widget _chip(String label, IconData icon, {Color warna = Tema.seed}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(Tema.pxSudut),
-        border: Border.all(color: Tema.seed, width: 1.2),
+        border: Border.all(color: warna, width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: Tema.seed),
+          Icon(icon, size: 13, color: warna),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Tema.seed,
+              color: warna,
             ),
           ),
         ],

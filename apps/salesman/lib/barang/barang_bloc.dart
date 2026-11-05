@@ -35,6 +35,8 @@ class BarangBloc extends Bloc<BarangEvent, BarangState> {
       );
       final ubah = KatalogBerubah.bandingkan(lokal: lokal, server: cloud);
       await PesanKatalogStore.simpanDari(ubah);
+      final masuk = await _repo.masukBuku();
+      await PesanKatalogStore.simpanMasuk(masuk);
       emit(BarangSiap(cloud, notices: await PesanKatalogStore.semua()));
     } catch (_) {
       if (lokal.isNotEmpty) {

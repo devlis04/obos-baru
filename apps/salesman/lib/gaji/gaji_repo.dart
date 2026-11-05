@@ -13,10 +13,14 @@ class IsiGajiSales {
     required this.rasioActual,
     required this.rasioTarget,
     required this.pctRasio,
+    required this.netActual,
+    required this.netTarget,
+    required this.pctNet,
     required this.omsetActual,
     required this.omsetTarget,
     required this.pctOmset,
     required this.benOmset,
+    required this.benInsentif,
     required this.ec,
     required this.ecTarget,
     required this.pctEc,
@@ -36,10 +40,14 @@ class IsiGajiSales {
   final double rasioActual;
   final double rasioTarget;
   final double pctRasio;
+  final int netActual;
+  final int netTarget;
+  final double pctNet;
   final int omsetActual;
   final int omsetTarget;
   final double pctOmset;
   final int benOmset;
+  final int benInsentif;
   final int ec;
   final int ecTarget;
   final double pctEc;
@@ -60,10 +68,14 @@ class IsiGajiSales {
       rasioActual: _desimal(m['rasio_actual']),
       rasioTarget: _desimal(m['rasio_target']),
       pctRasio: _desimal(m['pct_rasio']),
+      netActual: Uang.dari(m['net_actual']),
+      netTarget: Uang.dari(m['net_target']),
+      pctNet: _desimal(m['pct_net']),
       omsetActual: Uang.dari(m['omset_actual']),
       omsetTarget: Uang.dari(m['omset_target']),
       pctOmset: _desimal(m['pct_omset']),
       benOmset: Uang.dari(m['ben_omset']),
+      benInsentif: Uang.dari(m['ben_insentif']),
       ec: Uang.dari(m['ec']),
       ecTarget: Uang.dari(m['ec_target']).clamp(1, 999999),
       pctEc: _desimal(m['pct_ec']),

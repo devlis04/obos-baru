@@ -103,7 +103,7 @@ Future<void> bukaRinciSetoran({
       context,
       Jaringan.mati(e)
           ? 'Tidak ada internet. Rincian belum bisa dibuka.'
-          : 'Rincian belum bisa dibaca.',
+          : pesanGagal(e, 'Rincian belum bisa dibaca.'),
     );
     return;
   }

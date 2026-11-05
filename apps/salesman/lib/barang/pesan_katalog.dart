@@ -4,6 +4,34 @@ import 'package:obos_core/obos_core.dart';
 import '../uang.dart';
 import 'barang.dart';
 
+class MasukStok {
+  const MasukStok({
+    required this.idBuku,
+    required this.idBarang,
+    required this.nama,
+    required this.qty,
+  });
+
+  final int idBuku;
+  final String idBarang;
+  final String nama;
+  final num qty;
+
+  factory MasukStok.dari(Map<String, dynamic> m) {
+    num q(dynamic v) {
+      if (v is num) return v;
+      return num.tryParse(v?.toString().replaceAll(',', '.') ?? '') ?? 0;
+    }
+
+    return MasukStok(
+      idBuku: (m['id_setoran_buku'] as num?)?.toInt() ?? 0,
+      idBarang: m['id_barang']?.toString() ?? '',
+      nama: m['nama_barang']?.toString() ?? '',
+      qty: q(m['qty']),
+    );
+  }
+}
+
 class HargaBerubah {
   const HargaBerubah({
     required this.id,
@@ -185,6 +213,44 @@ class PesanKatalogStore {
       _kunci,
       jsonEncode(daftar.map((e) => e.toJson()).toList()),
     );
+  }
+
+  static String _teksQty(num n) {
+    if (n == n.roundToDouble()) return '${n.round()}';
+    return n
+        .toStringAsFixed(4)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '')
+        .replaceAll('.', ',');
+  }
+
+  static Future<void> simpanMasuk(List<MasukStok> masuk) async {
+    if (masuk.isEmpty) return;
+    final list = await semua();
+    final existing = {for (final e in list) e.id};
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var tambah = false;
+    for (final item in masuk) {
+      final id =
+          'masuk|${item.idBuku}|${item.idBarang}|${_teksQty(item.qty)}';
+      if (existing.contains(id)) continue;
+      list.add(
+        PesanKatalog(
+          id: id,
+          jenis: 'masuk',
+          judul: 'Barang masuk',
+          isi: '${item.nama} (${item.idBarang}) +${_teksQty(item.qty)}',
+          dibuatPada: now,
+        ),
+      );
+      existing.add(id);
+      tambah = true;
+    }
+    if (!tambah) return;
+    list.sort((a, b) => a.dibuatPada.compareTo(b.dibuatPada));
+    final dipotong =
+        list.length > _batas ? list.sublist(list.length - _batas) : list;
+    await _tulis(dipotong);
   }
 
   static Future<void> simpanDari(KatalogBerubah notice) async {

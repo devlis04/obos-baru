@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../jaringan.dart';
 import 'barang.dart';
 import 'barang_cache.dart';
+import 'pesan_katalog.dart';
 
 class BarangRepo {
   BarangRepo(this._sb);
@@ -15,6 +16,44 @@ class BarangRepo {
 
   Future<List<Barang>> unduh({Duration? batas}) async {
     final tunggu = batas ?? Jaringan.lambat;
+    final rows = await _unduhSisaGudang(tunggu) ?? await _unduhMaster(tunggu);
+    final daftar =
+        rows.map(Barang.fromJson).where((b) => b.id.isNotEmpty).toList();
+    await BarangCache.simpan(daftar);
+    return daftar;
+  }
+
+  Future<List<MasukStok>> masukBuku({Duration? batas}) async {
+    try {
+      final hasil = await _sb
+          .rpc('sales_barang_masuk_buku')
+          .timeout(batas ?? Jaringan.cepat);
+      if (hasil is! List) return const [];
+      return [
+        for (final e in hasil)
+          if (e is Map)
+            MasukStok.dari(Map<String, dynamic>.from(e)),
+      ].where((e) => e.idBarang.isNotEmpty && e.qty > 0 && e.idBuku > 0).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> _unduhSisaGudang(Duration tunggu) async {
+    try {
+      final hasil =
+          await _sb.rpc('sales_barang_katalog').timeout(tunggu);
+      if (hasil is! List) return null;
+      return [
+        for (final e in hasil)
+          if (e is Map) Map<String, dynamic>.from(e),
+      ];
+    } on PostgrestException {
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _unduhMaster(Duration tunggu) async {
     final rows = <Map<String, dynamic>>[];
     var from = 0;
     const ukuran = 200;
@@ -34,8 +73,6 @@ class BarangRepo {
       if (list.length < ukuran) break;
       from += ukuran;
     }
-    final daftar = rows.map(Barang.fromJson).where((b) => b.id.isNotEmpty).toList();
-    await BarangCache.simpan(daftar);
-    return daftar;
+    return rows;
   }
 }
