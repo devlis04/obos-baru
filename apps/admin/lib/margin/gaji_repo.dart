@@ -20,6 +20,8 @@ class GajiSetelan {
     required this.rasioSales,
     required this.visitTarget,
     required this.ecTarget,
+    required this.insentif,
+    required this.netMin,
   });
 
   final int bopMobil;
@@ -35,21 +37,25 @@ class GajiSetelan {
   final double rasioSales;
   final double visitTarget;
   final double ecTarget;
+  final int insentif;
+  final double netMin;
 
   static const awal = GajiSetelan(
-    bopMobil: 1020000,
-    ongkirSemua: 2000000,
-    salesNet: 800000,
-    salesVisit: 200000,
-    salesEc: 200000,
-    pengirim: 800000,
-    gudang: 500000,
+    bopMobil: 1000000,
+    ongkirSemua: 1600000,
+    salesNet: 600000,
+    salesVisit: 300000,
+    salesEc: 300000,
+    pengirim: 1800000,
+    gudang: 1800000,
     gudangSlot: 4,
-    admin: 800000,
-    omsetSemua: 0,
+    admin: 900000,
+    omsetSemua: 4200000,
     rasioSales: 0,
-    visitTarget: 90,
-    ecTarget: 70,
+    visitTarget: 100,
+    ecTarget: 80,
+    insentif: 300000,
+    netMin: 80,
   );
 
   factory GajiSetelan.dari(Map<String, dynamic> m) {
@@ -65,8 +71,10 @@ class GajiSetelan {
       admin: Uang.dari(m['admin']),
       omsetSemua: Uang.dari(m['omset_semua']),
       rasioSales: _desimal(m['rasio_sales']),
-      visitTarget: _desimal(m['visit_target']) == 0 ? 90 : _desimal(m['visit_target']),
-      ecTarget: _desimal(m['ec_target']) == 0 ? 70 : _desimal(m['ec_target']),
+      visitTarget: _desimal(m['visit_target']) == 0 ? 100 : _desimal(m['visit_target']),
+      ecTarget: _desimal(m['ec_target']) == 0 ? 80 : _desimal(m['ec_target']),
+      insentif: Uang.dari(m['insentif']) == 0 ? 300000 : Uang.dari(m['insentif']),
+      netMin: _desimal(m['net_min']) == 0 ? 80 : _desimal(m['net_min']),
     );
   }
 
@@ -252,6 +260,8 @@ class GajiRepo {
           'p_rasio_sales': s.rasioSales,
           'p_visit_target': s.visitTarget,
           'p_ec_target': s.ecTarget,
+          'p_insentif': s.insentif,
+          'p_net_min': s.netMin,
         },
       ).timeout(Jaringan.lambat);
     });
@@ -504,11 +514,13 @@ int gajiInsentifOmset({
   required bool rumusExcel,
   required int netActual,
   required int netTarget,
+  required int insentif,
+  required double netMin,
 }) {
-  if (!rumusExcel || netTarget <= 0) return 0;
+  if (!rumusExcel || netTarget <= 0 || insentif <= 0) return 0;
   final pct = netActual / netTarget;
-  if (pct < 0.80) return 0;
-  return (pct * 300000).round();
+  if (pct * 100 < netMin) return 0;
+  return (pct * insentif).round();
 }
 
 IsiGaji hitungGaji({
@@ -601,10 +613,7 @@ IsiGaji hitungGaji({
     late final int benV;
     late final int benE;
     if (rumusExcel) {
-      final ah = totNetT <= 0
-          ? 0
-          : gajiMround(setelan.omsetSemua * netT / totNetT, 5000);
-      benNet = gajiMround(pct * ah, 500);
+      benNet = gajiMround(pct * setelan.salesNet, 500);
       final scanPct = d.toko <= 0 ? 0.0 : d.visit * 100.0 / d.toko;
       final ecPct = d.toko <= 0 ? 0.0 : d.ec * 100.0 / d.toko;
       benV = d.toko <= 0 || setelan.visitTarget <= 0
@@ -631,6 +640,8 @@ IsiGaji hitungGaji({
       rumusExcel: rumusExcel,
       netActual: d.netActual,
       netTarget: netT,
+      insentif: setelan.insentif,
+      netMin: setelan.netMin,
     );
     sales.add(
       BarisGajiSales(

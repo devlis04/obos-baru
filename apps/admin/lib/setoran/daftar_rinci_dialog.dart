@@ -191,8 +191,8 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
           idBuku: widget.data.idBuku,
         ),
         wajib: widget.data.jenis == 'batal'
-            ? CekRinciSetoran.kunciSemuaBarang(widget.data.toko)
-            : CekRinciSetoran.kunciSemuaNota(widget.data.toko),
+            ? CekRinciSetoran.kunciBarangBatal(widget.data.toko)
+            : CekRinciSetoran.kunciNotaPending(widget.data.toko),
       );
       return;
     }
@@ -476,10 +476,10 @@ class _DialogKirimanTokoState extends State<DialogKirimanToko> {
                     ruteCek: widget.data.rute,
                     lihatSaja: widget.lihatSaja,
                     wajibBarang: widget.data.jenis == 'batal'
-                        ? CekRinciSetoran.kunciSemuaBarang(widget.data.toko)
+                        ? CekRinciSetoran.kunciBarangBatal(widget.data.toko)
                         : const {},
                     wajibNota: widget.data.jenis == 'pending'
-                        ? CekRinciSetoran.kunciSemuaNota(widget.data.toko)
+                        ? CekRinciSetoran.kunciNotaPending(widget.data.toko)
                         : const {},
                   ),
                 ),
@@ -1252,7 +1252,7 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
         ),
       ),
     );
-    if (!_cekNota) return nama;
+    if (!_cekNota || n.pending <= 0) return nama;
     final id = CekRinciSetoran.kunciNota(widget.toko, n);
     return Row(
       children: [
@@ -1900,7 +1900,7 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
 
   Widget _namaBarang(NotaSetoranRinci nota, SkuSetoranRinci s) {
     final nama = Text(s.nama);
-    if (!_cekBarang) return nama;
+    if (!_cekBarang || !CekRinciSetoran.adaBatal(s)) return nama;
     final id = CekRinciSetoran.kunciBarang(widget.toko, nota, s);
     return Row(
       children: [

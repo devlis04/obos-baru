@@ -214,6 +214,8 @@ class _DialogGajiState extends State<_DialogGaji> {
     p('pool', s.omsetSemua);
     p('vispct', s.visitTarget.round());
     p('ecpct', s.ecTarget.round());
+    p('ins', s.insentif);
+    p('nmin', s.netMin.round());
   }
 
   TextEditingController _c(String k, int n) {
@@ -240,6 +242,8 @@ class _DialogGajiState extends State<_DialogGaji> {
       rasioSales: _setelan.rasioSales,
       visitTarget: n('vispct', _setelan.visitTarget.round()).toDouble(),
       ecTarget: n('ecpct', _setelan.ecTarget.round()).toDouble(),
+      insentif: n('ins', _setelan.insentif),
+      netMin: n('nmin', _setelan.netMin.round()).toDouble(),
     );
   }
 
@@ -664,11 +668,13 @@ class _DialogGajiState extends State<_DialogGaji> {
   static const _patokanIsi = [
     ('BOP / mobil', 'bop'),
     ('Ongkir semua', 'ongkir'),
-    ('Kolam omset', 'pool'),
+    ('Plafon net', 'snet'),
     ('Sales visit', 'svis'),
     ('Sales EC', 'sec'),
     ('Scan %', 'vispct'),
     ('EC %', 'ecpct'),
+    ('Insentif', 'ins'),
+    ('Net %', 'nmin'),
     ('Pengirim', 'kirim'),
     ('Gudang', 'gud'),
     ('Slot gudang', 'slot'),
@@ -930,11 +936,13 @@ class _DialogGajiState extends State<_DialogGaji> {
     for (final k in const [
       'bop',
       'ongkir',
-      'pool',
+      'snet',
       'svis',
       'sec',
       'vispct',
       'ecpct',
+      'ins',
+      'nmin',
       'kirim',
       'gud',
       'slot',
@@ -952,11 +960,13 @@ class _DialogGajiState extends State<_DialogGaji> {
     final awal = switch (kunci) {
       'bop' => _setelan.bopMobil,
       'ongkir' => _setelan.ongkirSemua,
-      'pool' => _setelan.omsetSemua,
+      'snet' => _setelan.salesNet,
       'svis' => _setelan.salesVisit,
       'sec' => _setelan.salesEc,
       'vispct' => _setelan.visitTarget.round(),
       'ecpct' => _setelan.ecTarget.round(),
+      'ins' => _setelan.insentif,
+      'nmin' => _setelan.netMin.round(),
       'kirim' => _setelan.pengirim,
       'gud' => _setelan.gudang,
       'slot' => _setelan.gudangSlot,

@@ -30,11 +30,22 @@ class CekRinciSetoran extends ChangeNotifier {
   ) =>
       '${t.idPelanggan}|${t.rutePengirim}|${n.id}|${s.idBarang}';
 
+  static bool adaBatal(SkuSetoranRinci s) => s.qtyBatal > 0 || s.batal > 0;
+
   static Set<String> kunciSemuaBarang(List<TokoSetoranRinci> toko) {
     return {
       for (final t in toko)
         for (final n in t.notaList)
           for (final s in n.sku) kunciBarang(t, n, s),
+    };
+  }
+
+  static Set<String> kunciBarangBatal(List<TokoSetoranRinci> toko) {
+    return {
+      for (final t in toko)
+        for (final n in t.notaList)
+          for (final s in n.sku)
+            if (adaBatal(s)) kunciBarang(t, n, s),
     };
   }
 
@@ -45,6 +56,14 @@ class CekRinciSetoran extends ChangeNotifier {
     return {
       for (final t in toko)
         for (final n in t.notaList) kunciNota(t, n),
+    };
+  }
+
+  static Set<String> kunciNotaPending(List<TokoSetoranRinci> toko) {
+    return {
+      for (final t in toko)
+        for (final n in t.notaList)
+          if (n.pending > 0) kunciNota(t, n),
     };
   }
 
