@@ -18,6 +18,8 @@ class Barang {
     required this.jualStrat4,
     required this.minStrat5,
     required this.jualStrat5,
+    this.minStrat6 = 0,
+    this.jualStrat6 = 0,
     required this.pengurangStrata,
     required this.aktif,
     this.idSupplierUtama = 0,
@@ -42,6 +44,8 @@ class Barang {
   final int jualStrat4;
   final int minStrat5;
   final int jualStrat5;
+  final int minStrat6;
+  final int jualStrat6;
   final int pengurangStrata;
   final bool aktif;
   final int idSupplierUtama;
@@ -60,6 +64,7 @@ class Barang {
       minStrat3 == o.minStrat3 &&
       minStrat4 == o.minStrat4 &&
       minStrat5 == o.minStrat5 &&
+      minStrat6 == o.minStrat6 &&
       pengurangStrata == o.pengurangStrata &&
       aktif == o.aktif &&
       idSupplierUtama == o.idSupplierUtama;
@@ -113,6 +118,8 @@ class Barang {
         'jual_strat_4': jualStrat4,
         'min_strat_5': minStrat5,
         'jual_strat_5': jualStrat5,
+        'min_strat_6': minStrat6,
+        'jual_strat_6': jualStrat6,
         'pengurang_strata': pengurangStrata,
         'aktif': aktif,
       };
@@ -143,6 +150,8 @@ class Barang {
       jualStrat4: n(json['jual_strat_4']),
       minStrat5: n(json['min_strat_5']),
       jualStrat5: n(json['jual_strat_5']),
+      minStrat6: n(json['min_strat_6']),
+      jualStrat6: n(json['jual_strat_6']),
       pengurangStrata: n(json['pengurang_strata']),
       aktif: json['aktif'] != false,
       idSupplierUtama: n(json['id_supplier_utama']),

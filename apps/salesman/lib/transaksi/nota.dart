@@ -27,6 +27,8 @@ class BarisNota {
     this.jualStrat4 = 0,
     this.minStrat5 = 0,
     this.jualStrat5 = 0,
+    this.minStrat6 = 0,
+    this.jualStrat6 = 0,
   });
 
   final String idBarang;
@@ -56,6 +58,8 @@ class BarisNota {
   final int jualStrat4;
   final int minStrat5;
   final int jualStrat5;
+  final int minStrat6;
+  final int jualStrat6;
 
   String get kunciGrup {
     final g = idGrup.trim();
@@ -77,6 +81,7 @@ class BarisNota {
     cek(minStrat3, jualStrat3);
     cek(minStrat4, jualStrat4);
     cek(minStrat5, jualStrat5);
+    cek(minStrat6, jualStrat6);
     return harga;
   }
 
@@ -145,6 +150,8 @@ class BarisNota {
       jualStrat4: n(json['jual_strat_4']),
       minStrat5: n(json['min_strat_5']),
       jualStrat5: n(json['jual_strat_5']),
+      minStrat6: n(json['min_strat_6']),
+      jualStrat6: n(json['jual_strat_6']),
     );
   }
 
@@ -203,6 +210,8 @@ class BarisNota {
           jualStrat4: it.jualStrat4,
           minStrat5: it.minStrat5,
           jualStrat5: it.jualStrat5,
+          minStrat6: it.minStrat6,
+          jualStrat6: it.jualStrat6,
         ),
     ];
   }

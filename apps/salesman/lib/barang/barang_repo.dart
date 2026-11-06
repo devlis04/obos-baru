@@ -12,7 +12,8 @@ class BarangRepo {
   static const _kolom =
       'id_barang, id_grup, nama_barang, kategori, stok, harga_beli, harga_jual, '
       'min_strat_1, jual_strat_1, min_strat_2, jual_strat_2, min_strat_3, jual_strat_3, '
-      'min_strat_4, jual_strat_4, min_strat_5, jual_strat_5';
+      'min_strat_4, jual_strat_4, min_strat_5, jual_strat_5, '
+      'min_strat_6, jual_strat_6';
 
   Future<List<Barang>> unduh({Duration? batas}) async {
     final tunggu = batas ?? Jaringan.lambat;

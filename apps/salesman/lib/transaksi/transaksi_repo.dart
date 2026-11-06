@@ -38,7 +38,7 @@ class TransaksiRepo {
       'subtotal_beli_order, '
       'min_strat_1, jual_strat_1, min_strat_2, jual_strat_2, '
       'min_strat_3, jual_strat_3, min_strat_4, jual_strat_4, '
-      'min_strat_5, jual_strat_5';
+      'min_strat_5, jual_strat_5, min_strat_6, jual_strat_6';
 
   static const _kolom =
       'id_transaksi, id_pelanggan, nama_pelanggan, rute, status, '

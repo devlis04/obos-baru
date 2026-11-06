@@ -99,8 +99,8 @@ class _BarangPanelState extends State<BarangPanel> {
     _jual = TextEditingController();
     _pengurang = TextEditingController();
     _stok = TextEditingController();
-    _min = List.generate(5, (_) => TextEditingController());
-    _harga = List.generate(5, (_) => TextEditingController());
+    _min = List.generate(6, (_) => TextEditingController());
+    _harga = List.generate(6, (_) => TextEditingController());
     _isiDari(widget.awal);
     _beli.addListener(_ubahHarga);
     _jual.addListener(_ubahHarga);
@@ -144,8 +144,9 @@ class _BarangPanelState extends State<BarangPanel> {
       a?.minStrat3 ?? 0,
       a?.minStrat4 ?? 0,
       a?.minStrat5 ?? 0,
+      a?.minStrat6 ?? 0,
     ];
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       _min[i].text = mins[i] == 0 ? '' : '${mins[i]}';
     }
     _aktif = a?.aktif ?? true;
@@ -218,7 +219,7 @@ class _BarangPanelState extends State<BarangPanel> {
   }
 
   void _isiJualStrata() {
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       final n = _jualStrata(i);
       final teks = n <= 0 ? '' : '$n';
       if (_harga[i].text != teks) _harga[i].text = teks;
@@ -287,6 +288,8 @@ class _BarangPanelState extends State<BarangPanel> {
       jualStrat4: _jualStrata(3),
       minStrat5: _angka(_min[4]),
       jualStrat5: _jualStrata(4),
+      minStrat6: _angka(_min[5]),
+      jualStrat6: _jualStrata(5),
       pengurangStrata: _angka(_pengurang),
       aktif: _aktif,
     );
@@ -325,7 +328,7 @@ class _BarangPanelState extends State<BarangPanel> {
       return;
     }
     if (!_akanSkalakan) {
-      for (var i = 0; i < 5; i++) {
+      for (var i = 0; i < 6; i++) {
         if (_min[i].text.trim().isEmpty) continue;
         if (_jualStrata(i) <= _angka(_beli)) {
           tampilPesan(
@@ -686,7 +689,7 @@ class _BarangPanelState extends State<BarangPanel> {
                     const SizedBox(height: 4),
                     _angkaField(_pengurang, 'Pengurang', min: 100, max: 120),
                     const SizedBox(height: 6),
-                    for (var i = 0; i < 5; i++)
+                    for (var i = 0; i < 6; i++)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Wrap(

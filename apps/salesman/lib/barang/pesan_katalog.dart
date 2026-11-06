@@ -117,7 +117,9 @@ class KatalogBerubah {
         a.minStrat4 != b.minStrat4 ||
         a.jualStrat4 != b.jualStrat4 ||
         a.minStrat5 != b.minStrat5 ||
-        a.jualStrat5 != b.jualStrat5;
+        a.jualStrat5 != b.jualStrat5 ||
+        a.minStrat6 != b.minStrat6 ||
+        a.jualStrat6 != b.jualStrat6;
   }
 
   static bool _hargaAtauStrata(Barang a, Barang b) {

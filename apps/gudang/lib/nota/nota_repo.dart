@@ -133,6 +133,8 @@ class ItemNota {
     this.jualStrat4 = 0,
     this.minStrat5 = 0,
     this.jualStrat5 = 0,
+    this.minStrat6 = 0,
+    this.jualStrat6 = 0,
   });
 
   factory ItemNota.dari(Map<String, dynamic> r) {
@@ -166,6 +168,8 @@ class ItemNota {
       jualStrat4: _n(r['jual_strat_4']),
       minStrat5: _n(r['min_strat_5']),
       jualStrat5: _n(r['jual_strat_5']),
+      minStrat6: _n(r['min_strat_6']),
+      jualStrat6: _n(r['jual_strat_6']),
     );
   }
 
@@ -192,6 +196,8 @@ class ItemNota {
   final int jualStrat4;
   final int minStrat5;
   final int jualStrat5;
+  final int minStrat6;
+  final int jualStrat6;
 
   int get hargaDasarKunci =>
       hargaJualKunci > 0 ? hargaJualKunci : hargaJualOrder;

@@ -49,6 +49,8 @@ class BarangPdf {
       'Jual 4',
       'Min 5',
       'Jual 5',
+      'Min 6',
+      'Jual 6',
     ];
     final rows = urut.map((item) {
       return [
@@ -65,6 +67,8 @@ class BarangPdf {
         _strataJual(item.minStrat4, item.jualStrat4),
         _strataMin(item.minStrat5),
         _strataJual(item.minStrat5, item.jualStrat5),
+        _strataMin(item.minStrat6),
+        _strataJual(item.minStrat6, item.jualStrat6),
       ];
     }).toList();
 

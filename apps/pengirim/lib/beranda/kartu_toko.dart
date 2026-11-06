@@ -214,6 +214,8 @@ class ItemNota {
     this.jualStrat4 = 0,
     this.minStrat5 = 0,
     this.jualStrat5 = 0,
+    this.minStrat6 = 0,
+    this.jualStrat6 = 0,
   });
 
   final String idBarang;
@@ -240,6 +242,8 @@ class ItemNota {
   final int jualStrat4;
   final int minStrat5;
   final int jualStrat5;
+  final int minStrat6;
+  final int jualStrat6;
 
   List<({int minimal, int jual})> get strataAktif {
     final strata = <({int minimal, int jual})>[];
@@ -254,6 +258,7 @@ class ItemNota {
     add(minStrat3, jualStrat3);
     add(minStrat4, jualStrat4);
     add(minStrat5, jualStrat5);
+    add(minStrat6, jualStrat6);
     strata.sort((a, b) => a.minimal.compareTo(b.minimal));
     return strata;
   }
@@ -295,6 +300,8 @@ class ItemNota {
       jualStrat4: n(json['jual_strat_4']),
       minStrat5: n(json['min_strat_5']),
       jualStrat5: n(json['jual_strat_5']),
+      minStrat6: n(json['min_strat_6']),
+      jualStrat6: n(json['jual_strat_6']),
     );
   }
 }

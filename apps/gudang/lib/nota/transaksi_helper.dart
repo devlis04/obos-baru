@@ -56,6 +56,8 @@ class TransaksiHelper {
       jualStrat4: it.jualStrat4,
       minStrat5: it.minStrat5,
       jualStrat5: it.jualStrat5,
+      minStrat6: it.minStrat6,
+      jualStrat6: it.jualStrat6,
     );
   }
 

@@ -119,6 +119,8 @@ class _NotaReviewLayarState extends State<NotaReviewLayar> {
               jualStrat4: it.jualStrat4,
               minStrat5: it.minStrat5,
               jualStrat5: it.jualStrat5,
+              minStrat6: it.minStrat6,
+              jualStrat6: it.jualStrat6,
             );
         byId[it.idBarang] = TransaksiHelper.pakaiKunciNota(dasar, it);
       }

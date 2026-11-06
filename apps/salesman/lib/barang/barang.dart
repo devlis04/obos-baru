@@ -23,6 +23,8 @@ class Barang {
     required this.jualStrat4,
     required this.minStrat5,
     required this.jualStrat5,
+    this.minStrat6 = 0,
+    this.jualStrat6 = 0,
   });
 
   final String id;
@@ -42,6 +44,8 @@ class Barang {
   final int jualStrat4;
   final int minStrat5;
   final int jualStrat5;
+  final int minStrat6;
+  final int jualStrat6;
 
   List<BarangStrata> get strataAktif {
     final strata = <BarangStrata>[];
@@ -56,6 +60,7 @@ class Barang {
     add(minStrat3, jualStrat3);
     add(minStrat4, jualStrat4);
     add(minStrat5, jualStrat5);
+    add(minStrat6, jualStrat6);
     strata.sort((a, b) => a.minimal.compareTo(b.minimal));
     return strata;
   }
@@ -78,6 +83,8 @@ class Barang {
         'jual_strat_4': jualStrat4,
         'min_strat_5': minStrat5,
         'jual_strat_5': jualStrat5,
+        'min_strat_6': minStrat6,
+        'jual_strat_6': jualStrat6,
       };
 
   factory Barang.fromJson(Map<String, dynamic> json) {
@@ -105,6 +112,8 @@ class Barang {
       jualStrat4: n(json['jual_strat_4']),
       minStrat5: n(json['min_strat_5']),
       jualStrat5: n(json['jual_strat_5']),
+      minStrat6: n(json['min_strat_6']),
+      jualStrat6: n(json['jual_strat_6']),
     );
   }
 }

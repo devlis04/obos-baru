@@ -45,6 +45,7 @@ class BarangCsv {
     'min_3',
     'min_4',
     'min_5',
+    'min_6',
     'aktif',
     'hapus',
   ];
@@ -66,6 +67,7 @@ class BarangCsv {
         '1500',
         '12',
         '24',
+        '',
         '',
         '',
         '',
@@ -101,6 +103,7 @@ class BarangCsv {
         b.minStrat3 == 0 ? '' : '${b.minStrat3}',
         b.minStrat4 == 0 ? '' : '${b.minStrat4}',
         b.minStrat5 == 0 ? '' : '${b.minStrat5}',
+        b.minStrat6 == 0 ? '' : '${b.minStrat6}',
         b.aktif ? '1' : '0',
         '',
       ]);
@@ -152,6 +155,7 @@ class BarangCsv {
         'min_strat_3': _angka(row['min_3'] ?? row['min_strat_3'] ?? ''),
         'min_strat_4': _angka(row['min_4'] ?? row['min_strat_4'] ?? ''),
         'min_strat_5': _angka(row['min_5'] ?? row['min_strat_5'] ?? ''),
+        'min_strat_6': _angka(row['min_6'] ?? row['min_strat_6'] ?? ''),
         if (aktifTeks.isNotEmpty) 'aktif': _ya(aktifTeks),
         'hapus': hapus,
       });
