@@ -85,6 +85,9 @@ class _GajiLayarState extends State<GajiLayar> {
 
   String _teksRasio(double n) => '${n.toStringAsFixed(2)}%';
 
+  String _teksMargin(num laba) =>
+      (laba / 2 / 1000).toStringAsFixed(1).replaceAll('.', ',');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -235,10 +238,10 @@ class _GajiLayarState extends State<GajiLayar> {
                                           _barisCapai(
                                             label: 'Net',
                                             warna: Colors.teal,
-                                            targetText: Uang.rp(
+                                            targetText: _teksMargin(
                                               minggu.netTarget,
                                             ),
-                                            actualText: Uang.rp(
+                                            actualText: _teksMargin(
                                               minggu.netActual,
                                             ),
                                             persentase: minggu.pctNet,
@@ -284,7 +287,7 @@ class _GajiLayarState extends State<GajiLayar> {
                                           _barisCapai(
                                             label: 'BOP pengirim',
                                             warna: Colors.blueGrey,
-                                            actualText: Uang.rp(
+                                            actualText: _teksMargin(
                                               minggu.bopPengirim,
                                             ),
                                           ),

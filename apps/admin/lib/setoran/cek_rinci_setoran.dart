@@ -32,6 +32,9 @@ class CekRinciSetoran extends ChangeNotifier {
 
   static bool adaBatal(SkuSetoranRinci s) => s.qtyBatal > 0 || s.batal > 0;
 
+  static bool adaRetur(SkuSetoranRinci s) =>
+      s.qtyRetur > 0 || s.nilaiRetur > 0;
+
   static Set<String> kunciSemuaBarang(List<TokoSetoranRinci> toko) {
     return {
       for (final t in toko)
@@ -46,6 +49,15 @@ class CekRinciSetoran extends ChangeNotifier {
         for (final n in t.notaList)
           for (final s in n.sku)
             if (adaBatal(s)) kunciBarang(t, n, s),
+    };
+  }
+
+  static Set<String> kunciBarangRetur(List<TokoSetoranRinci> toko) {
+    return {
+      for (final t in toko)
+        for (final n in t.notaList)
+          for (final s in n.sku)
+            if (adaRetur(s)) kunciBarang(t, n, s),
     };
   }
 

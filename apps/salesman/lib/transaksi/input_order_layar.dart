@@ -502,6 +502,18 @@ class _InputOrderLayarState extends State<InputOrderLayar> {
                           color: theme.colorScheme.primary,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        TransaksiHelper.nilaiMarginKeranjang(
+                          keranjang: _keranjang,
+                          daftar: daftar,
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                     ],
                   ),
                 ],

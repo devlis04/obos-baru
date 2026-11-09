@@ -62,6 +62,9 @@ class _DashboardLayarState extends State<DashboardLayar> {
   double _pctEcPacked = 0;
   double _pctOmsetActual = 0;
   double _pctLabaActual = 0;
+  double _pctMargin = 0;
+  double _pctMarginPacked = 0;
+  double _pctMarginActual = 0;
   double _pctEcActual = 0;
   double _pctVisitActual = 0;
 
@@ -154,6 +157,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
     _pctOmsetActual = _targetOmset > 0 ? data.omsetActual / _targetOmset : 0;
     _pctLabaActual =
         _targetPersenLaba > 0 ? persenActual / _targetPersenLaba : 0;
+    final labaTarget = _labaTarget();
+    _pctMargin = labaTarget > 0 ? data.labaOrder / labaTarget : 0;
+    _pctMarginPacked = labaTarget > 0 ? data.labaKiriman / labaTarget : 0;
+    _pctMarginActual = labaTarget > 0 ? data.labaActual / labaTarget : 0;
     _pctEcActual = data.ecActual / _targetEc;
     _pctVisitActual = data.visit / _targetVisit;
   }
@@ -181,6 +188,15 @@ class _DashboardLayarState extends State<DashboardLayar> {
     final modal = omset - laba;
     if (omset <= 0 || modal <= 0) return '0.00%';
     return '${((laba / modal) * 100).toStringAsFixed(2)}%';
+  }
+
+  double _labaTarget() {
+    if (_targetOmset <= 0 || _targetPersenLaba <= 0) return 0;
+    return _targetOmset * _targetPersenLaba / (100 + _targetPersenLaba);
+  }
+
+  String _teksMargin(num laba) {
+    return (laba / 2 / 1000).toStringAsFixed(1).replaceAll('.', ',');
   }
 
   Future<void> _pilihMinggu() async {
@@ -672,6 +688,25 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                         child: Align(
                                           alignment: Alignment.centerLeft,
                                           child: _barisTarget(
+                                          label: 'Margin',
+                                          warna: Colors.teal,
+                                          targetText: _teksMargin(_labaTarget()),
+                                          orderText: _teksMargin(_labaMingguOrder),
+                                          packedText:
+                                              _teksMargin(_labaMingguPacked),
+                                          actualText:
+                                              _teksMargin(_labaMingguActual),
+                                          persentaseOrder: _pctMargin,
+                                          persentasePacked: _pctMarginPacked,
+                                          persentaseActual: _pctMarginActual,
+                                        ),
+                                        ),
+                                      ),
+                                      const Divider(height: 2),
+                                      Expanded(
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: _barisTarget(
                                           label: 'Effective call',
                                           warna: Colors.orangeAccent,
                                           targetText: '$_targetEc toko',
@@ -765,6 +800,22 @@ class _DashboardLayarState extends State<DashboardLayar> {
                                                       ),
                                                       actualText: _teksRasio(
                                                         _omsetHariActual,
+                                                        _labaHariActual,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: _kotakHari(
+                                                      label: 'Margin',
+                                                      warna: Colors.teal,
+                                                      orderText: _teksMargin(
+                                                        _labaHariOrder,
+                                                      ),
+                                                      packedText: _teksMargin(
+                                                        _labaHariPacked,
+                                                      ),
+                                                      actualText: _teksMargin(
                                                         _labaHariActual,
                                                       ),
                                                     ),

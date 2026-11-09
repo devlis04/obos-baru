@@ -113,6 +113,17 @@ class KartuBarang extends StatelessWidget {
                           ),
                       ],
                     ),
+                    if (qtyInput > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        TransaksiHelper.rp(hargaDinamis * qtyInput),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Tema.seed,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -148,6 +159,18 @@ class KartuBarang extends StatelessWidget {
                           TransaksiHelper.rasioItem(
                             hargaJual: hargaDinamis,
                             hargaBeli: barang.hargaBeli,
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Tema.seed,
+                          ),
+                        ),
+                        Text(
+                          TransaksiHelper.nilaiMarginItem(
+                            hargaJual: hargaDinamis,
+                            hargaBeli: barang.hargaBeli,
+                            qty: qtyInput,
                           ),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,

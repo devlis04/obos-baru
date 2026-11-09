@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obos_core/obos_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../beranda/kartu_toko.dart';
@@ -126,15 +127,35 @@ class _CekNotaLayarState extends State<CekNotaLayar> {
                             fontSize: 12,
                           ),
                         ),
-                        Text(
-                          q <= 0
-                              ? 'Tebus: 0 (batal)'
-                              : 'Tebus: $q × ${Uang.rp(harga)}',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: 12,
-                          ),
-                        ),
+                        q <= 0
+                            ? Text(
+                                'Tebus: 0 (batal)',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 12,
+                                ),
+                              )
+                            : Text.rich(
+                                TextSpan(
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 12,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text:
+                                          'Tebus: $q × ${Uang.rp(harga)} = ',
+                                    ),
+                                    TextSpan(
+                                      text: Uang.rp(harga * q),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Tema.seed,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                         const SizedBox(height: 8),
                         Row(
                           children: [

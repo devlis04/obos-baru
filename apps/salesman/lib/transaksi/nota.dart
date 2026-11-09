@@ -345,14 +345,21 @@ class PotensiToko {
   const PotensiToko({
     required this.rataOrder,
     required this.rasio,
+    required this.margin,
     required this.ada,
   });
 
   final int rataOrder;
   final double? rasio;
+  final double? margin;
   final bool ada;
 
-  static const kosong = PotensiToko(rataOrder: 0, rasio: null, ada: false);
+  static const kosong = PotensiToko(
+    rataOrder: 0,
+    rasio: null,
+    margin: null,
+    ada: false,
+  );
 
   static PotensiToko dari(List<Nota> nota) {
     var bayar = 0;
@@ -372,6 +379,7 @@ class PotensiToko {
     return PotensiToko(
       rataOrder: (bayar / 10).round(),
       rasio: modal > 0 ? (laba / modal) * 100 : null,
+      margin: (laba / 10) / 2 / 1000,
       ada: true,
     );
   }

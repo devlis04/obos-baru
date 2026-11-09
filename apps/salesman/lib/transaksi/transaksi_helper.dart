@@ -92,9 +92,33 @@ class TransaksiHelper {
     return '${(((omset - modal) / modal) * 100).toStringAsFixed(1)}%';
   }
 
+  static String nilaiMarginKeranjang({
+    required Map<String, int> keranjang,
+    required List<Barang> daftar,
+  }) {
+    final modal = totalModal(keranjang: keranjang, daftar: daftar);
+    if (modal <= 0) return '-';
+    final omset = totalNota(keranjang: keranjang, daftar: daftar);
+    return ((omset - modal) / 2 / 1000)
+        .toStringAsFixed(1)
+        .replaceAll('.', ',');
+  }
+
   static String rasioItem({required int hargaJual, required int hargaBeli}) {
     if (hargaBeli <= 0) return '-';
     return '${(((hargaJual - hargaBeli) / hargaBeli) * 100).toStringAsFixed(1)}%';
+  }
+
+  /// ((jual − beli) / 2 / 1000) × qty, ikut harga strata.
+  static String nilaiMarginItem({
+    required int hargaJual,
+    required int hargaBeli,
+    required int qty,
+  }) {
+    if (hargaBeli <= 0) return '-';
+    return ((hargaJual - hargaBeli) / 2 / 1000 * qty)
+        .toStringAsFixed(1)
+        .replaceAll('.', ',');
   }
 
   static String rasioOmset({required int omset, required int modal}) {

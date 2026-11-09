@@ -158,6 +158,15 @@ class _DashboardLayarState extends State<DashboardLayar> {
     return '${_persenLaba(omset, laba).toStringAsFixed(2)}%';
   }
 
+  double _labaTarget(int omset, double persen) {
+    if (omset <= 0 || persen <= 0) return 0;
+    return omset * persen / (100 + persen);
+  }
+
+  String _teksMargin(num laba) {
+    return (laba / 2 / 1000).toStringAsFixed(1).replaceAll('.', ',');
+  }
+
   double _pct(num nilai, num target) {
     if (target <= 0) return 0;
     return nilai / target;
@@ -352,9 +361,28 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 alignment: Alignment.centerLeft,
                 child: _isiTarget(
                   _barisTarget(
+                    label: 'Total omset',
+                    warna: theme.colorScheme.primary,
+                    targetText: Uang.rp(t.targetOmset),
+                    orderText: Uang.rp(m.omsetOrder),
+                    kirimanText: Uang.rp(m.omsetKiriman),
+                    actualText: Uang.rp(m.omsetActual),
+                    persentaseOrder: _pct(m.omsetOrder, t.targetOmset),
+                    persentaseActual: _pct(m.omsetActual, t.targetOmset),
+                  ),
+                ),
+              ),
+            ),
+            const Divider(height: 4),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _isiTarget(
+                  _barisTarget(
                     label: 'Rasio laba',
                     warna: Colors.green,
-                    targetText: '${t.targetPersen.toStringAsFixed(2)}%',
+                    targetText:
+                        '${t.targetPersen.toStringAsFixed(2)}% · ${_teksMargin(_labaTarget(t.targetOmset, t.targetPersen))}',
                     orderText: _teksRasio(m.omsetOrder, m.labaOrder),
                     kirimanText: _teksRasio(m.omsetKiriman, m.labaKiriman),
                     actualText: _teksRasio(m.omsetActual, m.labaActual),
@@ -376,14 +404,22 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 alignment: Alignment.centerLeft,
                 child: _isiTarget(
                   _barisTarget(
-                    label: 'Total omset',
-                    warna: theme.colorScheme.primary,
-                    targetText: Uang.rp(t.targetOmset),
-                    orderText: Uang.rp(m.omsetOrder),
-                    kirimanText: Uang.rp(m.omsetKiriman),
-                    actualText: Uang.rp(m.omsetActual),
-                    persentaseOrder: _pct(m.omsetOrder, t.targetOmset),
-                    persentaseActual: _pct(m.omsetActual, t.targetOmset),
+                    label: 'Margin',
+                    warna: Colors.teal,
+                    targetText: _teksMargin(
+                      _labaTarget(t.targetOmset, t.targetPersen),
+                    ),
+                    orderText: _teksMargin(m.labaOrder),
+                    kirimanText: _teksMargin(m.labaKiriman),
+                    actualText: _teksMargin(m.labaActual),
+                    persentaseOrder: _pct(
+                      m.labaOrder,
+                      _labaTarget(t.targetOmset, t.targetPersen),
+                    ),
+                    persentaseActual: _pct(
+                      m.labaActual,
+                      _labaTarget(t.targetOmset, t.targetPersen),
+                    ),
                   ),
                 ),
               ),
@@ -469,6 +505,16 @@ class _DashboardLayarState extends State<DashboardLayar> {
                 children: [
                   Expanded(
                     child: _kotakHari(
+                      label: 'Omset',
+                      warna: theme.colorScheme.primary,
+                      orderText: Uang.rp(h.omsetOrder),
+                      kirimanText: Uang.rp(h.omsetKiriman),
+                      actualText: Uang.rp(h.omsetActual),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _kotakHari(
                       label: 'Rasio laba',
                       warna: Colors.green,
                       orderText: _teksRasio(h.omsetOrder, h.labaOrder),
@@ -479,11 +525,11 @@ class _DashboardLayarState extends State<DashboardLayar> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _kotakHari(
-                      label: 'Omset',
-                      warna: theme.colorScheme.primary,
-                      orderText: Uang.rp(h.omsetOrder),
-                      kirimanText: Uang.rp(h.omsetKiriman),
-                      actualText: Uang.rp(h.omsetActual),
+                      label: 'Margin',
+                      warna: Colors.teal,
+                      orderText: _teksMargin(h.labaOrder),
+                      kirimanText: _teksMargin(h.labaKiriman),
+                      actualText: _teksMargin(h.labaActual),
                     ),
                   ),
                 ],
@@ -550,7 +596,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
                     child: _sisiRute(
                       judul: 'Minggu',
                       aksi: Text(
-                        'Target ${Uang.rp(k.targetOmset)} · ${k.targetPersen.toStringAsFixed(2)}%',
+                        'Target ${Uang.rp(k.targetOmset)} · ${k.targetPersen.toStringAsFixed(2)}% · ${_teksMargin(_labaTarget(k.targetOmset, k.targetPersen))}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -572,6 +618,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           _teksRasio(m.omsetOrder, m.labaOrder),
                           _teksRasio(m.omsetKiriman, m.labaKiriman),
                           _teksRasio(m.omsetActual, m.labaActual),
+                        ),
+                        _barisKecil(
+                          'Margin',
+                          _teksMargin(m.labaOrder),
+                          _teksMargin(m.labaKiriman),
+                          _teksMargin(m.labaActual),
                         ),
                         _barisKecil(
                           'EC',
@@ -633,6 +685,12 @@ class _DashboardLayarState extends State<DashboardLayar> {
                           _teksRasio(h.omsetOrder, h.labaOrder),
                           _teksRasio(h.omsetKiriman, h.labaKiriman),
                           _teksRasio(h.omsetActual, h.labaActual),
+                        ),
+                        _barisKecil(
+                          'Margin',
+                          _teksMargin(h.labaOrder),
+                          _teksMargin(h.labaKiriman),
+                          _teksMargin(h.labaActual),
                         ),
                         _barisKecil(
                           'EC',
@@ -718,7 +776,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           Expanded(
             child: Text(
               'Order',
@@ -792,7 +850,7 @@ class _DashboardLayarState extends State<DashboardLayar> {
       child: Row(
         children: [
           SizedBox(
-            width: 40,
+            width: 48,
             child: Text(
               label,
               style: TextStyle(fontSize: _teksIsi, color: Colors.grey.shade700),

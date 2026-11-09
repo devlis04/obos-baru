@@ -289,6 +289,9 @@ class _TokoLayarState extends State<TokoLayar> {
     final teksRasio = _potensi.ada && _potensi.rasio != null
         ? '${_potensi.rasio!.toStringAsFixed(1)}%'
         : '-';
+    final teksMargin = _potensi.ada && _potensi.margin != null
+        ? _potensi.margin!.toStringAsFixed(1).replaceAll('.', ',')
+        : '-';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,6 +303,7 @@ class _TokoLayarState extends State<TokoLayar> {
         const SizedBox(height: 8),
         _barisPotensi('Potensi order', teksOrder),
         _barisPotensi('Potensi rasio laba', teksRasio),
+        _barisPotensi('Potensi margin', teksMargin),
       ],
     );
   }

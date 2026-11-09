@@ -114,6 +114,17 @@ class KartuBarang extends StatelessWidget {
                           ),
                       ],
                     ),
+                    if (qtyInput > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        TransaksiHelper.rp(hargaDinamis * qtyInput),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Tema.seed,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

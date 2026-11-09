@@ -558,7 +558,7 @@ class _DialogReturTokoState extends State<DialogReturToko> {
         rute: widget.data.rute,
         idBuku: widget.data.idBuku,
       ),
-      wajib: CekRinciSetoran.kunciSemuaBarang(widget.data.toko),
+      wajib: CekRinciSetoran.kunciBarangRetur(widget.data.toko),
     );
   }
 
@@ -635,7 +635,7 @@ class _DialogReturTokoState extends State<DialogReturToko> {
                       idBuku: widget.data.idBuku,
                       ruteCek: widget.data.rute,
                       lihatSaja: widget.lihatSaja,
-                      wajibBarang: CekRinciSetoran.kunciSemuaBarang(
+                      wajibBarang: CekRinciSetoran.kunciBarangRetur(
                         widget.data.toko,
                       ),
                     ),
@@ -1270,6 +1270,7 @@ class _DialogNotaTokoState extends State<DialogNotaToko> {
                       _centang.remove(id);
                     }
                   });
+                  _catatTutup();
                 },
         ),
         Expanded(child: nama),
@@ -1900,7 +1901,11 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
 
   Widget _namaBarang(NotaSetoranRinci nota, SkuSetoranRinci s) {
     final nama = Text(s.nama);
-    if (!_cekBarang || !CekRinciSetoran.adaBatal(s)) return nama;
+    if (!_cekBarang) return nama;
+    final perluCek = widget.jenis == 'retur'
+        ? CekRinciSetoran.adaRetur(s)
+        : CekRinciSetoran.adaBatal(s);
+    if (!perluCek) return nama;
     final id = CekRinciSetoran.kunciBarang(widget.toko, nota, s);
     return Row(
       children: [
@@ -1918,6 +1923,7 @@ class _RinciSkuDialogState extends State<RinciSkuDialog> {
                       _centang.remove(id);
                     }
                   });
+                  _catatTutup();
                 },
         ),
         Expanded(child: nama),
