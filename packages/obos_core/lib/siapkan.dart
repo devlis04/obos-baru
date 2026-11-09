@@ -21,13 +21,18 @@ Future<bool> siapkanObos({required bool pakaiPrefsHp}) async {
     await PrefsHp.siap();
   }
   await dotenv.load(fileName: 'assets/.env');
-  final url = (dotenv.env['SUPABASE_URL'] ?? '').trim();
+  final url = (dotenv.env['SUPABASE_URL'] ?? '')
+      .trim()
+      .replaceFirst(RegExp(r'/+$'), '');
   final kunci = (dotenv.env['SUPABASE_ANON_KEY'] ?? '').trim();
   if (url.isEmpty || kunci.isEmpty) return false;
   await Supabase.initialize(
     url: url,
     // ignore: deprecated_member_use
     anonKey: kunci,
+    authOptions: const FlutterAuthClientOptions(
+      detectSessionInUri: false,
+    ),
   );
   return true;
 }

@@ -72,11 +72,9 @@ class _Gerbang extends StatelessWidget {
             info: state.info,
           );
         }
-        if (state is AuthKeluar) {
-          return LoginLayar(konfig: AuthKonfig.admin, pesan: state.pesan);
-        }
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+        return LoginLayar(
+          konfig: AuthKonfig.admin,
+          pesan: state is AuthKeluar ? state.pesan : null,
         );
       },
     );

@@ -186,7 +186,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await _masukAdmin(event, emit);
       }
     } on AuthException catch (e) {
-      emit(AuthKeluar(pesan: _pesanMasuk(e.message)));
+      emit(AuthKeluar(pesan: _pesanMasuk(e)));
     } catch (_) {
       emit(
         AuthKeluar(
@@ -198,7 +198,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _masukAdmin(MintaMasuk event, Emitter<AuthState> emit) async {
     final res = await _sb.auth.signInWithPassword(
-      email: event.email.trim(),
+      email: event.email.trim().toLowerCase(),
       password: event.sandi,
     );
     if (res.user?.email == null) {
@@ -221,7 +221,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _masukHp(MintaMasuk event, Emitter<AuthState> emit) async {
     final lokal = await SesiHp.bertandaMasuk();
     final res = await _sb.auth.signInWithPassword(
-      email: event.email.trim(),
+      email: event.email.trim().toLowerCase(),
       password: event.sandi,
     );
     final user = res.user;
@@ -309,10 +309,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  String _pesanMasuk(String asli) {
-    final t = asli.toLowerCase();
+  String _pesanMasuk(AuthException e) {
+    final t = '${e.code ?? ''} ${e.message}'.toLowerCase();
     if (t.contains('not confirmed') || t.contains('email_not_confirmed')) {
       return 'Email Auth belum dikonfirmasi. Jalankan supabase/002_confirm_auth.sql.';
+    }
+    if (t.contains('api key') ||
+        t.contains('invalid jwt') ||
+        t.contains('unauthorized')) {
+      return 'Kunci API web tidak diterima server. Cek secret GitHub Pages.';
     }
     if (t.contains('invalid') ||
         t.contains('credential') ||

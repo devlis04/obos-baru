@@ -99,6 +99,8 @@ class _LoginLayarState extends State<LoginLayar> {
                     enabled: !memuat,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       enabledBorder: garisBiru,
@@ -111,6 +113,9 @@ class _LoginLayarState extends State<LoginLayar> {
                     controller: _sandi,
                     enabled: !memuat,
                     obscureText: _tutupSandi,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.password],
                     onSubmitted: (_) => _masuk(),
                     decoration: InputDecoration(
                       labelText: 'Kata sandi',
