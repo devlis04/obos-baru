@@ -31,6 +31,17 @@ class Jaringan {
         teks.contains('offline');
   }
 
+  /// Timeout / putus ke Supabase; Wi-Fi bisa tetap nyala.
+  static String pesanMuat(Object e, String aksi) {
+    if (e is TimeoutException) {
+      return 'Server lambat merespons. $aksi';
+    }
+    if (mati(e)) {
+      return 'Tidak bisa menghubungi server. $aksi';
+    }
+    return aksi;
+  }
+
   /// Satu kali ulang jika putus/timeout. Jangan untuk tulis yang tidak idempoten.
   static Future<T> denganUlang<T>(Future<T> Function() fn) async {
     try {

@@ -82,7 +82,10 @@ class _DashboardLayarState extends State<DashboardLayar> {
       tampilPesan(
         context,
         Jaringan.mati(e)
-            ? 'Tidak ada internet. Ringkasan penjualan belum bisa dimuat.'
+            ? Jaringan.pesanMuat(
+                e,
+                'Ringkasan penjualan belum bisa dimuat.',
+              )
             : pesanGagal(e, 'Ringkasan penjualan belum bisa dimuat. Jalankan supabase/133_ringkas_tanggal_buku.sql.'),
       );
     }

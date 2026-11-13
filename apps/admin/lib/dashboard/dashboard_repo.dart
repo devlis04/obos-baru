@@ -214,15 +214,17 @@ class DashboardRepo {
     required DateTime senin,
     required DateTime hari,
   }) async {
-    final hasil = await _sb
-        .rpc(
-          'admin_dashboard',
-          params: {
-            'p_senin': Uang.isoHari(senin),
-            'p_hari': Uang.isoHari(hari),
-          },
-        )
-        .timeout(const Duration(seconds: 45));
+    final hasil = await Jaringan.denganUlang(
+      () => _sb
+          .rpc(
+            'admin_dashboard',
+            params: {
+              'p_senin': Uang.isoHari(senin),
+              'p_hari': Uang.isoHari(hari),
+            },
+          )
+          .timeout(const Duration(seconds: 70)),
+    );
     if (hasil is! Map) {
       throw Exception('Ringkasan penjualan belum bisa dimuat.');
     }
