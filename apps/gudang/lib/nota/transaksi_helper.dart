@@ -44,7 +44,7 @@ class TransaksiHelper {
 
   static Barang pakaiKunciNota(Barang dasar, ItemNota it) {
     return dasar.kunciNota(
-      idGrup: it.idGrupKunci.trim().isNotEmpty ? it.idGrupKunci : dasar.idGrup,
+      idGrup: it.idGrupKunci,
       hargaJual: it.hargaDasarKunci > 0 ? it.hargaDasarKunci : dasar.hargaJual,
       minStrat1: it.minStrat1,
       jualStrat1: it.jualStrat1,
